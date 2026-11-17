@@ -1,5 +1,7 @@
 # Contitext
 
+<!-- mcp-name: io.github.jessysw/contitext -->
+
 **Project continuity for AI agents.**
 
 Keep project state, decisions, checkpoints, and handoffs available across agents,
@@ -10,7 +12,7 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.5.2 is an early public release.** The core service is usable independently.
+**v0.5.3 is an early public release.** The core service is usable independently.
 Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
 
 ## Quick start
@@ -45,6 +47,10 @@ See [installation](https://github.com/jessysw/contitext/blob/main/docs/installat
 backup, and remote access.
 
 ## Connect an MCP client
+
+The MCP Registry identifier is `io.github.jessysw/contitext`. The
+[Registry setup guide](https://github.com/jessysw/contitext/blob/main/docs/mcp-registry.md)
+explains the PyPI/stdio installation and required database configuration.
 
 After the quick start, add this server to a client that supports stdio MCP. Replace
 the directory with your own absolute checkout path:

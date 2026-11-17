@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Publish release
 on:
   workflow_dispatch:
 permissions:
@@ -55,3 +55,63 @@ jobs:
           name: distributions
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+  registry:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Wait for the versioned PyPI ownership marker
+        run: |
+          python - <<'PY'
+          import json, time, urllib.error, urllib.request
+          from pathlib import Path
+          manifest = json.loads(Path('server.json').read_text())
+          package = manifest['packages'][0]
+          url = f"https://pypi.org/pypi/{package['identifier']}/{package['version']}/json"
+          for attempt in range(12):
+              try:
+                  with urllib.request.urlopen(url, timeout=30) as response:
+                      info = json.load(response)['info']
+                  assert info['version'] == package['version']
+                  assert f"<!-- mcp-name: {manifest['name']} -->" in info['description']
+                  print('Published PyPI version and ownership marker verified.')
+                  break
+              except urllib.error.HTTPError as exc:
+                  if exc.code != 404 or attempt == 11:
+                      raise
+                  time.sleep(10)
+          PY
+      - name: Install signature verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Install verified MCP publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          archive=mcp-publisher_linux_amd64.tar.gz
+          base="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --show-error --silent --location --retry 3 "$base/$archive" -o "$archive"
+          curl --fail --show-error --silent --location --retry 3 "$base/$archive.sigstore.json" -o "$archive.sigstore.json"
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+      - name: Validate Registry metadata
+        run: '"$RUNNER_TEMP/mcp-publisher" validate server.json'
+      - name: Authenticate using GitHub OIDC
+        run: '"$RUNNER_TEMP/mcp-publisher" login github-oidc'
+      - name: Publish to MCP Registry
+        run: '"$RUNNER_TEMP/mcp-publisher" publish server.json'

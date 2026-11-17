@@ -8,7 +8,7 @@ the package from PyPI:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.5.2
+python -m pip install contitext==0.5.3
 ```
 
 For a source checkout, use `python -m pip install .` instead.
@@ -32,6 +32,9 @@ keep administration separate from untrusted clients.
 For native stdio MCP, provide the same database/token-store configuration plus
 `CONTITEXT_MCP_TOKEN`, then run `contitext mcp`. Client-side instructions are in
 `integrations/PROJECT-CONTEXT-PROTOCOL.md`.
+
+For clients that install from the official MCP Registry, see the
+[Registry setup guide](mcp-registry.md).
 
 See the [command reference](commands.md) for supported terminal commands and
 agent chat instructions.

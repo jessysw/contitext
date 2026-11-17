@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 from uuid import uuid4
@@ -93,8 +94,9 @@ def test_mcp_http_semantics_and_acl_are_identical(migrated_database_url: str) ->
 
 @pytest.mark.parametrize("server_args", [
     ["-m", "contitext.cli", "mcp"], ["-m", "contitext.mcp_server"],
+    None,  # Installed console command and package arguments from the Registry.
 ])
-def test_real_stdio_initialize_list_and_calls(migrated_database_url: str, server_args: list[str]) -> None:
+def test_real_stdio_initialize_list_and_calls(migrated_database_url: str, server_args: list[str] | None) -> None:
     engine, principal, _, _ = setup(migrated_database_url)
     engine.dispose()
     auth_json = json.dumps({"stdio-token": {"principal_id": str(principal.principal_id), "name": principal.name}})
@@ -106,9 +108,16 @@ def test_real_stdio_initialize_list_and_calls(migrated_database_url: str, server
     })
 
     async def smoke():
+        command = sys.executable
+        args = server_args
+        if args is None:
+            manifest = json.loads((Path(__file__).resolve().parents[1] / "server.json").read_text())
+            package = manifest["packages"][0]
+            command = str(Path(sys.executable).with_name(package["identifier"]))
+            args = [argument["value"] for argument in package["packageArguments"]]
         params = StdioServerParameters(
-            command=sys.executable,
-            args=server_args,
+            command=command,
+            args=args,
             env=env,
         )
         async with stdio_client(params) as (read, write):

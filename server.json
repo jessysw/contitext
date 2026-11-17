@@ -1,0 +1,51 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jessysw/contitext",
+  "title": "Contitext",
+  "description": "Self-hosted project continuity for AI agents: state, decisions, checkpoints, and handoffs.",
+  "version": "0.5.3",
+  "repository": {
+    "url": "https://github.com/jessysw/contitext",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/jessysw/contitext/blob/main/docs/mcp-registry.md",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "contitext",
+      "version": "0.5.3",
+      "runtimeHint": "uvx",
+      "runtimeArguments": [
+        {"type": "named", "name": "--python", "value": "3.12"}
+      ],
+      "packageArguments": [
+        {"type": "positional", "value": "mcp"}
+      ],
+      "transport": {"type": "stdio"},
+      "environmentVariables": [
+        {
+          "name": "DATABASE_URL",
+          "description": "SQLAlchemy postgresql+psycopg:// URL for your migrated PostgreSQL 16+ database. See setup instructions.",
+          "format": "string",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "CONTITEXT_AUTH_TOKENS",
+          "description": "JSON token store mapping credentials to seeded principal_id and name values. See setup instructions.",
+          "format": "string",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "CONTITEXT_MCP_TOKEN",
+          "description": "This client's credential from CONTITEXT_AUTH_TOKENS; its principal must have explicit project ACLs.",
+          "format": "string",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
