@@ -10,8 +10,8 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.5.1 is an early public release.** The core service is usable independently.
-Companion integrations and broader memory features are on the [roadmap](docs/roadmap.md).
+**v0.5.2 is an early public release.** The core service is usable independently.
+Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
 
 ## Quick start
 
@@ -41,7 +41,7 @@ the real HTTP API. Its final output includes:
 
 The API listens on localhost. PostgreSQL has no published host port. Data persists
 in a Compose volume; `docker compose down` stops the service and preserves it.
-See [installation](docs/installation.md) for Python-package setup, administration,
+See [installation](https://github.com/jessysw/contitext/blob/main/docs/installation.md) for Python-package setup, administration,
 backup, and remote access.
 
 ## Connect an MCP client
@@ -61,7 +61,7 @@ the directory with your own absolute checkout path:
 ```
 
 Client configuration formats differ. The same command can be used by any stdio MCP
-client. Load [the agent protocol](integrations/PROJECT-CONTEXT-PROTOCOL.md) into the
+client. Load [the agent protocol](https://github.com/jessysw/contitext/blob/main/integrations/PROJECT-CONTEXT-PROTOCOL.md) into the
 client's instruction mechanism and restart its MCP session. This release does not
 automatically modify your agent settings. The MCP server runs locally inside the
 existing app container and shares its database.
@@ -77,7 +77,7 @@ existing app container and shares its database.
 
 No project is inferred from the working directory or repository name. Each caller
 uses a stable conversation scope and explicitly selects a project. Project ACLs
-are enforced on the server. [API contracts and limits](docs/api.md) describe what
+are enforced on the server. [API contracts and limits](https://github.com/jessysw/contitext/blob/main/docs/api.md) describe what
 the server enforces and what the agent protocol requires.
 
 ## Commands
@@ -107,7 +107,7 @@ instructions** in a conversation with the agent:
 `!! context` remains a legacy alias. These are agent instructions, not terminal
 subcommands. The terminal CLI currently runs and administers the service; it does
 not implement chat actions such as `use`, `status`, or `search`, and it does not
-set a global default project. See the [command reference](docs/commands.md) for
+set a global default project. See the [command reference](https://github.com/jessysw/contitext/blob/main/docs/commands.md) for
 CLI options, compatibility entry points, and conversation scope behavior.
 
 ## What it includes
@@ -127,10 +127,10 @@ handoff for the whole project, not a task scheduler or a conflict-resolution sys
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the isolated PostgreSQL test setup.
-See [SECURITY.md](SECURITY.md) for trust boundaries and vulnerability reporting.
+See [CONTRIBUTING.md](https://github.com/jessysw/contitext/blob/main/CONTRIBUTING.md) for the isolated PostgreSQL test setup.
+See [SECURITY.md](https://github.com/jessysw/contitext/blob/main/SECURITY.md) for trust boundaries and vulnerability reporting.
 Repository: [jessysw/contitext](https://github.com/jessysw/contitext).
 
 ## License
 
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](https://github.com/jessysw/contitext/blob/main/LICENSE).

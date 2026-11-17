@@ -19,7 +19,7 @@ contains no PyPI API token. Creating a pending publisher is not a guarantee that
 name has been reserved: the project is created by its first successful upload.
 
 After CI passes, create a version tag matching `pyproject.toml` (for example,
-`v0.5.1`). Manually dispatch the **Publish to PyPI** workflow from that tag. It tests
+`v0.5.2`). Manually dispatch the **Publish to PyPI** workflow from that tag. It tests
 and builds without publishing credentials, then hands the distributions to a
 separate publishing job using OIDC. It does not run on every commit or release.
 Use English for the commit, release title, and release notes.

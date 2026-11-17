@@ -8,7 +8,7 @@ the package from PyPI:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.5.1
+python -m pip install contitext==0.5.2
 ```
 
 For a source checkout, use `python -m pip install .` instead.
