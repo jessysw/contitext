@@ -1,5 +1,6 @@
 # Exercise the compatibility floors introduced for Python 3.14.
 # Other dependencies use the normal resolver; this is not a complete lockfile.
-psycopg[binary]==3.2.10
+psycopg==3.2.10
+psycopg-binary==3.2.10
 pydantic==2.12.0
 sqlalchemy==2.0.44
