@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import stat
 from typing import Callable, Iterator
@@ -41,10 +42,14 @@ class Projector:
         projects_root: str | Path,
         *,
         filesystem_hook: Callable[[str], None] | None = None,
+        legacy_marker_prefixes: tuple[str, ...] = (),
     ) -> None:
         self._session_factory = session_factory
         self._projects_root = Path(projects_root).expanduser().absolute()
         self._filesystem_hook = filesystem_hook
+        if any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", prefix) for prefix in legacy_marker_prefixes):
+            raise ProjectionSafetyError("invalid legacy marker prefix")
+        self._marker_prefixes = ("contitext", *legacy_marker_prefixes)
         self._require_secure_filesystem_api()
 
     @staticmethod
@@ -169,7 +174,7 @@ class Projector:
 
     def _project_event(self, project_fd: int, event: ContextEvent) -> str | None:
         rendered = render_event(ContextEventResult.model_validate(event, from_attributes=True))
-        marker = f"<!-- contitext:event:{event.event_id}:begin -->"
+        markers = [f"<!-- {prefix}:event:{event.event_id}:begin -->" for prefix in self._marker_prefixes]
         if event.event_kind == "handoff":
             handoffs_fd = self._open_child_directory(project_fd, "HANDOFFS", "HANDOFFS")
             try:
@@ -178,7 +183,7 @@ class Projector:
                 target = f"{event.event_id}.md"
                 if self._entry_exists(handoffs_fd, target, "handoff target"):
                     existing = self._read_file(handoffs_fd, target, "handoff target")
-                    if marker in existing:
+                    if any(marker in existing for marker in markers):
                         return None
                     raise ProjectionSafetyError("handoff target already exists with different content")
                 self._atomic_write(handoffs_fd, target, "# Handoff\n\n" + rendered, "handoff target")
@@ -188,7 +193,7 @@ class Projector:
 
         filename = TARGET_FILES[event.event_kind]
         existing = self._read_file(project_fd, filename, filename)
-        if marker in existing:
+        if any(marker in existing for marker in markers):
             return None
         separator = "" if existing.endswith("\n") or not existing else "\n"
         self._atomic_write(project_fd, filename, existing + separator + "\n" + rendered, filename)

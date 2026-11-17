@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from contitext.auth import PrincipalIdentity, ProjectNotFoundError
 from contitext.db import create_session_factory
 from contitext.repository import IdempotencyConflictError, Repository
-from contitext.schemas import EventKind, RecordContextRequest, RecordEventKind
+from contitext.schemas import BindProjectRequest, EventKind, RecordContextRequest, RecordEventKind
 from contitext.service import ContextService, WriterFencedError
 
 
@@ -41,6 +41,13 @@ def seed_event_access(database_url: str) -> tuple[PrincipalIdentity, PrincipalId
                        ('beta', :reader, 'owner')"""),
                 {"writer": writer.principal_id, "reader": reader.principal_id},
             )
+    finally:
+        engine.dispose()
+    engine = create_engine(database_url)
+    try:
+        service = ContextService(Repository(create_session_factory(engine)))
+        for identity in (writer, reader):
+            service.bind_project(identity, BindProjectRequest(project_id="alpha", scope_id="scope:exact", session_id="session:exact"))
     finally:
         engine.dispose()
     return writer, reader
@@ -162,6 +169,7 @@ def test_idempotency_rejects_changed_payload_and_provenance(migrated_database_ur
     service = ContextService(Repository(create_session_factory(engine)))
     try:
         original = service.record_context(writer, make_event_request())
+        service.bind_project(writer, BindProjectRequest(project_id="alpha", scope_id="another-scope", session_id="session:exact"))
         for field, value in (("payload", {"text": "changed"}), ("source_id", "another-source"),
                              ("scope_id", "another-scope"), ("session_id", "another-session")):
             changed = make_event_request().model_copy(update={field: value})

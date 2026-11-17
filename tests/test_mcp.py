@@ -69,6 +69,9 @@ def test_mcp_http_semantics_and_acl_are_identical(migrated_database_url: str) ->
             "event_kind": "note", "payload": {"text": "parity phrase"},
             "idempotency_key": "parity-1",
         }
+        with pytest.raises(ToolError, match="bind this scope"):
+            asyncio.run(server.call_tool("context_record", args))
+        asyncio.run(server.call_tool("project_bind", {"project_id": "alpha", "scope_id": "scope", "session_id": "session"}))
         _, mcp_result = asyncio.run(server.call_tool("context_record", args))
         store = TokenStore.from_json(json.dumps({"token": {"principal_id": str(principal.principal_id), "name": principal.name}}))
         client = TestClient(create_app(service=service, token_store=store))

@@ -24,6 +24,7 @@ class Settings:
         environ: Mapping[str, str] | None = None,
         *,
         testing: bool = False,
+        require_auth: bool = True,
     ) -> "Settings":
         values = os.environ if environ is None else environ
         database_key = "CONTITEXT_TEST_DATABASE_URL" if testing else "DATABASE_URL"
@@ -33,7 +34,7 @@ class Settings:
         missing = []
         if not database_url:
             missing.append(database_key)
-        if not testing and not auth_tokens_json:
+        if not testing and require_auth and not auth_tokens_json:
             missing.append("CONTITEXT_AUTH_TOKENS")
         if missing:
             raise ConfigurationError(
@@ -41,6 +42,7 @@ class Settings:
             )
         if not database_url.startswith(("postgresql+psycopg://", "postgresql://")):
             raise ConfigurationError("Contitext requires a PostgreSQL database URL")
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
         if testing and "test" not in database_url.rsplit("/", 1)[-1].lower():
             raise ConfigurationError("test database URL must name a dedicated test database")
 

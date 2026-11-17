@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from contitext.auth import AuthenticationError, PrincipalIdentity, ProjectNotFoundError, TokenStore
 from contitext.config import Settings
 from contitext.db import create_database_engine, create_session_factory
-from contitext.repository import BindingNotFoundError, IdempotencyConflictError, Repository
+from contitext.repository import BindingConflictError, BindingNotFoundError, IdempotencyConflictError, Repository
 from contitext.projector import Projector
 from contitext.schemas import (
     BindProjectRequest,
@@ -78,7 +78,9 @@ def create_app(
                 import os
                 projects_root = os.environ.get("CONTITEXT_PROJECTS_ROOT")
                 if projects_root:
-                    configured_projector = Projector(factory, projects_root)
+                    configured_projector = Projector(factory, projects_root, legacy_marker_prefixes=tuple(
+                        prefix.strip() for prefix in os.environ.get("CONTITEXT_LEGACY_MARKER_PREFIXES", "").split(",") if prefix.strip()
+                    ))
             service = ContextService(Repository(factory), configured_projector)
         if token_store is None:
             token_store = settings.token_store
@@ -137,6 +139,7 @@ def create_app(
     async def invalid_value(_: Request, exc: ValueError):
         return _json_error(422, str(exc))
 
+    @app.exception_handler(BindingConflictError)
     @app.exception_handler(IdempotencyConflictError)
     async def idempotency_conflict(_: Request, exc: IdempotencyConflictError):
         return _json_error(409, str(exc))

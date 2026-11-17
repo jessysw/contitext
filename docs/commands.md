@@ -12,6 +12,16 @@ command-specific options. Help and version output do not require a database.
 | Command | Purpose |
 | --- | --- |
 | `contitext --version` | Print the installed package version |
+| `contitext init --project research --name "Research"` | Generate private `.env` and initial project seed; does not contact the database |
+| `contitext --env-file /absolute/private.env doctor` | Check configuration, schema, MCP identity, and grants without writing |
+| `contitext project list` / `show ID` | Inspect projects and access grants |
+| `contitext project create ID --name NAME --owner UUID` | Create a project and its owner grant atomically |
+| `contitext project update ID --name NAME --status STATUS` | Update metadata while preserving events and bindings |
+| `contitext principal create NAME` / `list` | Provision and inspect identities; credentials are configured separately |
+| `contitext access grant ID UUID --role writer` | Add or change a project grant |
+| `contitext access revoke ID UUID` | Revoke project access without deleting history |
+| `contitext access list ID` | Inspect project grants |
+| `contitext client-config --compose /absolute/contitext --ssh server` | Print stdio MCP configuration using your SSH transport |
 | `contitext migrate` | Apply bundled database migrations |
 | `contitext admin seed` | Upsert projects, principals, and ACLs from `CONTITEXT_SEED_JSON` |
 | `contitext serve` | Run the REST API; defaults to `127.0.0.1:8000` |
@@ -19,7 +29,14 @@ command-specific options. Help and version output do not require a database.
 | `contitext mcp` | Run the stdio MCP server for an MCP client |
 | `contitext mcp-smoke` | Exercise all six MCP tools using synthetic records |
 
-The migration and seed commands require database-owner privileges. The API and
+The migration, seed, project, principal, and access commands require trusted
+database access. They are operator commands, not MCP tools or tenant APIs.
+`--env-file` explicitly loads dotenv settings before any command; there is no
+automatic configuration or project selection from the working directory. Treat
+that file as credentials and never shell-source it. `admin seed --if-empty` only
+initializes an empty deployment; plain `admin seed` intentionally reapplies
+the supplied document. Project status is descriptive metadata, not an access
+control: use `access revoke` to remove access. The API and
 MCP server use the existing authentication and project ACL configuration described
 in [installation](installation.md). The smoke command requires
 `CONTITEXT_SMOKE_PROJECT_ID` and `CONTITEXT_MCP_TOKEN`, and **writes synthetic

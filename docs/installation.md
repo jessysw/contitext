@@ -40,6 +40,11 @@ For clients that install from the official MCP Registry, see the
 See the [command reference](commands.md) for supported terminal commands and
 agent chat instructions.
 
+The [self-hosting workflow](self-hosting.md) covers the development branch's
+initialization, project and permission management, client configuration, and
+backup/recovery acceptance. Install the checkout to use commands that are not
+yet in the published 0.5.4 package.
+
 ## Remote use
 
 The quick start is intentionally local. For an HTTP deployment, use TLS, protect
@@ -58,6 +63,12 @@ a database cursor. Paths and files must be ordinary files/directories, not
 symlinks. The implementation requires POSIX no-follow directory operations; use
 the Linux container when your host does not support them. Projection is optional
 and is not enabled by the default Compose file.
+
+For migration from an earlier marker namespace, set
+`CONTITEXT_LEGACY_MARKER_PREFIXES` to the explicitly trusted comma-separated
+prefixes. Existing `<!-- PREFIX:event:UUID:begin -->` blocks then prevent duplicate
+projection after a cursor rewind. New blocks always use `contitext`; existing
+files are not rewritten. The default accepts only Contitext's own markers.
 
 ## Backup and upgrades
 

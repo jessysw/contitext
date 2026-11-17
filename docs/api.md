@@ -27,17 +27,21 @@ principal return the original event. Changed payload, provenance, event kind, or
 principal produces HTTP 409 (an MCP tool error), leaving the original event intact.
 
 Unknown and unauthorized projects both produce HTTP 404 to avoid enumeration.
-An unbound scope also produces 404. Invalid input produces 422. Missing or invalid
+Reading an unbound scope produces 404. Writing with an unbound or mismatched
+scope produces 409. Invalid input produces 422. Missing or invalid
 bearer credentials produce 401. An unavailable projector or maintenance fence
 produces 503.
 
 ## Explicit boundaries in v0.5
 
-- Scope selection is an agent-protocol requirement. The service authorizes every
-  request's explicit project ID; it does not yet require that an event's project
-  match a persisted scope binding. Callers must check `project_current` before
-  writing. Stricter atomic binding validation is planned before migration of
-  existing deployments.
+- Every event and handoff write requires a persisted binding for the authenticated
+  principal and scope that matches the requested project. Validation and insertion
+  share a transaction; concurrent rebinding cannot redirect a write. Bind explicitly
+  before writing, including before retrying an event after switching projects. A
+  resumed conversation may use a new session ID with its existing project binding.
+  Reads remain project-authorized; the agent must use its binding to select the
+  correct project. The server cannot detect unsaved conversation content, so the
+  agent protocol still requires a handoff before switching projects.
 - `context_get` returns the latest project checkpoint and handoff, the 20 latest
   decisions, and up to 20 question events whose own payload is not marked
   `resolved: true`. Events are immutable. Appending a later resolution does not

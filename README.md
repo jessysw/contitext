@@ -46,6 +46,11 @@ in a Compose volume; `docker compose down` stops the service and preserves it.
 See [installation](https://github.com/jessysw/contitext/blob/main/docs/installation.md) for Python-package setup, administration,
 backup, and remote access.
 
+For a real project, see the [self-hosting workflow](docs/self-hosting.md):
+initialize your project, manage access, check your installation, connect clients,
+and verify backup recovery. New administration commands described there are in
+the development branch; install this checkout to try them before the next release.
+
 ## Connect an MCP client
 
 The MCP Registry identifier is `io.github.jessysw/contitext`. The

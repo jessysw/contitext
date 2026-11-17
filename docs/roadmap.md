@@ -6,9 +6,13 @@ PostgreSQL event storage, REST, six stdio MCP tools, explicit scope selection,
 project ACLs, idempotency, lexical search, and optional Markdown projection.
 Quick start, synthetic two-agent demo, portable package, and isolated tests.
 
+The current development branch adds project/principal/access administration,
+private configuration initialization, read-only diagnostics, portable MCP client
+configuration, and atomic event-to-binding consistency. See the
+[self-hosting guide](self-hosting.md) for a complete operator workflow.
+
 ## Before v1.0
 
-- Enforce event-to-binding consistency atomically in the service.
 - Add question resolution, decision supersession, and task-scoped handoff selection
   with explicit lifecycle semantics and regression tests.
 - Rehearse migration and rollback with private deployments using private tooling;

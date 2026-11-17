@@ -36,6 +36,10 @@ class IdempotencyConflictError(RuntimeError):
     """An existing event key cannot be reused for another request or principal."""
 
 
+class BindingConflictError(RuntimeError):
+    """A write must target the caller's explicitly bound project."""
+
+
 class Repository:
     """Only exposes project-filtered, authorization-aware operations."""
 
@@ -109,6 +113,14 @@ class Repository:
     ) -> ContextEventResult:
         with self._session_factory.begin() as session:
             require_project_access(session, principal.principal_id, request.project_id, "writer")
+            # Serialize writes with rebinds of the same principal/conversation.
+            # Session IDs may change when a conversation resumes; project identity may not.
+            binding = session.execute(select(ScopeBinding).where(
+                ScopeBinding.principal_id == principal.principal_id,
+                ScopeBinding.scope_id == request.scope_id,
+            ).with_for_update()).scalar_one_or_none()
+            if binding is None or binding.project_id != request.project_id:
+                raise BindingConflictError("bind this scope to the requested project before writing")
             acquire_project_transaction_lock(session, request.project_id)
             statement = (
                 insert(ContextEvent)

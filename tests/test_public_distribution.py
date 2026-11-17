@@ -15,6 +15,10 @@ def test_bootstrap_uses_fresh_credentials_and_preserves_existing_config(tmp_path
     (tmp_path / "scripts").mkdir()
     script = tmp_path / "scripts/bootstrap.py"
     shutil.copyfile(ROOT / "scripts/bootstrap.py", script)
+    package = tmp_path / "src" / "contitext"
+    package.mkdir(parents=True)
+    for name in ("__init__.py", "onboarding.py"):
+        shutil.copyfile(ROOT / "src" / "contitext" / name, package / name)
     run = subprocess.run([sys.executable, str(script)], capture_output=True, text=True)
     assert run.returncode == 0
     config = tmp_path / ".env"
