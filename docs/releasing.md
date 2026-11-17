@@ -23,7 +23,7 @@ Keep the version in `pyproject.toml`, `src/contitext/__init__.py`, the REST API,
 in sync. The README must retain its `mcp-name: io.github.jessysw/contitext` ownership
 marker so it is included in the published PyPI description.
 
-After CI passes, create a matching version tag (for example, `v0.5.4`). Manually
+After CI passes, create a matching version tag (for example, `v0.6.0`). Manually
 dispatch the **Publish release** workflow (`publish.yml`) from that tag. It tests
 and builds on Python 3.11–3.14 without publishing credentials. All four jobs must
 pass before the Python 3.12 distributions are handed to a separate PyPI publishing

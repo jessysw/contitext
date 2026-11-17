@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, text
 from contitext.auth import PrincipalIdentity, ProjectNotFoundError
 from contitext.db import create_session_factory
 from contitext.repository import Repository
-from contitext.schemas import HandoffRequest, RecordContextRequest, RecordEventKind
+from contitext.schemas import BindProjectRequest, HandoffRequest, RecordContextRequest, RecordEventKind
 from contitext.service import ContextService
 
 
@@ -23,6 +23,7 @@ def build_service(database_url: str):
 
 
 def record(service, principal, project, kind, text_value, key, **extra):
+    service.bind_project(principal, BindProjectRequest(project_id=project, scope_id="scope", session_id="session"))
     return service.record_context(principal, RecordContextRequest(
         project_id=project, scope_id="scope", session_id="session", agent_id="agent",
         source_kind="test", source_id=f"source:{key}", event_kind=kind,

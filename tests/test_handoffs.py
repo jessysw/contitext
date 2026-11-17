@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from contitext.auth import PrincipalIdentity
 from contitext.db import create_session_factory
 from contitext.repository import Repository
-from contitext.schemas import HandoffRequest
+from contitext.schemas import BindProjectRequest, HandoffRequest
 from contitext.service import ContextService
 
 
@@ -33,7 +33,9 @@ def setup(database_url: str):
         connection.execute(text("INSERT INTO projects (id,display_name,status) VALUES ('alpha','Alpha','active')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'Writer')"), {"id": principal.principal_id})
         connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:id,'writer')"), {"id": principal.principal_id})
-    return engine, principal, ContextService(Repository(create_session_factory(engine)))
+    service = ContextService(Repository(create_session_factory(engine)))
+    service.bind_project(principal, BindProjectRequest(project_id="alpha", scope_id="scope:exact", session_id="session:exact"))
+    return engine, principal, service
 
 
 def test_handoff_requires_summary_next_action_and_exact_provenance() -> None:

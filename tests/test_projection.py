@@ -15,7 +15,7 @@ from contitext.auth import PrincipalIdentity, ProjectNotFoundError, TokenStore
 from contitext.db import create_session_factory
 from contitext.projector import Projector, ProjectionSafetyError
 from contitext.repository import Repository
-from contitext.schemas import HandoffRequest, RecordContextRequest, RecordEventKind
+from contitext.schemas import BindProjectRequest, HandoffRequest, RecordContextRequest, RecordEventKind
 from contitext.service import ContextService
 
 
@@ -39,6 +39,7 @@ def setup(database_url: str, tmp_path: Path):
 
 
 def record(service, principal, kind, key, text_value):
+    service.bind_project(principal, BindProjectRequest(project_id="alpha", scope_id=f"scope:{key}", session_id=f"session:{key}"))
     return service.record_context(principal, RecordContextRequest(
         project_id="alpha", scope_id=f"scope:{key}", session_id=f"session:{key}",
         agent_id=f"agent:{key}", source_kind="test", source_id=f"source:{key}",
@@ -55,6 +56,7 @@ def test_fresh_repeated_partial_restart_and_curated_preservation(migrated_databa
             record(service, owner, RecordEventKind.question, "q", "question text"),
             record(service, owner, RecordEventKind.checkpoint, "c", "checkpoint text"),
         ]
+        service.bind_project(owner, BindProjectRequest(project_id="alpha", scope_id="scope:h", session_id="session:h"))
         handoff = service.create_handoff(owner, HandoffRequest(
             project_id="alpha", scope_id="scope:h", session_id="session:h", agent_id="agent:h",
             source_kind="test", source_id="source:h", summary="handoff summary",
@@ -174,6 +176,7 @@ def test_handoffs_directory_swap_cannot_redirect_projection(
 ) -> None:
     engine, owner, _, service, project, _ = setup(migrated_database_url, tmp_path)
     try:
+        service.bind_project(owner, BindProjectRequest(project_id="alpha", scope_id="scope:swap", session_id="session:swap"))
         handoff = service.create_handoff(owner, HandoffRequest(
             project_id="alpha", scope_id="scope:swap", session_id="session:swap",
             agent_id="agent:swap", source_kind="test", source_id="source:swap",
@@ -235,5 +238,34 @@ def test_http_projection_uses_same_owner_acl_and_service(migrated_database_url: 
         assert projected.status_code == 200
         assert projected.json()["projected_event_ids"] == [str(event.event_id)]
         assert str(event.event_id) in (project / "NOTES.md").read_text()
+    finally:
+        engine.dispose()
+
+
+def test_configured_legacy_markers_survive_cursor_rewind(migrated_database_url, tmp_path):
+    engine, owner, _, service, project, _ = setup(migrated_database_url, tmp_path)
+    try:
+        record(service, owner, RecordEventKind.note, "legacy-note", "Existing note")
+        service.bind_project(owner, BindProjectRequest(project_id="alpha", scope_id="legacy:h", session_id="legacy"))
+        service.create_handoff(owner, HandoffRequest(
+            project_id="alpha", scope_id="legacy:h", session_id="legacy", agent_id="test",
+            source_kind="test", source_id="legacy:h", summary="Existing handoff", next_action="Continue", idempotency_key="legacy-h",
+        ))
+        service.project_context(owner, "alpha")
+        for path in project.rglob("*.md"):
+            path.write_text(path.read_text().replace("<!-- contitext:event:", "<!-- old-tool:event:"))
+        before = {str(p): p.read_bytes() for p in project.rglob("*.md")}
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM projection_offsets"))
+        factory = create_session_factory(engine)
+        migrated = ContextService(Repository(factory), Projector(factory, project.parent, legacy_marker_prefixes=("old-tool",)))
+        assert migrated.project_context(owner, "alpha").files_changed == []
+        assert {str(p): p.read_bytes() for p in project.rglob("*.md")} == before
+        assert migrated.project_context(owner, "alpha").projected_event_ids == []
+        record(migrated, owner, RecordEventKind.note, "new-note", "New note")
+        migrated.project_context(owner, "alpha")
+        assert "<!-- contitext:event:" in (project / "NOTES.md").read_text()
+        with pytest.raises(ProjectionSafetyError, match="invalid legacy"):
+            Projector(factory, project.parent, legacy_marker_prefixes=("invalid prefix",))
     finally:
         engine.dispose()

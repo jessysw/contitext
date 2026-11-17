@@ -23,3 +23,8 @@ def test_test_configuration_requires_dedicated_database() -> None:
             {"CONTITEXT_TEST_DATABASE_URL": "postgresql+psycopg://u:p@db/context"},
             testing=True,
         )
+
+
+def test_plain_postgresql_url_selects_the_installed_psycopg_driver():
+    settings = Settings.from_env({"DATABASE_URL": "postgresql://u:p@db/context"}, require_auth=False)
+    assert settings.database_url == "postgresql+psycopg://u:p@db/context"

@@ -12,15 +12,31 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.5.4 is an early public release.** The core service is usable independently.
+**v0.6.0 supports independent self-hosting.** Initialize your own projects, manage
+access, connect agents, and preserve context across sessions.
 Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
 
-## Quick start
+## Installation options
+
+Both options run the same Contitext implementation and expose the same six MCP
+tools. Neither requires a private repository or a paid service.
+
+| Option | Requirements | Operation |
+| --- | --- | --- |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.6.0` from PyPI; run native stdio MCP and optionally REST |
+| Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the pinned release; Compose runs Contitext and PostgreSQL together |
+
+Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
+for either path. Python installation does not require Docker. The database is
+required in both cases; Contitext is not a standalone in-memory or SQLite store.
+A native MCP client can launch `contitext mcp` directly without a REST process.
+
+## Docker Compose quick start
 
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone https://github.com/jessysw/contitext.git
+git clone --branch v0.6.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -45,6 +61,11 @@ The API listens on localhost. PostgreSQL has no published host port. Data persis
 in a Compose volume; `docker compose down` stops the service and preserves it.
 See [installation](https://github.com/jessysw/contitext/blob/main/docs/installation.md) for Python-package setup, administration,
 backup, and remote access.
+
+For a real project, use `python3 scripts/bootstrap.py --project research --name "Research"`
+and skip the synthetic demo. The [self-hosting workflow](https://github.com/jessysw/contitext/blob/main/docs/self-hosting.md)
+covers project creation, access management, client setup, and backup recovery.
+These commands are included in both the PyPI package and the Compose release.
 
 ## Connect an MCP client
 
@@ -93,6 +114,9 @@ Terminal commands use the `contitext` executable:
 ```sh
 contitext --help
 contitext --version
+contitext init --project research --name "Research"
+contitext project list
+contitext doctor
 contitext migrate
 contitext admin seed
 contitext serve --host 127.0.0.1 --port 18791
@@ -118,6 +142,9 @@ CLI options, compatibility entry points, and conversation scope behavior.
 
 ## What it includes
 
+- Private initialization, project and permission administration, diagnostics, and
+  portable native/Docker/SSH MCP client configuration.
+- Atomic validation that every write matches the caller's conversation binding.
 - A durable, append-only event store with caller identity and source provenance.
 - Reader, writer, and owner project ACLs shared by REST and MCP.
 - Idempotent retries; conflicting reuse of an event key is rejected.

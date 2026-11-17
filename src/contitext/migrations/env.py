@@ -15,6 +15,7 @@ if config.config_file_name is not None:
 database_url = os.environ.get("CONTITEXT_TEST_DATABASE_URL") or os.environ.get("DATABASE_URL")
 if not database_url:
     raise RuntimeError("DATABASE_URL or CONTITEXT_TEST_DATABASE_URL is required")
+database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 target_metadata = Base.metadata
 
