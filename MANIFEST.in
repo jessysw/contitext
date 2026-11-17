@@ -2,7 +2,7 @@ include README.md pyproject.toml alembic.ini compose.yaml Dockerfile .env.exampl
 include CONTRIBUTING.md SECURITY.md LICENSE NOTICE
 include server.json
 recursive-include src *.py
-recursive-include tests *.py
+recursive-include tests *.py *.txt
 recursive-include scripts *.py
 recursive-include docs *.md
 recursive-include integrations *.md

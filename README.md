@@ -12,12 +12,12 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.5.3 is an early public release.** The core service is usable independently.
+**v0.5.4 is an early public release.** The core service is usable independently.
 Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
 
 ## Quick start
 
-Requires Docker with Compose, Python 3.11 or 3.12, and Git.
+Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
 git clone https://github.com/jessysw/contitext.git

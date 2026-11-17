@@ -4,8 +4,12 @@ Contitext's official MCP Registry name is `io.github.jessysw/contitext`. Its
 `server.json` describes a versioned PyPI package running over stdio:
 
 ```sh
-uvx --python 3.12 contitext==0.5.3 mcp
+uvx --python 3.12 contitext==0.5.4 mcp
 ```
+
+The package supports standard CPython 3.11–3.14. The Registry launcher pins
+Python 3.12 for a reproducible default; native installations can use any supported
+version.
 
 The Registry is a directory of server metadata. It does not host Contitext or
 provide a database, account, or credentials. Each deployment retains its own
@@ -50,7 +54,7 @@ command is:
   "mcpServers": {
     "contitext": {
       "command": "uvx",
-      "args": ["--python", "3.12", "contitext==0.5.3", "mcp"]
+      "args": ["--python", "3.12", "contitext==0.5.4", "mcp"]
     }
   }
 }

@@ -3,7 +3,7 @@
   "name": "io.github.jessysw/contitext",
   "title": "Contitext",
   "description": "Self-hosted project continuity for AI agents: state, decisions, checkpoints, and handoffs.",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "repository": {
     "url": "https://github.com/jessysw/contitext",
     "source": "github"
@@ -14,7 +14,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "contitext",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "runtimeHint": "uvx",
       "runtimeArguments": [
         {"type": "named", "name": "--python", "value": "3.12"}

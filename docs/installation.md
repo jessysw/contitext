@@ -2,13 +2,14 @@
 
 ## Python package
 
-Python 3.11–3.12 and PostgreSQL 16+ are required. For a published release, install
-the package from PyPI:
+Standard CPython 3.11–3.14 and PostgreSQL 16+ are supported.
+Free-threaded Python builds are not included in the tested support matrix.
+For a published release, install the package from PyPI:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.5.3
+python -m pip install contitext==0.5.4
 ```
 
 For a source checkout, use `python -m pip install .` instead.
