@@ -1,10 +1,9 @@
 # Self-hosting and replacing an existing deployment
 
-This guide targets a trusted personal or small-team deployment. The commands in
-this development branch extend the published 0.5.4 release. Until a new release
-is published, install the checkout with `python -m pip install .` or build its
-Compose image. PostgreSQL 16+ is required; no private repository, cloud account,
-LLM API key, or hosted control plane is needed.
+This guide covers Contitext 0.6.0 for trusted personal or small-team deployments.
+Choose the [Python package or Docker Compose installation](installation.md); both
+provide the commands below. PostgreSQL 16+ is required. No private repository,
+cloud account, LLM API key, or hosted control plane is needed.
 
 ## Start with your own project
 
@@ -32,8 +31,13 @@ contitext init --project research --name "Research" --output /absolute/private.e
 contitext --env-file /absolute/private.env migrate
 contitext --env-file /absolute/private.env admin seed --if-empty
 contitext --env-file /absolute/private.env doctor
-contitext --env-file /absolute/private.env serve --port 18791
+contitext --env-file /absolute/private.env client-config --config-file /absolute/private.env --executable /absolute/venv/bin/contitext
 ```
+
+For MCP-only use, let the agent launch the generated stdio command. Run
+`contitext --env-file /absolute/private.env serve --port 18791` separately only
+when you also need REST. Use your normal process supervisor for an always-on REST
+deployment; package installation does not register a system service.
 
 `init` uses the existing `DATABASE_URL` if supplied. Without it, it creates the
 configuration for the Compose `postgres` service, not a host PostgreSQL instance.
@@ -141,6 +145,21 @@ docker compose exec -T postgres sh -c \
 docker compose exec -T postgres sh -c \
   'exec pg_restore -U "$POSTGRES_USER" -d contitext_restore_check --no-owner --no-acl --exit-on-error' \
   < backups/rehearsal.dump
+```
+
+For a native installation, use PostgreSQL's `pg_dump`, `createdb`, and `pg_restore`
+utilities. Configure their standard `PGHOST`, `PGPORT`, `PGUSER`, and `PGDATABASE`
+settings for the source database, with credentials in a protected `PGPASSFILE` or
+your secret manager. These utilities do not read Contitext's dotenv file and do
+not accept SQLAlchemy's `postgresql+psycopg://` scheme. Then:
+
+```sh
+mkdir -p backups
+chmod 700 backups
+(umask 077; set -C; pg_dump -Fc > backups/rehearsal.dump)
+createdb contitext_restore_check && \
+pg_restore -d contitext_restore_check --no-owner --no-acl --exit-on-error \
+  backups/rehearsal.dump
 ```
 
 Point a separate candidate service at that restored database using a separate

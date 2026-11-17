@@ -89,7 +89,7 @@ def create_app(
 
     app = FastAPI(
         title="Contitext",
-        version="0.5.4",
+        version="0.6.0",
         docs_url=None,
         redoc_url=None,
     )

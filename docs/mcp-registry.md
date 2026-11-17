@@ -4,7 +4,7 @@ Contitext's official MCP Registry name is `io.github.jessysw/contitext`. Its
 `server.json` describes a versioned PyPI package running over stdio:
 
 ```sh
-uvx --python 3.12 contitext==0.5.4 mcp
+uvx --python 3.12 contitext==0.6.0 mcp
 ```
 
 The package supports standard CPython 3.11–3.14. The Registry launcher pins
@@ -18,10 +18,12 @@ MCP endpoint.
 
 ## Prepare your deployment
 
-Use the [installation guide](installation.md) to configure PostgreSQL 16+, apply
-`contitext migrate`, and run `contitext admin seed` with your projects, principals,
-and project ACLs. These are administrator operations performed before starting
-the MCP client. The launcher does not create a database or seed a default project.
+Choose either path in the [installation guide](installation.md). For native use,
+`contitext init --project YOUR_PROJECT` generates private configuration and an
+initial owner grant; apply `contitext migrate` and `contitext admin seed --if-empty`
+with that configuration. These are administrator operations performed before
+starting the MCP client. The Registry launcher itself does not create a database
+or seed a default project.
 
 If you already use the Docker Compose quick start, use the Docker command in the
 [README](../README.md) to share that deployment. Its PostgreSQL service is private
@@ -54,7 +56,7 @@ command is:
   "mcpServers": {
     "contitext": {
       "command": "uvx",
-      "args": ["--python", "3.12", "contitext==0.5.4", "mcp"]
+      "args": ["--python", "3.12", "contitext==0.6.0", "mcp"]
     }
   }
 }
@@ -64,6 +66,11 @@ Supply the three environment variables through your client's configuration or
 environment inheritance mechanism. Formats differ between clients. An empty
 environment will not work, and registration does not automatically install or
 configure the server in every client.
+
+If a manual client can access a native installation's protected configuration file,
+its command may instead be `uvx --python 3.12 contitext==0.6.0 --env-file
+/absolute/private.env mcp`. This explicitly loads the same three variables; it
+does not change the Registry manifest's required inputs.
 
 Load the [agent protocol](../integrations/PROJECT-CONTEXT-PROTOCOL.md) into your
 client's instruction mechanism, then restart its MCP session. In agent chat, use

@@ -6,7 +6,9 @@ PostgreSQL event storage, REST, six stdio MCP tools, explicit scope selection,
 project ACLs, idempotency, lexical search, and optional Markdown projection.
 Quick start, synthetic two-agent demo, portable package, and isolated tests.
 
-The current development branch adds project/principal/access administration,
+## v0.6: self-hosting and migration readiness
+
+Released project/principal/access administration,
 private configuration initialization, read-only diagnostics, portable MCP client
 configuration, and atomic event-to-binding consistency. See the
 [self-hosting guide](self-hosting.md) for a complete operator workflow.
