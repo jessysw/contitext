@@ -2,14 +2,16 @@
 
 ## Python package
 
-Python 3.11–3.12 and PostgreSQL 16+ are required. Install from a source checkout
-until the PyPI release is available:
+Python 3.11–3.12 and PostgreSQL 16+ are required. For a published release, install
+the package from PyPI:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install .
+python -m pip install contitext==0.5.1
 ```
+
+For a source checkout, use `python -m pip install .` instead.
 
 Provide `DATABASE_URL` using the SQLAlchemy `postgresql+psycopg://` scheme and
 `CONTITEXT_AUTH_TOKENS` using the JSON shape in `.env.example`. Supply
@@ -18,18 +20,21 @@ The generic identifiers in `.env.example` are examples, not production credentia
 
 ```sh
 contitext migrate
-contitext-admin seed
-contitext-api --host 127.0.0.1 --port 18791
+contitext admin seed
+contitext serve --host 127.0.0.1 --port 18791
 ```
 
 Migrations are included in the installed package, so these commands work outside
-the source checkout. `contitext-admin seed` upserts the entries supplied and does
+the source checkout. `contitext admin seed` upserts the entries supplied and does
 not revoke entries omitted from the seed. It requires database-owner privileges;
 keep administration separate from untrusted clients.
 
 For native stdio MCP, provide the same database/token-store configuration plus
-`CONTITEXT_MCP_TOKEN`, then run `contitext-mcp`. Client-side instructions are in
+`CONTITEXT_MCP_TOKEN`, then run `contitext mcp`. Client-side instructions are in
 `integrations/PROJECT-CONTEXT-PROTOCOL.md`.
+
+See the [command reference](commands.md) for supported terminal commands and
+agent chat instructions.
 
 ## Remote use
 

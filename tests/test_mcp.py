@@ -91,7 +91,10 @@ def test_mcp_http_semantics_and_acl_are_identical(migrated_database_url: str) ->
         engine.dispose()
 
 
-def test_real_stdio_initialize_list_and_calls(migrated_database_url: str) -> None:
+@pytest.mark.parametrize("server_args", [
+    ["-m", "contitext.cli", "mcp"], ["-m", "contitext.mcp_server"],
+])
+def test_real_stdio_initialize_list_and_calls(migrated_database_url: str, server_args: list[str]) -> None:
     engine, principal, _, _ = setup(migrated_database_url)
     engine.dispose()
     auth_json = json.dumps({"stdio-token": {"principal_id": str(principal.principal_id), "name": principal.name}})
@@ -105,7 +108,7 @@ def test_real_stdio_initialize_list_and_calls(migrated_database_url: str) -> Non
     async def smoke():
         params = StdioServerParameters(
             command=sys.executable,
-            args=["-m", "contitext.mcp_server"],
+            args=server_args,
             env=env,
         )
         async with stdio_client(params) as (read, write):
@@ -139,7 +142,10 @@ def test_real_stdio_initialize_list_and_calls(migrated_database_url: str) -> Non
     asyncio.run(smoke())
 
 
-def test_deployable_mcp_smoke_module_uses_official_stdio_client(migrated_database_url: str) -> None:
+@pytest.mark.parametrize("smoke_args", [
+    ["-m", "contitext.cli", "mcp-smoke"], ["-m", "contitext.mcp_smoke"],
+])
+def test_deployable_mcp_smoke_module_uses_official_stdio_client(migrated_database_url: str, smoke_args: list[str]) -> None:
     engine, principal, _, _ = setup(migrated_database_url)
     engine.dispose()
     token = "module-smoke-token"
@@ -153,7 +159,7 @@ def test_deployable_mcp_smoke_module_uses_official_stdio_client(migrated_databas
         "CONTITEXT_SMOKE_PROJECT_ID": "alpha",
     })
     completed = subprocess.run(
-        [sys.executable, "-m", "contitext.mcp_smoke"],
+        [sys.executable, *smoke_args],
         env=env,
         text=True,
         capture_output=True,

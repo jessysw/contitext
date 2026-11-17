@@ -22,7 +22,7 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:${CONTITEXT_PORT:-18791}:8000"
-    command: ["sh", "-ec", "contitext migrate && contitext-admin seed && exec contitext-api --host 0.0.0.0"]
+    command: ["sh", "-ec", "contitext migrate && contitext admin seed && exec contitext serve --host 0.0.0.0"]
     init: true
     read_only: true
     tmpfs: [/tmp]

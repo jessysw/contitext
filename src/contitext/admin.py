@@ -11,7 +11,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.dialects.postgresql import insert
 
-from contitext.config import Settings
+from contitext.config import ConfigurationError, Settings
 from contitext.db import create_database_engine, create_session_factory
 from contitext.models import Principal, Project, ProjectACL
 
@@ -105,8 +105,8 @@ def _load_seed() -> SeedDocument:
     return SeedDocument.model_validate_json(raw)
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="contitext-admin")
+def main(argv: list[str] | None = None, *, prog: str = "contitext-admin") -> None:
+    parser = argparse.ArgumentParser(prog=prog)
     parser.add_argument("command", choices=["seed"])
     args = parser.parse_args(argv)
     try:
@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> None:
             settings = Settings.from_env()
             counts = seed_database(settings.database_url, _load_seed())
             print(json.dumps({"status": "ok", **counts}, sort_keys=True))
-    except (ValueError, ValidationError) as exc:
+    except (ConfigurationError, ValueError, ValidationError) as exc:
         parser.error(str(exc))
 
 

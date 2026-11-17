@@ -10,7 +10,7 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.5.0 is an early public release.** The core service is usable independently.
+**v0.5.1 is an early public release.** The core service is usable independently.
 Companion integrations and broader memory features are on the [roadmap](docs/roadmap.md).
 
 ## Quick start
@@ -54,7 +54,7 @@ the directory with your own absolute checkout path:
   "mcpServers": {
     "contitext": {
       "command": "docker",
-      "args": ["compose", "--project-directory", "/absolute/path/to/contitext", "exec", "-T", "app", "contitext-mcp"]
+      "args": ["compose", "--project-directory", "/absolute/path/to/contitext", "exec", "-T", "app", "contitext", "mcp"]
     }
   }
 }
@@ -79,6 +79,36 @@ No project is inferred from the working directory or repository name. Each calle
 uses a stable conversation scope and explicitly selects a project. Project ACLs
 are enforced on the server. [API contracts and limits](docs/api.md) describe what
 the server enforces and what the agent protocol requires.
+
+## Commands
+
+Terminal commands use the `contitext` executable:
+
+```sh
+contitext --help
+contitext --version
+contitext migrate
+contitext admin seed
+contitext serve --host 127.0.0.1 --port 18791
+contitext mcp
+```
+
+After installing the agent protocol in your MCP client, use these **chat
+instructions** in a conversation with the agent:
+
+```text
+!! contitext use demo
+!! contitext status
+!! contitext search publishing
+!! contitext checkpoint Documented the publishing workflow.
+```
+
+`!! contitext` is the canonical chat prefix. `!! ctx` is a shortcut, and
+`!! context` remains a legacy alias. These are agent instructions, not terminal
+subcommands. The terminal CLI currently runs and administers the service; it does
+not implement chat actions such as `use`, `status`, or `search`, and it does not
+set a global default project. See the [command reference](docs/commands.md) for
+CLI options, compatibility entry points, and conversation scope behavior.
 
 ## What it includes
 

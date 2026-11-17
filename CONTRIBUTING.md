@@ -1,5 +1,9 @@
 # Contributing
 
+Use English for commit messages, issues, pull requests, reviews, release notes,
+documentation, code comments, and user-facing CLI messages. Use ASCII `!!` in
+documented chat commands; full-width punctuation is a compatibility input only.
+
 Use synthetic projects and identities in tests and documentation. Keep private
 configuration, credentials, hostnames, conversation history, and project state out
 of commits. Add regression tests for behavior changes and document API changes.
