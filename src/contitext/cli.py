@@ -35,6 +35,10 @@ def main(argv: list[str] | None = None) -> None:
     add_arguments(commands.add_parser("init", help="Create private configuration and an initial project seed."))
     from contitext.admin import add_management_commands
     add_management_commands(commands)
+    reader = commands.add_parser("export", help="Export an authenticated Markdown reading copy without changing the database.")
+    reader.add_argument("--output", type=Path, required=True, help="Dedicated empty or managed reading folder; parent must exist.")
+    reader.add_argument("--project", action="append", help="Explicit project ID; repeat to select several. Default: all accessible projects.")
+    reader.add_argument("--watch", type=int, metavar="SECONDS", help="Refresh repeatedly; minimum 10 seconds. Otherwise export once.")
     commands.add_parser("doctor", help="Check configuration, database, MCP identity, and access without writing.")
     client = commands.add_parser("client-config", help="Print generic MCP client JSON without embedding secrets.")
     transport = client.add_mutually_exclusive_group(required=True)
@@ -57,6 +61,8 @@ def main(argv: list[str] | None = None) -> None:
     seed = admin_commands.add_parser("seed", help="Apply the configured seed document.")
     seed.add_argument("--if-empty", action="store_true")
     args = parser.parse_args(argv)
+    if args.command == "export" and args.watch is not None and args.watch < 10:
+        parser.error("--watch must be at least 10 seconds")
     if args.env_file:
         from dotenv import dotenv_values
         if not args.env_file.is_file():
@@ -66,6 +72,15 @@ def main(argv: list[str] | None = None) -> None:
         except (OSError, UnicodeError):
             parser.error("cannot read configuration file")
         os.environ.update({key: value for key, value in values.items() if value is not None})
+    if args.command == "export":
+        from contitext.reader import run
+        from contitext.auth import AuthenticationError
+        from contitext.config import ConfigurationError
+        from contitext.projector import ProjectionSafetyError
+        try:
+            raise SystemExit(run(args))
+        except (AuthenticationError, ConfigurationError, ValueError, OSError, ProjectionSafetyError):
+            parser.error("cannot start reader; check authentication, output ownership, permissions, and configuration")
     if args.command in {"init", "project", "principal", "access", "doctor", "client-config"}:
         from contitext.admin import manage
         from contitext.config import ConfigurationError

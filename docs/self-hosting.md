@@ -1,6 +1,6 @@
 # Self-hosting and replacing an existing deployment
 
-This guide covers Contitext 0.7.0 for trusted personal or small-team deployments.
+This guide covers Contitext 0.7.1 for trusted personal or small-team deployments.
 Choose the [Python package or Docker Compose installation](installation.md); both
 provide the commands below. PostgreSQL 16+ is required. No private repository,
 cloud account, LLM API key, or hosted control plane is needed.
@@ -201,3 +201,9 @@ not a substitute for stopping all writers. After acceptance, archive the private
 implementation and maintain only public Contitext code plus private deployment
 configuration/data. The deployment is not migrated merely because the package
 has been published.
+
+## Human reading and Obsidian
+
+Use the [Markdown reader guide](obsidian.md) to export current database state
+without an agent. Generated reading copies can be rebuilt from PostgreSQL and do
+not replace backups or curated Markdown. They are not imported on restore.

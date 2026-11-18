@@ -35,5 +35,29 @@ services:
       retries: 30
     restart: unless-stopped
 
+  reader:
+    profiles: [reader]
+    build: .
+    env_file: .env
+    user: "${CONTITEXT_READER_UID:-10001}:${CONTITEXT_READER_GID:-10001}"
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./reader-vault:/vault
+    command: ["contitext", "export", "--output", "/vault", "--watch", "60"]
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,datetime,pathlib; m=json.loads(pathlib.Path('/vault/.contitext-reader.json').read_text()); t=datetime.datetime.fromisoformat(m['last_success']); assert not m.get('pending') and (datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()<150"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 20s
+    restart: unless-stopped
+
 volumes:
   postgres-data:

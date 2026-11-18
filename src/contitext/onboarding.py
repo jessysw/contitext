@@ -42,6 +42,8 @@ def initialize(args) -> dict:
         "CONTITEXT_AUTH_TOKENS": literal_json({token: identity}),
         "CONTITEXT_SEED_JSON": literal_json(seed),
         "CONTITEXT_MCP_TOKEN": token, "CONTITEXT_SMOKE_PROJECT_ID": args.project,
+        "CONTITEXT_READER_UID": str(os.getuid()) if hasattr(os, "getuid") else "10001",
+        "CONTITEXT_READER_GID": str(os.getgid()) if hasattr(os, "getgid") else "10001",
     }
     # Values contain no literal single quotes or ambiguous escaped backslashes.
     lines = ["# Private credentials. Do not commit, share, or shell-source this file."]

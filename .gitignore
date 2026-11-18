@@ -14,5 +14,7 @@ htmlcov/
 .DS_Store
 runtime/
 backups/
+reader-vault/
 *.dump
 *.log
+client.json

@@ -10,7 +10,7 @@ of commits. Add regression tests for behavior changes and document API changes.
 
 ## Local tests
 
-Use standard CPython 3.11–3.14 and a **dedicated disposable** PostgreSQL 16 database.
+Use standard CPython 3.11–3.14 and a **dedicated disposable** PostgreSQL 16+ database.
 Tests drop and recreate its public schema. Never point tests at an application DB.
 
 ```sh
@@ -29,7 +29,8 @@ python -m twine check dist/*
 docker stop contitext-tests
 ```
 
-CI uses a fresh PostgreSQL service for each Python version. An additional Python
+CI uses a fresh PostgreSQL service for each Python version, with PostgreSQL 16
+and a separate PostgreSQL 18 job. An additional Python
 3.14 job tests the Psycopg, Pydantic, and SQLAlchemy compatibility floors:
 
 ```sh
