@@ -114,7 +114,7 @@ def test_readiness_fails_closed_without_database_and_openapi_is_exact(migrated_d
             "/v1/scopes/{scope_id}/binding", "/v1/projects/{project_id}/context",
             "/v1/projects/{project_id}/search", "/v1/projects/{project_id}/events",
             "/v1/projects/{project_id}/handoffs", "/v1/projects/{project_id}/projection",
-            "/health/live", "/health/ready",
+            "/health/live", "/health/ready", "/v1/projects",
         }
     finally:
         engine.dispose()

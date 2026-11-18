@@ -4,6 +4,27 @@ Contitext has two distinct interfaces: a terminal CLI and instructions that an
 agent follows in a conversation. Neither interface infers a project from the
 working directory, and the terminal CLI does not set a default chat project.
 
+## Everyday project workflow
+
+In an agent chat connected to your server:
+
+```text
+!! contitext list
+!! contitext create my-project --name "My Project"
+!! contitext use my-project
+```
+
+`list` returns projects the authenticated caller can access, including their IDs,
+display names, statuses, and roles. It works before any project is selected.
+`create` grants the authenticated, provisioned caller ownership of a new project
+atomically. No owner UUID is needed. An unavailable ID fails without revealing
+another project's metadata or overwriting anything. Neither command changes the
+conversation's binding; `use` is a separate explicit step.
+
+Project ID, display name, and repository are independent concepts. This release
+has no repository association field or command. A project may span multiple
+repositories or have none; working-directory changes never select a project.
+
 ## Terminal CLI
 
 Run `contitext --help` to list commands. Use `contitext <command> --help` for
@@ -15,7 +36,7 @@ command-specific options. Help and version output do not require a database.
 | `contitext init --project research --name "Research"` | Generate private `.env` and initial project seed; does not contact the database |
 | `contitext --env-file /absolute/private.env doctor` | Check configuration, schema, MCP identity, and grants without writing |
 | `contitext project list` / `show ID` | Inspect projects and access grants |
-| `contitext project create ID --name NAME --owner UUID` | Create a project and its owner grant atomically |
+| `contitext project create ID --name NAME [--owner UUID]` | Create a project; defaults to the authenticated MCP identity |
 | `contitext project update ID --name NAME --status STATUS` | Update metadata while preserving events and bindings |
 | `contitext principal create NAME` / `list` | Provision and inspect identities; credentials are configured separately |
 | `contitext access grant ID UUID --role writer` | Add or change a project grant |
@@ -27,7 +48,7 @@ command-specific options. Help and version output do not require a database.
 | `contitext serve` | Run the REST API; defaults to `127.0.0.1:8000` |
 | `contitext serve --host 127.0.0.1 --port 18791` | Run the REST API at a specific address |
 | `contitext mcp` | Run the stdio MCP server for an MCP client |
-| `contitext mcp-smoke` | Exercise all six MCP tools using synthetic records |
+| `contitext mcp-smoke` | Exercise all eight MCP tools using synthetic records |
 
 The migration, seed, project, principal, and access commands require trusted
 database access. They are operator commands, not MCP tools or tenant APIs.
@@ -39,8 +60,9 @@ the supplied document. Project status is descriptive metadata, not an access
 control: use `access revoke` to remove access. The API and
 MCP server use the existing authentication and project ACL configuration described
 in [installation](installation.md). The smoke command requires
-`CONTITEXT_SMOKE_PROJECT_ID` and `CONTITEXT_MCP_TOKEN`, and **writes synthetic
-events** to the selected project. Run it only against a designated test project.
+`CONTITEXT_SMOKE_PROJECT_ID` and `CONTITEXT_MCP_TOKEN`. It **writes synthetic
+events** to the selected project and **creates a synthetic project**. Run it only
+in a designated test deployment.
 
 The CLI currently covers service operation and administration. Chat actions such
 as `use`, `status`, `search`, and `handoff` are not terminal subcommands in this
@@ -58,6 +80,14 @@ Use the canonical `contitext` commands in new documentation and configuration.
 | `contitext-mcp` | `contitext mcp` |
 | `contitext-mcp-smoke` | `contitext mcp-smoke` |
 
+Without `--owner`, CLI creation resolves `CONTITEXT_MCP_TOKEN` against
+`CONTITEXT_AUTH_TOKENS` and requires that identity to exist in the database. It
+never chooses the first principal, a local OS user, or an arbitrary default.
+Trusted operators can still supply `--owner UUID` (obtained with
+`contitext principal list`) to create on another identity's behalf. MCP and REST
+creation do not expose that override. The operator CLI's `project list` lists all
+projects in the connected database; MCP/REST lists only the caller's grants.
+
 ## Agent chat instructions
 
 Configure the MCP server and install the
@@ -69,7 +99,9 @@ add a universal command parser to every chat application.
 The canonical prefix is `!! contitext`, using ASCII punctuation and one space:
 
 ```text
-!! contitext use demo
+!! contitext list
+!! contitext create my-project --name "My Project"
+!! contitext use my-project
 !! contitext current
 !! contitext status
 !! contitext search publishing
@@ -80,7 +112,7 @@ The canonical prefix is `!! contitext`, using ASCII punctuation and one space:
 
 `!! ctx` is the shortcut. `!! context` is a legacy alias. Both map to the same
 operations and enforce the same project-selection and handoff rules as the
-canonical prefix. Accepted subcommands are `use`, `current`, `get`, `status`,
+canonical prefix. Accepted subcommands are `list`, `create`, `use`, `current`, `get`, `status`,
 `search`, `record`, `checkpoint`, and `handoff`.
 
 `use` selects a project only for the current authenticated caller and conversation

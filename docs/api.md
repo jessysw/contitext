@@ -6,6 +6,8 @@ that identity. Health endpoints expose readiness only and do not require a token
 
 | Method | Path | Access |
 | --- | --- | --- |
+| GET | `/v1/projects?limit=100&cursor=...` | Authenticated caller; only accessible projects |
+| POST | `/v1/projects` | Provisioned caller; creates own project |
 | PUT / GET | `/v1/scopes/{scope_id}/binding` | Reader on the selected project |
 | GET | `/v1/projects/{project_id}/context` | Reader |
 | GET | `/v1/projects/{project_id}/search?q=...&limit=20&cursor=...` | Reader |
@@ -32,7 +34,29 @@ scope produces 409. Invalid input produces 422. Missing or invalid
 bearer credentials produce 401. An unavailable projector or maintenance fence
 produces 503.
 
-## Explicit boundaries in v0.5
+## Project discovery and creation
+
+`project_list(limit=100, cursor=None)` corresponds to `GET /v1/projects` and
+returns `projects` (project_id, display_name, status, role) and `next_cursor`.
+The maximum page size is 100. Follow the opaque cursor until null. Results are
+ordered by project ID; revocation is checked on each page. This is not a snapshot
+of a concurrently changing catalog and does not expose inaccessible projects.
+
+`project_create(project_id, display_name)` corresponds to `POST /v1/projects`
+with those two JSON fields. It creates an active project and an owner grant for
+the authenticated, provisioned principal in one transaction. No scope binding is
+required or changed. Requests cannot choose another owner. Each provisioned
+identity can create its own projects, including an identity with no existing ACL.
+This capability does not grant access to existing projects or operator commands.
+
+IDs use ASCII letters, digits, dots, underscores, and hyphens, beginning with an
+alphanumeric character (maximum 128 characters). Display names are nonblank and
+at most 256 characters. A duplicate ID returns 409 with the same generic message
+whether or not the existing project is visible. It is never an upsert; an
+identical retry also returns 409. Unknown/unprovisioned identities cannot create.
+Creation observes the maintenance writer fence; listing remains read-only.
+
+## Context boundaries
 
 - Every event and handoff write requires a persisted binding for the authenticated
   principal and scope that matches the requested project. Validation and insertion
@@ -56,5 +80,6 @@ produces 503.
   multi-tenant hosted product are outside this release.
 
 The [demo](../src/contitext/demo.py) is an executable REST example. The MCP smoke
-command checks all six tools against a real stdio server and writes synthetic
-records to the explicitly configured smoke project.
+command checks all eight tools against a real stdio server and writes synthetic
+records to the explicitly configured smoke project and creates one synthetic
+project. Run it only in a test deployment.

@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AccessRole(StrEnum):
@@ -113,6 +113,29 @@ class ProjectOverview(BaseModel):
     project_id: str
     display_name: str
     status: str
+
+
+class CreateProjectRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", revalidate_instances="always")
+
+    project_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    display_name: str = Field(min_length=1, max_length=256)
+
+    @field_validator("display_name")
+    @classmethod
+    def nonblank_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("display_name must not be blank")
+        return value
+
+
+class AccessibleProject(ProjectOverview):
+    role: AccessRole
+
+
+class ProjectListPage(BaseModel):
+    projects: list[AccessibleProject]
+    next_cursor: str | None
 
 
 class ProjectContext(BaseModel):

@@ -6,24 +6,24 @@
 
 Keep project state, decisions, checkpoints, and handoffs available across agents,
 sessions, and machines. Contitext is a small, self-hosted Python service backed by
-PostgreSQL, with REST and six MCP tools. No LLM API key or embedding service is required.
+PostgreSQL, with REST and eight MCP tools. No LLM API key or embedding service is required.
 
 An agent finishes a session by recording what changed and what comes next. Another
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.6.0 supports independent self-hosting.** Initialize your own projects, manage
+**v0.7.0 adds project discovery and creation directly in agent chats.** Initialize your own projects, manage
 access, connect agents, and preserve context across sessions.
 Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
 
 ## Installation options
 
-Both options run the same Contitext implementation and expose the same six MCP
+Both options run the same Contitext implementation and expose the same eight MCP
 tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.6.0` from PyPI; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.7.0` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the pinned release; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -36,7 +36,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.6.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.7.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -128,7 +128,9 @@ clients with backups and a shared protocol. After installation, use these **chat
 instructions** in a conversation with the agent:
 
 ```text
-!! contitext use demo
+!! contitext list
+!! contitext create my-project --name "My Project"
+!! contitext use my-project
 !! contitext status
 !! contitext search publishing
 !! contitext checkpoint Documented the publishing workflow.
@@ -145,7 +147,9 @@ CLI options, compatibility entry points, and conversation scope behavior.
 
 - Private initialization, project and permission administration, diagnostics, and
   portable native/Docker/SSH MCP client configuration.
-- Atomic validation that every write matches the caller's conversation binding.
+- Project discovery filtered by caller access, and atomic creation owned by the
+  authenticated caller without an owner UUID or implicit conversation switch.
+- Atomic validation that every event or handoff write matches the caller's conversation binding.
 - A durable, append-only event store with caller identity and source provenance.
 - Reader, writer, and owner project ACLs shared by REST and MCP.
 - Idempotent retries; conflicting reuse of an event key is rejected.

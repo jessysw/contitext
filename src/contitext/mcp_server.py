@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import Field
 
 from mcp.server.fastmcp import FastMCP
 
@@ -13,6 +15,9 @@ from contitext.db import create_database_engine, create_session_factory
 from contitext.repository import Repository
 from contitext.schemas import (
     BindProjectRequest,
+    AccessibleProject,
+    CreateProjectRequest,
+    ProjectListPage,
     ContextEventResult,
     ContextSearchPage,
     HandoffRequest,
@@ -104,6 +109,21 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
             current=current or [],
             blockers=blockers or [],
             idempotency_key=idempotency_key,
+        ))
+
+    @server.tool(name="project_list", structured_output=True)
+    def project_list(
+        limit: Annotated[int, Field(ge=1, le=100)] = 100,
+        cursor: str | None = None,
+    ) -> ProjectListPage:
+        """List projects accessible to the authenticated caller without selecting one."""
+        return service.list_projects(principal, limit=limit, cursor=cursor)
+
+    @server.tool(name="project_create", structured_output=True)
+    def project_create(project_id: str, display_name: str) -> AccessibleProject:
+        """Create a project owned by the authenticated caller; does not bind a conversation."""
+        return service.create_project(principal, CreateProjectRequest(
+            project_id=project_id, display_name=display_name,
         ))
 
     return server

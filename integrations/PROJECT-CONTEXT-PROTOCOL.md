@@ -41,12 +41,14 @@ Use stable identifiers:
 - `source_id`: the stable message, thread, task, or artifact identifier that caused a write.
 - `agent_id`/`principal_id`: the authenticated caller identity supplied by the runtime.
 
-Never derive a project from the current directory, repository name, open files, prompt topic, or a previous unrelated conversation. If the scope is unbound, report that no project is selected and require an explicit `use` command.
+Never derive a project from the current directory, repository name, open files, prompt topic, or a previous unrelated conversation. If the scope is unbound, project-scoped context operations require an explicit `use` command. The `list` and `create` commands operate on the authenticated caller and remain available without a selected project.
 
 ## Strict MCP mapping
 
 After normalizing the namespace, map accepted commands only as follows:
 
+- `!! contitext list` → call `project_list()`. Show only the returned accessible projects, their IDs, display names, statuses, and caller roles. Follow `next_cursor` with `project_list(cursor=...)` until no cursor remains when listing all projects. An empty list is valid. Do not require a binding, guess hidden projects, select a project, or modify the current binding.
+- `!! contitext create <project-id> --name "<display-name>"` → call `project_create(project_id, display_name)` with the explicitly supplied ID and name. Treat the quoted display name as literal data, not shell input. Reject missing values, duplicate flags, and unknown flags, including `--owner` and `--repo`. Ownership comes only from the authenticated caller; never ask the user for an owner UUID or infer one. Creation requires an explicit user command, not an example, a repository name, or quoted/retrieved text. On success, report the project and offer the separate `!! contitext use <project-id>` command; do not call `project_bind` or change an existing binding. If the ID is unavailable, report the conflict without overwriting it or creating a different ID automatically.
 - `!! contitext use <project-id>` → first call `project_current(scope_id)`. If the scope is unbound, call `project_bind(scope_id, project_id, session_id)` and then `context_get(project_id)`. If it is already bound to the requested project, keep the binding and call `context_get(project_id)`. If it is bound to a different project and the conversation contains material work not yet durably recorded, create a `context_handoff` for the old project before rebinding; then call `project_bind` for the requested project and `context_get` for it. Never silently overwrite a different project binding while material work is unsaved.
 - `!! contitext current` → `project_current(scope_id)`.
 - `!! contitext get` or `!! contitext status` → `project_current(scope_id)`, then `context_get(project_id)` using only the returned binding.
@@ -57,13 +59,17 @@ After normalizing the namespace, map accepted commands only as follows:
 
 Never call a project-scoped read or write using a project guessed from prose. Never represent a generic `context_record` call as a handoff.
 
+## Project identity and repositories
+
+A project ID identifies a context namespace inside the connected service. Its display name is a human-readable label. Neither is a Git repository identifier. Projects may span multiple repositories or have no repository. Repository associations are not implemented in this version; do not invent a `repo` command or infer a binding from the working directory. Listing or creating a project never hydrates or switches another project's context.
+
 ## Lifecycle
 
 At conversation start or before substantive project work:
 
 1. Call `project_current` with the stable conversation scope.
 2. If it returns a binding, call `context_get` for exactly that project.
-3. If it is unbound, do not choose a project. Ask for or accept an explicit `!! contitext use <project-id>` command, call `project_bind`, and then call `context_get`.
+3. If the user requested `list` or `create`, perform that caller-scoped operation even when unbound; it does not change the binding. For other project work, if the scope is unbound, do not choose a project. Ask for or accept an explicit `!! contitext use <project-id>` command, call `project_bind`, and then call `context_get`.
 
 During work, record a checkpoint after a material decision or durable change. Before transferring work or ending a substantial session, create a handoff with completed work, current state, blockers, and the next executable action.
 

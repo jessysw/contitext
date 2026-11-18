@@ -11,6 +11,9 @@ from typing import Any
 from contitext.repository import Repository
 from contitext.schemas import (
     BindProjectRequest,
+    AccessibleProject,
+    CreateProjectRequest,
+    ProjectListPage,
     ContextSearchPage,
     ContextEventResult,
     EventKind,
@@ -51,6 +54,18 @@ class ContextService:
 
     def ready(self) -> bool:
         return self._repository.ready()
+
+    def list_projects(
+        self, principal: PrincipalIdentity, *, limit: int = 100, cursor: str | None = None,
+    ) -> ProjectListPage:
+        return self._repository.list_projects(principal, limit=limit, cursor=cursor)
+
+    def create_project(
+        self, principal: PrincipalIdentity, request: CreateProjectRequest,
+    ) -> AccessibleProject:
+        self._require_writers_unfenced()
+        validated = CreateProjectRequest.model_validate(request, from_attributes=True)
+        return self._repository.create_project(principal, validated)
 
     def bind_project(
         self,

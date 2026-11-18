@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-11-17
+
+- Add `!! contitext list` and `!! contitext create ID --name "Name"`, backed by
+  `project_list` and `project_create` MCP tools and matching REST endpoints.
+- List only projects granted to the authenticated caller, with bounded pagination.
+- Create a project and its caller-owned ACL atomically without selecting a chat
+  project, exposing an owner override, or overwriting existing project IDs.
+- Default CLI project creation to the configured MCP identity; preserve explicit
+  owner UUIDs as a trusted operator override.
+- Respect writer fencing and preserve generic conflict errors for hidden IDs.
+- Preserve existing bindings, schema, and the original six MCP tool contracts.
+- Expand complete legacy tool allowlists while preserving custom restrictions.
+- Document repository independence and distinguish status metadata from archival.
+- Add PostgreSQL 18 CI coverage alongside the supported PostgreSQL 16 baseline.
+
 
 - Add a repeatable adapter installer for Codex, Claude Code, Zed, Hermes, and
   OpenClaw, with configuration backups, dry runs, and explicit legacy migration.

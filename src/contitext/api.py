@@ -14,10 +14,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from contitext.auth import AuthenticationError, PrincipalIdentity, ProjectNotFoundError, TokenStore
 from contitext.config import Settings
 from contitext.db import create_database_engine, create_session_factory
-from contitext.repository import BindingConflictError, BindingNotFoundError, IdempotencyConflictError, Repository
+from contitext.repository import BindingConflictError, BindingNotFoundError, IdempotencyConflictError, ProjectCreationConflictError, Repository
 from contitext.projector import Projector
 from contitext.schemas import (
     BindProjectRequest,
+    CreateProjectRequest,
     HandoffRequest,
     RecordEventKind,
     RecordContextRequest,
@@ -89,7 +90,7 @@ def create_app(
 
     app = FastAPI(
         title="Contitext",
-        version="0.6.0",
+        version="0.7.0",
         docs_url=None,
         redoc_url=None,
     )
@@ -131,6 +132,10 @@ def create_app(
     async def project_not_found(_: Request, __: ProjectNotFoundError):
         return _json_error(404, "project not found")
 
+    @app.exception_handler(AuthenticationError)
+    async def unprovisioned_identity(_: Request, __: AuthenticationError):
+        return _json_error(401, "authenticated principal is not provisioned")
+
     @app.exception_handler(BindingNotFoundError)
     async def binding_not_found(_: Request, __: BindingNotFoundError):
         return _json_error(404, "scope is not bound")
@@ -140,6 +145,7 @@ def create_app(
         return _json_error(422, str(exc))
 
     @app.exception_handler(BindingConflictError)
+    @app.exception_handler(ProjectCreationConflictError)
     @app.exception_handler(IdempotencyConflictError)
     async def idempotency_conflict(_: Request, exc: IdempotencyConflictError):
         return _json_error(409, str(exc))
@@ -151,6 +157,18 @@ def create_app(
     @app.exception_handler(WriterFencedError)
     async def writers_fenced(_: Request, exc: WriterFencedError):
         return _json_error(503, str(exc))
+
+    @app.get("/v1/projects")
+    def list_projects(
+        limit: int = Query(default=100, ge=1, le=100),
+        cursor: str | None = None,
+        identity: PrincipalIdentity = Depends(principal),
+    ):
+        return service.list_projects(identity, limit=limit, cursor=cursor)
+
+    @app.post("/v1/projects", status_code=201)
+    def create_project(body: CreateProjectRequest, identity: PrincipalIdentity = Depends(principal)):
+        return service.create_project(identity, body)
 
     @app.put("/v1/scopes/{scope_id}/binding")
     def bind(scope_id: str, body: BindBody, identity: PrincipalIdentity = Depends(principal)):

@@ -1,4 +1,4 @@
-"""Official-SDK stdio smoke check for the deployed MCP adapter."""
+"""Official-SDK smoke check that creates synthetic records and a project in a test deployment."""
 
 from __future__ import annotations
 
@@ -18,6 +18,8 @@ TOOLS = [
     "context_search",
     "context_record",
     "context_handoff",
+    "project_list",
+    "project_create",
 ]
 
 
@@ -53,6 +55,14 @@ async def run_smoke() -> None:
             names = [tool.name for tool in listed.tools]
             if names != TOOLS:
                 raise RuntimeError(f"unexpected MCP tool set: {names!r}")
+
+            # The smoke command is explicitly for synthetic data in a test deployment.
+            _structured(await session.call_tool("project_list", {}), "project_list")
+            created = _structured(await session.call_tool("project_create", {
+                "project_id": f"smoke-{run_id}", "display_name": "Synthetic smoke project",
+            }), "project_create")
+            if created.get("role") != "owner":
+                raise RuntimeError("project_create did not grant the caller ownership")
 
             bound = _structured(await session.call_tool("project_bind", {
                 "scope_id": scope_id,
