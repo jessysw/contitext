@@ -144,4 +144,3 @@ def insert_object_member(text, node, rendered):
     prefix = "" if not existing or has_trailing_comma(text, node) else ","
     insertion = prefix + "\n" + "\n".join(child_indent + line if line else line for line in rendered.splitlines()) + "\n" + base
     return text[:close] + insertion + text[close:]
-
