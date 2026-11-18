@@ -18,8 +18,9 @@ PostgreSQL → authenticated Markdown export → optional file transfer → loca
 - Event timestamps, agent attribution, and source identifiers.
 - The last successful database snapshot and the result of the latest refresh.
 
-Payloads are rendered as readable fields and lists. Stored links, HTML, and
-embeds are escaped instead of activated. A question is not automatically resolved
+Payloads are rendered as readable fields and lists. Explicit Markdown link and
+embed syntax and stored HTML are escaped. A reader such as Obsidian can still
+auto-link a plain URL; this does not load an embedded image or execute HTML. A question is not automatically resolved
 by a later event; decisions are not automatically superseded. Those are existing
 context lifecycle limits, not deductions made by the reader.
 

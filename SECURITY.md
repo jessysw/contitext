@@ -22,5 +22,6 @@ target the latest release. Do not assume older versions receive backports.
 
 Markdown reader exports contain authorized project content in local files. Protect
 that folder like a backup. ACL revocation prevents future database reads, but
-cannot recall copies already downloaded. Generated pages escape stored HTML,
-links, and embeds; Obsidian community plugins are not required.
+cannot recall copies already downloaded. Generated pages escape stored HTML and explicit
+Markdown link/embed syntax. Readers may still auto-link plain URLs. Obsidian
+community plugins are not required.
