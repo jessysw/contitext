@@ -48,6 +48,8 @@ command-specific options. Help and version output do not require a database.
 | `contitext serve` | Run the REST API; defaults to `127.0.0.1:8000` |
 | `contitext serve --host 127.0.0.1 --port 18791` | Run the REST API at a specific address |
 | `contitext mcp` | Run the stdio MCP server for an MCP client |
+| `contitext export --output /absolute/reader-vault` | Export all projects accessible to the configured identity as readable Markdown |
+| `contitext export --output /absolute/reader-vault --project research --watch 60` | Refresh a selected project every 60 seconds |
 | `contitext mcp-smoke` | Exercise all eight MCP tools using synthetic records |
 
 The migration, seed, project, principal, and access commands require trusted
@@ -78,7 +80,9 @@ Use the canonical `contitext` commands in new documentation and configuration.
 | `contitext-api` | `contitext serve` |
 | `contitext-admin seed` | `contitext admin seed` |
 | `contitext-mcp` | `contitext mcp` |
-| `contitext-mcp-smoke` | `contitext mcp-smoke` |
+| `contitext-mcp-smoke` | `contitext export --output /absolute/reader-vault` | Export all projects accessible to the configured identity as readable Markdown |
+| `contitext export --output /absolute/reader-vault --project research --watch 60` | Refresh a selected project every 60 seconds |
+| `contitext mcp-smoke` |
 
 Without `--owner`, CLI creation resolves `CONTITEXT_MCP_TOKEN` against
 `CONTITEXT_AUTH_TOKENS` and requires that identity to exist in the database. It
@@ -130,3 +134,17 @@ ASCII `!! contitext` remains the canonical spelling in documentation and help.
 Only the prefix and namespace are normalized; query and payload text are preserved.
 Mixed-width punctuation, unrelated namespaces, and unknown subcommands are not
 recognized as valid commands.
+
+## Human-readable exports
+
+`export` requires database configuration and `CONTITEXT_MCP_TOKEN`. It is an
+operator-launched CLI using the authenticated caller's project ACLs, not a new
+MCP tool or chat command. It never changes database records, projection offsets,
+or conversation bindings. Repeat `--project ID` to select several projects; omit
+it to discover all currently accessible projects on each refresh.
+
+The output parent directory must exist. Use a dedicated empty folder, not an
+existing notes vault or source checkout. The exporter refuses unrelated folders,
+symlinks, competing writers, and a reader folder owned by another identity.
+`--watch SECONDS` requires at least 10 seconds and runs until interrupted.
+See [Obsidian and the Markdown reader](obsidian.md) for complete setup.

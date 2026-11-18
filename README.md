@@ -12,9 +12,12 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**v0.7.0 adds project discovery and creation directly in agent chats.** Initialize your own projects, manage
-access, connect agents, and preserve context across sessions.
-Companion integrations and broader memory features are on the [roadmap](https://github.com/jessysw/contitext/blob/main/docs/roadmap.md).
+**New to Contitext? Follow [Getting started](https://github.com/jessysw/contitext/blob/main/docs/getting-started.md)**
+from installation to your first cross-session handoff.
+
+**v0.7.1 adds a human-readable Markdown reader**, including optional automatic
+refresh and Obsidian instructions. See [Read your context](https://github.com/jessysw/contitext/blob/main/docs/obsidian.md).
+Project listing and creation remain available directly in agent chats.
 
 ## Installation options
 
@@ -23,7 +26,7 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.7.0` from PyPI; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.7.1` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the pinned release; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -36,7 +39,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.7.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -89,12 +92,14 @@ the directory with your own absolute checkout path:
 
 Client configuration formats differ. The same command can be used by any stdio MCP
 client. Load [the agent protocol](https://github.com/jessysw/contitext/blob/main/integrations/PROJECT-CONTEXT-PROTOCOL.md) into the
-client's instruction mechanism and restart its MCP session. This release does not
-automatically modify your agent settings. The MCP server runs locally inside the
+client's instruction mechanism and restart its MCP session. Client settings are changed only when you explicitly run the
+[adapter installer](https://github.com/jessysw/contitext/blob/main/docs/agent-installation.md). The MCP server runs locally inside the
 existing app container and shares its database.
 
 | Tool | Purpose |
 | --- | --- |
+| `project_list` | List projects accessible to the authenticated caller |
+| `project_create` | Create a project owned by the caller without selecting it |
 | `project_bind` | Explicitly select a project for a caller's conversation scope |
 | `project_current` | Read that scope's current project |
 | `context_get` | Get a bounded project overview, checkpoint, questions, decisions, and handoff |
@@ -162,6 +167,28 @@ Use Contitext when you need explicit project continuity across tools and machine
 It does not automatically capture every conversation, consolidate memories, build
 a knowledge graph, or decide which facts are true. A project handoff is the latest
 handoff for the whole project, not a task scheduler or a conflict-resolution system.
+
+## Read your context without an agent
+
+Enable the optional Markdown reader to browse project state, decisions, notes,
+questions, and handoffs in Obsidian or any Markdown reader. No Obsidian plugin,
+subscription, or account is required for local viewing.
+
+After a fresh Docker setup:
+
+```sh
+mkdir -p reader-vault
+docker compose --profile reader up --build -d --wait
+```
+
+Open `reader-vault` as an Obsidian vault and start with `README.md`. The exporter
+refreshes every 60 seconds and shows the last successful snapshot and refresh
+status. Native installs use `contitext --env-file /absolute/private.env export
+--output /absolute/reader-vault --watch 60`.
+
+This is a generated, one-way reading copy. Edits are not imported. Keep personal
+notes elsewhere. See the [reader guide](https://github.com/jessysw/contitext/blob/main/docs/obsidian.md)
+for existing-install permissions, remote copies, and troubleshooting.
 
 ## Development
 

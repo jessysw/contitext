@@ -11,11 +11,11 @@ interpreter is elsewhere. No packages are installed by this script.
 
 ## Connect an agent
 
-Obtain the installer from the public repository. Use the v0.7.0 installer with
-the v0.7.0 server to enable project listing and creation:
+Obtain the installer from the public repository. Use the v0.7.1 installer with
+the v0.7.1 server. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.7.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -93,3 +93,7 @@ database, identities, bindings, credentials, and optional Markdown separately,
 as described in [installation and operation](installation.md). Keep a private
 rollback backup. Stop every old writer before the final database copy; never
 run independent writable copies of the same logical deployment.
+
+For a complete first installation, follow [Getting started](getting-started.md).
+The optional [Markdown reader](obsidian.md) is configured on the service host;
+installing an agent adapter does not enable or select a vault.

@@ -30,7 +30,7 @@ def cli(*args, cwd, env=None):
 
 
 @pytest.mark.parametrize("command", [
-    [], ["init"], ["doctor"], ["project"], ["principal"], ["access"], ["client-config"], ["migrate"], ["serve"], ["mcp"], ["mcp-smoke"], ["admin"], ["admin", "seed"],
+    [], ["init"], ["export"], ["doctor"], ["project"], ["principal"], ["access"], ["client-config"], ["migrate"], ["serve"], ["mcp"], ["mcp-smoke"], ["admin"], ["admin", "seed"],
 ])
 def test_help_requires_no_configuration(command, tmp_path, clean_environment):
     result = cli(*command, "--help", cwd=tmp_path)

@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, s
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
 
+from contitext import __version__
 from contitext.auth import AuthenticationError, PrincipalIdentity, ProjectNotFoundError, TokenStore
 from contitext.config import Settings
 from contitext.db import create_database_engine, create_session_factory
@@ -90,7 +91,7 @@ def create_app(
 
     app = FastAPI(
         title="Contitext",
-        version="0.7.0",
+        version=__version__,
         docs_url=None,
         redoc_url=None,
     )

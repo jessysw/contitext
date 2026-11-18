@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.1 — 2026-11-18
+
+- Add authenticated, read-only Markdown exports for Obsidian and other readers.
+- Show project state and complete event history with readable payloads and source metadata.
+- Support selected projects or automatic discovery, periodic refresh, refresh status,
+  safe output ownership, and removal of revoked projects on successful full refreshes.
+- Add an opt-in Compose reader with automatic restart and freshness health checks.
+- Add a complete getting-started tutorial and native, Docker, and remote reader guides.
+- Align current release examples, security guidance, and all eight MCP tool listings.
+- Preserve the database schema, existing curated Markdown, and all MCP contracts.
+
 ## 0.7.0 — 2026-11-17
 
 - Add `!! contitext list` and `!! contitext create ID --name "Name"`, backed by

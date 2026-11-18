@@ -19,6 +19,11 @@ List accessible projects and create a project owned by the authenticated caller
 through MCP, REST, and agent chat instructions. Simplified CLI creation resolves
 the configured identity automatically. Neither operation selects a chat project.
 
+## v0.7.1: human reading and onboarding
+
+Read-only Markdown exports, optional periodic refresh, Obsidian setup, and an
+end-to-end first-use tutorial. The database remains authoritative.
+
 ## Before v1.0
 
 - Add question resolution, decision supersession, and task-scoped handoff selection

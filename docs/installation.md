@@ -1,6 +1,6 @@
 # Installation and operation
 
-Contitext 0.7.0 supports two installation paths. Both use the same code, PostgreSQL
+Contitext 0.7.1 supports two installation paths. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
@@ -18,7 +18,7 @@ Install from PyPI in a virtual environment:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.7.0
+python -m pip install contitext==0.7.1
 ```
 
 Create a PostgreSQL 16+ database with your normal database administration tools.
@@ -68,7 +68,7 @@ Requires Docker with Compose, Git, and Python 3.11–3.14 for the dependency-fre
 bootstrap script. A separate host Python environment for Contitext is unnecessary.
 
 ```sh
-git clone --branch v0.7.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project research --name "Research"
 docker compose up --build -d --wait
@@ -129,7 +129,15 @@ PostgreSQL publicly. Docker and database access are trusted operator capabilitie
 not a tenant isolation boundary. Token changes require REST/MCP process restarts;
 ACL changes are checked on subsequent requests without restarting.
 
-## Optional Markdown projection
+## Human-readable Markdown reader
+
+Use [Getting started](getting-started.md) for the full first-use workflow and
+[Obsidian and the Markdown reader](obsidian.md) to enable readable exports.
+The new `export` command reads the database directly, so it includes events that
+were never projected to the older curated Markdown files. It does not change
+those files or their projection offsets.
+
+## Optional curated Markdown projection
 
 Set `CONTITEXT_PROJECTS_ROOT` on the REST process. For each project, create a
 directory containing `NOTES.md`, `DECISIONS.md`, `OPEN-QUESTIONS.md`, `STATUS.md`, and
@@ -164,3 +172,9 @@ project selection. Reload MCP and rerun the adapter installer to install the new
 protocol. Clients with the complete legacy six-tool allowlist are expanded to
 include the two new tools; custom restrictions remain unchanged. The database
 schema and existing six tool contracts are unchanged.
+
+In 0.7.1, enable the reader explicitly; existing services and the eight MCP tool
+contracts are unchanged. There is no schema migration. Existing `.env` files are
+preserved, so set the reader UID/GID as described in the reader guide when
+upgrading an older Compose deployment. The optional reader is a separate process
+with its own restart policy; it does not block context writes if export fails.
