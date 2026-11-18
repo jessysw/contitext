@@ -123,7 +123,8 @@ contitext serve --host 127.0.0.1 --port 18791
 contitext mcp
 ```
 
-After installing the agent protocol in your MCP client, use these **chat
+Use the [agent adapter installer](docs/agent-installation.md) to configure your
+clients with backups and a shared protocol. After installation, use these **chat
 instructions** in a conversation with the agent:
 
 ```text
