@@ -12,12 +12,17 @@ jobs:
       matrix:
         python: ['3.11', '3.12', '3.13', '3.14']
         dependencies: ['latest']
+        postgres: ['16']
         include:
           - python: '3.14'
             dependencies: 'compatibility-floor'
+            postgres: '16'
+          - python: '3.13'
+            dependencies: 'latest'
+            postgres: '18'
     services:
       postgres:
-        image: postgres:16
+        image: postgres:${{ matrix.postgres }}
         env:
           POSTGRES_USER: contitext
           POSTGRES_PASSWORD: ci-test-only

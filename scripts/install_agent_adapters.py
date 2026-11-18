@@ -49,6 +49,12 @@ def migrated_entry(servers, wrapper, legacy):
         raise InstallError('existing Contitext entry uses another launcher; preserve it or migrate explicitly')
     for key in ['command','args','env','env_vars','url','headers','bearer_token_env_var','cwd','type','transport']:
         previous.pop(key,None)
+    original_tools={'project_bind','project_current','context_get','context_search','context_record','context_handoff'}
+    tool_filter=previous.get('toolFilter')
+    if isinstance(tool_filter,dict) and isinstance(tool_filter.get('include'),list) and set(tool_filter['include'])==original_tools:
+        previous['toolFilter']={**tool_filter,'include':[*tool_filter['include'],'project_list','project_create']}
+    if isinstance(previous.get('enabled_tools'),list) and set(previous['enabled_tools'])==original_tools:
+        previous['enabled_tools']=[*previous['enabled_tools'],'project_list','project_create']
     previous.update(command=str(wrapper),args=[])
     return previous,matches[0] if matches else None
 

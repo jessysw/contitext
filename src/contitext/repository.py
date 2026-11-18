@@ -12,11 +12,14 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql import func
 
-from contitext.auth import PrincipalIdentity, ProjectNotFoundError, require_project_access
+from contitext.auth import AuthenticationError, PrincipalIdentity, ProjectNotFoundError, require_project_access
 from contitext.locking import acquire_project_transaction_lock
-from contitext.models import ContextEvent, ProjectACL, ScopeBinding
+from contitext.models import ContextEvent, Principal, Project, ProjectACL, ScopeBinding
 from contitext.schemas import (
     BindProjectRequest,
+    AccessibleProject,
+    CreateProjectRequest,
+    ProjectListPage,
     ContextSearchPage,
     ContextSearchResult,
     ContextEventResult,
@@ -40,6 +43,10 @@ class BindingConflictError(RuntimeError):
     """A write must target the caller's explicitly bound project."""
 
 
+class ProjectCreationConflictError(RuntimeError):
+    """A project ID is unavailable; never disclose an existing project's metadata."""
+
+
 class Repository:
     """Only exposes project-filtered, authorization-aware operations."""
 
@@ -55,6 +62,61 @@ class Repository:
                 return version == "0001_foundation"
         except Exception:
             return False
+
+    def list_projects(
+        self, principal: PrincipalIdentity, *, limit: int = 100, cursor: str | None = None,
+    ) -> ProjectListPage:
+        if not 1 <= limit <= 100:
+            raise ValueError("limit must be between 1 and 100")
+        after = None
+        if cursor is not None:
+            try:
+                after = json.loads(base64.b64decode(
+                    cursor + "=" * (-len(cursor) % 4), altchars=b"-_", validate=True,
+                ).decode("utf-8"))
+                if not isinstance(after, str) or not after:
+                    raise ValueError
+            except (ValueError, UnicodeError) as exc:
+                raise ValueError("invalid project cursor") from exc
+        with self._session_factory() as session:
+            statement = select(Project, ProjectACL.role).join(ProjectACL).where(
+                ProjectACL.principal_id == principal.principal_id,
+            ).order_by(Project.id.collate("C")).limit(limit + 1)
+            if after is not None:
+                statement = statement.where(Project.id.collate("C") > after)
+            rows = session.execute(statement).all()
+            projects = [AccessibleProject(
+                project_id=p.id, display_name=p.display_name, status=p.status, role=role,
+            ) for p, role in rows[:limit]]
+            next_cursor = None
+            if len(rows) > limit:
+                next_cursor = base64.urlsafe_b64encode(
+                    json.dumps(projects[-1].project_id).encode("utf-8")
+                ).decode("ascii").rstrip("=")
+            return ProjectListPage(projects=projects, next_cursor=next_cursor)
+
+    def create_project(
+        self, principal: PrincipalIdentity, request: CreateProjectRequest,
+    ) -> AccessibleProject:
+        with self._session_factory.begin() as session:
+            # Hold the identity against concurrent deletion until its owner grant commits.
+            identity = session.execute(select(Principal.id).where(
+                Principal.id == principal.principal_id,
+            ).with_for_update(read=True, key_share=True)).scalar_one_or_none()
+            if identity is None:
+                raise AuthenticationError("authenticated principal is not provisioned")
+            created = session.execute(insert(Project).values(
+                id=request.project_id, display_name=request.display_name, status="active",
+            ).on_conflict_do_nothing(index_elements=[Project.id]).returning(Project.id)).scalar_one_or_none()
+            if created is None:
+                raise ProjectCreationConflictError("project ID is unavailable")
+            session.add(ProjectACL(
+                project_id=request.project_id, principal_id=principal.principal_id, role="owner",
+            ))
+            return AccessibleProject(
+                project_id=request.project_id, display_name=request.display_name,
+                status="active", role="owner",
+            )
 
     def bind_project(
         self,

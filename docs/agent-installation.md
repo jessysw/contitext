@@ -11,11 +11,11 @@ interpreter is elsewhere. No packages are installed by this script.
 
 ## Connect an agent
 
-Obtain the installer from the public repository's `main` branch. The installer
-was added after v0.6.0 and works with that server release:
+Obtain the installer from the public repository. Use the v0.7.0 installer with
+the v0.7.0 server to enable project listing and creation:
 
 ```sh
-git clone https://github.com/jessysw/contitext.git
+git clone --branch v0.7.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -63,6 +63,8 @@ session may retain its previous server name or instructions. Use the client's
 MCP status command to check the connection, then start with:
 
 ```text
+!! contitext list
+!! contitext create your-project --name "Your Project"
 !! contitext use your-project
 !! contitext current
 ```

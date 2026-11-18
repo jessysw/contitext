@@ -23,7 +23,7 @@ from contitext.repository import Repository
 from contitext.service import ContextService
 
 
-TOOLS = ["project_bind", "project_current", "context_get", "context_search", "context_record", "context_handoff"]
+TOOLS = ["project_bind", "project_current", "context_get", "context_search", "context_record", "context_handoff", "project_list", "project_create"]
 
 
 def setup(database_url: str):
@@ -38,7 +38,7 @@ def setup(database_url: str):
     return engine, principal, denied, service
 
 
-def test_lists_exactly_six_tools_with_stable_schemas(migrated_database_url: str) -> None:
+def test_lists_eight_tools_with_stable_schemas(migrated_database_url: str) -> None:
     engine, principal, _, service = setup(migrated_database_url)
     try:
         tools = asyncio.run(create_mcp_server(service, principal).list_tools())
@@ -46,6 +46,8 @@ def test_lists_exactly_six_tools_with_stable_schemas(migrated_database_url: str)
         schemas = {tool.name: tool.inputSchema for tool in tools}
         assert set(schemas["project_bind"]["required"]) == {"scope_id", "project_id", "session_id"}
         assert "principal" not in json.dumps(schemas)
+        assert set(schemas["project_create"]["required"]) == {"project_id", "display_name"}
+        assert "owner" not in schemas["project_create"]["properties"]
         assert set(schemas["context_record"]["required"]) == {
             "project_id", "scope_id", "session_id", "agent_id", "source_kind",
             "source_id", "event_kind", "payload", "idempotency_key",
@@ -128,6 +130,12 @@ def test_real_stdio_initialize_list_and_calls(migrated_database_url: str, server
                 await session.initialize()
                 listed = await session.list_tools()
                 assert [tool.name for tool in listed.tools] == TOOLS
+                projects = await session.call_tool("project_list", {})
+                assert [p["project_id"] for p in projects.structuredContent["projects"]] == ["alpha"]
+                created = await session.call_tool("project_create", {"project_id": "new-project", "display_name": "New Project"})
+                assert not created.isError and created.structuredContent["role"] == "owner"
+                unbound = await session.call_tool("project_current", {"scope_id": "stdio"})
+                assert unbound.isError
                 bound = await session.call_tool("project_bind", {"scope_id": "stdio", "project_id": "alpha", "session_id": "stdio-session"})
                 assert not bound.isError and bound.structuredContent["project_id"] == "alpha"
                 current = await session.call_tool("project_current", {"scope_id": "stdio"})

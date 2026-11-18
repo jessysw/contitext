@@ -84,3 +84,13 @@ def test_credentials_rejected_without_echo(tmp_path, capsys):
         a.main(['--home',str(home),'--config',str(config),'--target','codex'])
     assert 'do-not-echo-this' not in capsys.readouterr().err
     assert not (home/'.local').exists()
+
+
+def test_complete_legacy_allowlist_expands_but_custom_restrictions_survive():
+    original=['project_bind','project_current','context_get','context_search','context_record','context_handoff']
+    wrapper=Path('/tmp/wrapper')
+    entry,_=a.migrated_entry({'contitext':{'command':str(wrapper),'toolFilter':{'include':original}}},wrapper,[])
+    assert entry['toolFilter']['include']==original+['project_list','project_create']
+    restricted={'command':str(wrapper),'toolFilter':{'include':['context_get']},'enabled_tools':['context_get']}
+    entry,_=a.migrated_entry({'contitext':restricted},wrapper,[])
+    assert entry['toolFilter']['include']==['context_get'] and entry['enabled_tools']==['context_get']

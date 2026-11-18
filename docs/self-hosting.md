@@ -1,6 +1,6 @@
 # Self-hosting and replacing an existing deployment
 
-This guide covers Contitext 0.6.0 for trusted personal or small-team deployments.
+This guide covers Contitext 0.7.0 for trusted personal or small-team deployments.
 Choose the [Python package or Docker Compose installation](installation.md); both
 provide the commands below. PostgreSQL 16+ is required. No private repository,
 cloud account, LLM API key, or hosted control plane is needed.
@@ -47,10 +47,12 @@ untrusted dotenv file: it configures database access and process behavior.
 
 ## Manage projects and access
 
-Use the UUID returned by initialization or `principal list` as `OWNER_UUID`:
+The normal creation command uses the authenticated MCP identity; no owner UUID
+is needed. List, create, and select projects directly from an agent chat as shown
+in the [command reference](commands.md#everyday-project-workflow). For operators:
 
 ```sh
-contitext project create client-work --name "Client work" --owner OWNER_UUID
+contitext project create client-work --name "Client work"
 contitext project list
 contitext project show client-work
 contitext project update client-work --status paused
@@ -68,8 +70,12 @@ owner grant are one transaction. Revoking access preserves events and bindings;
 subsequent API/MCP requests recheck the ACL. In-flight operations may finish.
 A status such as `paused` is metadata, not a permission switch.
 
-These are trusted database-operator commands, deliberately absent from the six
-MCP tools. A bearer `owner` role does not grant shell/database administration.
+Project discovery and self-owned creation are also exposed through MCP/REST.
+Principal administration, ACL management, and creating on another owner's behalf remain trusted database-operator capabilities. An authenticated,
+provisioned identity may create its own projects even before it has any grants;
+this grants no access to existing projects. A bearer `owner` role does not grant
+shell/database administration. For an explicit operator override, use
+`project create ID --name NAME --owner UUID`; obtain UUIDs with `principal list`.
 An operator can revoke the last owner and recover with `access grant`; history
 is not deleted. Omitting an entry from a seed does not revoke it.
 

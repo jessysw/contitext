@@ -49,8 +49,8 @@ def main(argv: list[str] | None = None) -> None:
     api.add_argument("--port", type=int, default=8000)
     commands.add_parser("mcp", help="Run the stdio MCP server.")
     commands.add_parser(
-        "mcp-smoke", help="Check all six MCP tools using synthetic records.",
-        description="Check MCP against CONTITEXT_SMOKE_PROJECT_ID; writes synthetic records.",
+        "mcp-smoke", help="Check all eight MCP tools using synthetic data.",
+        description="Check MCP in a test deployment; writes synthetic records and creates a project.",
     )
     admin = commands.add_parser("admin", help="Administer projects, principals, and access.")
     admin_commands = admin.add_subparsers(dest="admin_command", required=True)
@@ -69,6 +69,9 @@ def main(argv: list[str] | None = None) -> None:
     if args.command in {"init", "project", "principal", "access", "doctor", "client-config"}:
         from contitext.admin import manage
         from contitext.config import ConfigurationError
+        from contitext.auth import AuthenticationError
+        from contitext.repository import ProjectCreationConflictError
+        from contitext.service import WriterFencedError
         from contitext.diagnostics import doctor, client_config
         from contitext.onboarding import initialize
         from pydantic import ValidationError
@@ -86,7 +89,7 @@ def main(argv: list[str] | None = None) -> None:
             parser.error("configuration already exists; preserved without changes")
         except ValidationError:
             parser.error("invalid identifier or empty name; check command arguments")
-        except (ValueError, ConfigurationError) as exc:
+        except (ValueError, ConfigurationError, AuthenticationError, ProjectCreationConflictError, WriterFencedError) as exc:
             parser.error(str(exc))
         except SQLAlchemyError:
             parser.error("database operation failed; check connectivity, migrations, and identifiers")

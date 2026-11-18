@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, delete, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from contitext.auth import AuthenticationError
 from contitext.config import ConfigurationError, Settings
 from contitext.db import create_database_engine, create_session_factory
 from contitext.models import Principal, Project, ProjectACL
@@ -141,7 +142,7 @@ def add_management_commands(commands) -> None:
     create = actions.add_parser("create", help="Create a project and its first owner atomically.")
     create.add_argument("project_id")
     create.add_argument("--name", required=True)
-    create.add_argument("--owner", required=True, type=UUID, help="Existing principal UUID.")
+    create.add_argument("--owner", type=UUID, help="Optional operator override; defaults to the authenticated MCP identity.")
     update = actions.add_parser("update", help="Update project metadata without deleting history.")
     update.add_argument("project_id")
     update.add_argument("--name")
@@ -171,6 +172,19 @@ def manage(args) -> dict:
     settings = Settings.from_env(require_auth=False)
     engine = create_database_engine(settings.database_url)
     try:
+        if args.command == "project" and args.action == "create" and args.owner is None:
+            token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
+            if not token or settings.token_store is None:
+                raise AuthenticationError("configure CONTITEXT_MCP_TOKEN and CONTITEXT_AUTH_TOKENS, or supply --owner from principal list")
+            from contitext.repository import Repository
+            from contitext.schemas import CreateProjectRequest
+            from contitext.service import ContextService
+            identity = settings.token_store.resolve(token)
+            created = ContextService(Repository(create_session_factory(engine))).create_project(
+                identity, CreateProjectRequest(project_id=args.project_id, display_name=args.name),
+            )
+            return {"id": created.project_id, "display_name": created.display_name,
+                    "status": created.status, "owner": str(identity.principal_id)}
         with create_session_factory(engine).begin() as session:
             if args.command == "principal":
                 if args.action == "list":
