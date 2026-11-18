@@ -95,6 +95,13 @@ If you used `docker compose -p NAME`, add `--compose-project NAME` when generati
 client configuration. For the synthetic demo, use the default `demo` bootstrap
 and follow the [README quick start](../README.md).
 
+## Agent installation
+
+Use the [repeatable adapter installer](agent-installation.md) to configure Codex,
+Claude Code, Zed, Hermes, or OpenClaw and install their shared protocol. The same
+installer supports either server deployment path and remote SSH connections.
+It backs up client settings and does not migrate or duplicate the database.
+
 ## Projects, identities, and permissions
 
 Use `project create/list/show/update`, `principal create/list`, and

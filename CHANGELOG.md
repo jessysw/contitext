@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add a repeatable adapter installer for Codex, Claude Code, Zed, Hermes, and
+  OpenClaw, with configuration backups, dry runs, and explicit legacy migration.
+- Document shared-server client setup without installing another database.
+
 ## 0.6.0 — 2026-11-17
 
 ### Self-hosting
