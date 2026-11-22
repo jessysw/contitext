@@ -18,7 +18,7 @@ def export(args):
     if args.output.exists() or args.output.is_symlink():
         raise ResolutionError('export destination must be new; review a new export before replacing an installed plugin')
     command = [sys.executable, '-I', '-m', 'contitext.hooks', '--client', args.client,
-               '--connection', str(args.connection), '--mappings', str(args.mappings), '--timeout', '2']
+               '--connection', str(args.connection), '--mappings', str(args.mappings), '--timeout', '3']
     checkpoints = getattr(args, 'checkpoints', False)
     state_dir = getattr(args, 'state_dir', None)
     if checkpoints:

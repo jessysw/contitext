@@ -148,7 +148,10 @@ async def flush(client, args, connection, binding):
 
 def status(directory):
     private_directory(directory)
+    from contitext.hook_diagnostics import last_run
+    diagnostic = last_run(directory)
     return {'pending':sum(1 for _ in directory.glob('*.pending.json')),
             'sessions':sum(1 for _ in directory.glob('*.state.json')),
             'limit':MAX_PENDING,
+            'last_run': diagnostic,
             'note':'Local counts only; pending items may be offline, revoked or pinned to an old binding. No content is printed.'}

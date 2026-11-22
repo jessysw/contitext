@@ -25,7 +25,8 @@ to opt in to candidate capture. Without it, no assistant text is forwarded.
 
 The export pins the current Python executable and private configuration paths.
 Review `bridge.json` and the small runtime adapter. The bridge reads no transcript,
-forwards no user prompt, and has a bounded worker. An existing export is never
+forwards no user prompt, and has a three-second worker inside a bounded runtime
+callback. Slow or unavailable connections return no context rather than stale data. An existing export is never
 overwritten. On upgrade, export to a new directory and review the new code before
 changing the runtime's reference. Do not delete the pinned Python environment.
 
@@ -112,3 +113,7 @@ Primary interfaces checked 2026-11-22:
 [Hermes memory providers](https://hermes-agent.nousresearch.com/docs/developer-guide/memory-provider-plugin),
 [OpenClaw plugin hooks](https://docs.openclaw.ai/plugins/hooks),
 [OpenCode server plugins](https://opencode.ai/docs/build/plugins/server).
+
+See [diagnostics and validation coverage](hook-diagnostics.md) for read-only
+connection checks, safe disabling and the distinction between bridge tests and
+authenticated host execution.

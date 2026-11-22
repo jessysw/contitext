@@ -1,6 +1,7 @@
 """Exported runtime modules, exact lineage and lifecycle contracts."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -96,7 +97,9 @@ def test_hermes_provider_never_captures_user_or_subagent_and_drops_old_cwd(tmp_p
 @pytest.mark.parametrize('client', ['openclaw','opencode'])
 def test_exported_javascript_lifecycle_and_isolation(tmp_path, client):
     node = shutil.which('node')
-    if not node: pytest.skip('Node.js required for native JavaScript adapter tests')
+    if not node:
+        if os.environ.get('CI'): pytest.fail('CI must install Node.js for native adapter tests')
+        pytest.skip('Node.js required for native JavaScript adapter tests')
     args = exported(tmp_path, client)
     recorder = tmp_path/'recorder.py'
     recorder.write_text('import json,sys\nfrom pathlib import Path\ne=json.load(sys.stdin)\n'

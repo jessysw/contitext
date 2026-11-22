@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add read-only hook diagnostics, content-free local outcomes, safe generated-hook
+  removal and explicit timeout budgets. Exercise all eight automation bridges
+  from installed wheel and Docker artifacts; distinguish runtime activation from
+  configuration and contract test coverage.
+
 - Export optional native adapters for Hermes memory-provider lifecycle, OpenClaw
   prompt/finalization hooks, and OpenCode 2 context/events. Preserve explicit
   scope bindings, keep compression lineage private, and require runtime-owned

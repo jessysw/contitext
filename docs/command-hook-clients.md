@@ -55,3 +55,7 @@ Primary contracts checked 2026-11-22:
 [Copilot hooks](https://docs.github.com/en/copilot/reference/hooks-reference),
 [Cursor hooks](https://cursor.com/docs/hooks),
 [Gemini hooks](https://geminicli.com/docs/hooks/reference/).
+
+See [diagnostics and validation coverage](hook-diagnostics.md) for read-only
+connection checks, safe disabling and the distinction between bridge tests and
+authenticated host execution.

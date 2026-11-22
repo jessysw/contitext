@@ -113,7 +113,9 @@ async def progress_event(args, event):
 
 
 def run_supervised(args, data):
+    from contitext.hook_diagnostics import record_run
     if len(data) > MAX_INPUT:
+        record_run(args, b'{}', 'invalid_input')
         return {}
     command = [sys.executable, '-I', '-m', 'contitext.hooks', '--worker', '--client', args.client,
                '--connection', str(args.connection), '--mappings', str(args.mappings),
@@ -122,15 +124,25 @@ def run_supervised(args, data):
         command.extend(['--task-id', args.task_id])
     if getattr(args, 'state_dir', None):
         command.extend(['--state-dir', str(args.state_dir)])
-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL, start_new_session=True)
+    try:
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        record_run(args, data, 'worker_error')
+        return {}
     try:
         output, _ = process.communicate(data, timeout=args.timeout)
         if process.returncode or len(output) > args.max_bytes * 2 + 4096:
+            record_run(args, data, 'worker_error')
             return {}
         result = json.loads(output)
+        record_run(args, data, 'context_loaded' if isinstance(result,dict) and result.get('hookSpecificOutput') else 'completed_without_context')
         return result if isinstance(result, dict) else {}
-    except (subprocess.TimeoutExpired, ValueError):
+    except subprocess.TimeoutExpired:
+        record_run(args, data, 'timeout')
+        return {}
+    except ValueError:
+        record_run(args, data, 'worker_error')
         return {}
     finally:
         # Only the dedicated worker's process group; never the agent's group.
@@ -142,6 +154,7 @@ def run_supervised(args, data):
 
 
 def main(argv=None):
+    args = None
     parser = argparse.ArgumentParser(description='Fail-open Contitext session hook.')
     parser.add_argument('--state-dir', type=Path, help='Opt in to private progress capture and replay.')
     parser.add_argument('--task-id', help='Explicit task identity; never inferred from a title or directory.')
@@ -170,16 +183,21 @@ def main(argv=None):
             if args.state_dir:
                 from contitext.outbox import stage
                 try: stage(args,event)
-                except Exception: pass  # Still attempt delivery of earlier durable work.
+                except Exception: args.capture_failed = True  # Still retry earlier durable work.
             result = run_supervised(args, data)
-        if event.get('hook_event_name') != 'PreCompact' or args.client not in ('codex','claude'):
+        if args.worker or event.get('hook_event_name') != 'PreCompact' or args.client not in ('codex','claude'):
             print(json.dumps(result if args.worker else output(args.client, result)))
     except (Exception, SystemExit):
         # Never echo paths, prompt text, server stderr, credentials or tracebacks.
         # An advisory hook cannot veto agent startup, even on malformed input.
+        if args is not None and not args.worker:
+            from contitext.hook_diagnostics import record_run
+            record_run(args, b'{}', 'invalid_input')
         print('{}')
+        if args is not None and args.worker:
+            return 1
     return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

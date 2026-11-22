@@ -40,8 +40,8 @@ private backup before changing an existing file. Identical installation is a
 no-op; a different Contitext hook is reported for explicit review, not duplicated.
 `--dry-run` does not write configuration or lock files.
 
-To disable, remove only the generated `SessionStart` group whose command invokes
-`contitext.hooks`, or disable it in the client. A backup is a recovery copy, not a
+Use [hook diagnostics and disable](hook-diagnostics.md) to inspect connectivity,
+observe content-free run outcomes, or remove only generated Contitext hooks. A backup is a recovery copy, not a
 reason to overwrite unrelated settings added since installation. Uninstalling the
 hook does not remove context or conversation bindings.
 
@@ -66,8 +66,9 @@ advertises it, and otherwise uses the bounded legacy bundle.
 The installer uses Python isolated mode so repository files and `PYTHONPATH`
 cannot replace the hook package. A separate worker has a three-second deadline. The supervisor terminates its
 local process group on timeout and exits successfully with no context on malformed
-input, ambiguous mapping, unavailable server or denied access. Generated runtime
-configuration also sets a five-second outer timeout. Startup may wait briefly for
+input, ambiguous mapping, unavailable server or denied access. Startup-only configuration sets a five-second outer timeout. Capture-enabled
+command hooks allow at least four seconds externally; Codex end/interrupt hooks
+retain a two-second worker and three-second outer limit. Startup may wait briefly for
 this bounded load; failure never asks the client to block or continue a turn.
 No stale disk cache is injected after failure. Use `contitext resolve` for explicit
 diagnostics, or `!! contitext use <project-id>` to select a project manually.
@@ -80,8 +81,9 @@ Native adapters currently cover Codex and Claude Code command hooks. They use
 fixtures and a real MCP service are tested; this is not a claim of automated GUI
 acceptance for every client version.
 
-Hermes, OpenClaw, Zed and other MCP clients retain the explicit chat/MCP workflow.
-Their native lifecycle APIs are not interchangeable with these command hooks.
+Hermes, OpenClaw and OpenCode 2 have optional [native plugin adapters](plugin-clients.md).
+Zed and other MCP clients retain the explicit chat/MCP workflow. Native lifecycle
+APIs are not interchangeable with these command hooks.
 Do not install a Codex hook file into another client and assume it will run.
 
 Primary runtime references:

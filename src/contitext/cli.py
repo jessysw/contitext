@@ -58,8 +58,20 @@ def main(argv: list[str] | None = None) -> None:
     hook_install.add_argument("--dry-run", action="store_true")
     hook_install.add_argument("--checkpoints", action="store_true", help="Opt in to candidate progress capture and durable retry.")
     hook_install.add_argument("--state-dir", type=Path)
+    hook_install.add_argument('--timeout', dest='worker_timeout', type=float, help='Explicit worker budget in seconds (0.1–10); runtime end deadlines still apply.')
     hook_status = hook_commands.add_parser("status")
     hook_status.add_argument("--state-dir", type=Path, required=True)
+    hook_disable = hook_commands.add_parser('disable', help='Remove only generated hooks for this client.')
+    hook_disable.add_argument('--client', choices=CLIENTS, required=True)
+    hook_disable.add_argument('--config', type=Path, required=True)
+    hook_disable.add_argument('--dry-run', action='store_true')
+    hook_doctor = hook_commands.add_parser('doctor', help='Read-only configuration and MCP connectivity checks.')
+    hook_doctor.add_argument('--client', choices=CLIENTS, required=True)
+    hook_doctor.add_argument('--config', type=Path, required=True)
+    hook_doctor.add_argument('--connection', type=Path, required=True)
+    hook_doctor.add_argument('--mappings', type=Path, required=True)
+    hook_doctor.add_argument('--state-dir', type=Path)
+    hook_doctor.add_argument('--timeout', type=float, default=3)
     for action in ("flush", "checkpoint"):
         operation = hook_commands.add_parser(action)
         operation.add_argument("--client", choices=CLIENTS + PLUGIN_CLIENTS, required=True)
@@ -149,6 +161,15 @@ def main(argv: list[str] | None = None) -> None:
         try:
             if args.hook_action == "install":
                 result = install(args)
+            elif args.hook_action == 'disable':
+                from contitext.hook_config import disable
+                result = disable(args)
+            elif args.hook_action == 'doctor':
+                import asyncio
+                from contitext.hook_diagnostics import doctor
+                if not 0.1 <= args.timeout <= 10:
+                    raise ResolutionError('timeout must be between 0.1 and 10 seconds')
+                result = asyncio.run(doctor(args))
             elif args.hook_action == "status":
                 from contitext.outbox import status
                 result = status(args.state_dir)
