@@ -298,5 +298,7 @@ def render_event(event: ContextEventResult) -> str:
         f"- source_kind: `{event.source_kind}`\n"
         f"- source_id: `{event.source_id}`\n\n"
         f"```json\n{payload}\n```\n"
+        + ("Context metadata: " + event.event_metadata.model_dump_json() + "\n" if event.event_metadata else "")
+        +
         f"<!-- contitext:event:{event.event_id}:end -->\n"
     )

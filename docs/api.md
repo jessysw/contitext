@@ -68,9 +68,10 @@ Creation observes the maintenance writer fence; listing remains read-only.
   agent protocol still requires a handoff before switching projects.
 - `context_get` returns the latest project checkpoint and handoff, the 20 latest
   decisions, and up to 20 question events whose own payload is not marked
-  `resolved: true`. Events are immutable. Appending a later resolution does not
-  close an earlier question automatically; question/decision lifecycle reduction
-  is planned. Search retains the full history.
+  `resolved: true`. In development, explicit `event_metadata` also reduces
+  question/decision lifecycle and separates candidates; see
+  [context assembly](context-assembly.md). Arbitrary later payload text never
+  closes a question. Search retains the full history.
 - Search is lexical, not semantic. Results rank matching JSON payload text using
   PostgreSQL's `simple` dictionary. Unicode is stored, but CJK segmentation and
   embeddings are outside this release.
@@ -104,3 +105,7 @@ it returns the existing authorized binding without changing its session or time.
 A revoked existing project is not replaced. Discovery clients must inspect the
 MCP tool schema before using this capability and may not fall back to a blind
 manual bind on older servers. No schema migration or new MCP tool is required.
+
+Optional `task_id` / `token_budget` on `context_get` and `event_metadata` on record/
+handoff are documented in [context assembly](context-assembly.md). They require
+the unreleased metadata migration; default MCP result objects are not wrapped.

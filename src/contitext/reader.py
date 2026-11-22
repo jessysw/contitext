@@ -62,6 +62,7 @@ def snapshot(engine, identity, project_ids: list[str] | None = None) -> list[dic
             ).order_by(ContextEvent.created_at, ContextEvent.event_id)):
                 events[e.project_id].append({
                     "id": str(e.event_id), "kind": e.event_kind, "payload": e.payload,
+                    "event_metadata": e.event_metadata,
                     "created_at": e.created_at.astimezone(timezone.utc).isoformat(),
                     "agent_id": e.agent_id, "source_kind": e.source_kind, "source_id": e.source_id,
                 })
@@ -88,6 +89,7 @@ def render_payload(payload: dict) -> str:
 
 def render_event(event: dict, heading: str) -> str:
     return (f"### {heading} — {literal(event['created_at'])}\n\n"
+            + ("**Context metadata:** " + literal(json.dumps(event["event_metadata"])) + "\n\n" if event.get("event_metadata") else "")
             + render_payload(event["payload"])
             + f"\nRecorded by {literal(event['agent_id'])}. Event: `{event['id']}`.\n\n"
             + f"Source: {literal(event['source_kind'])} / {literal(event['source_id'])}.\n\n")
@@ -112,9 +114,9 @@ def render(projects: list[dict], generated_at: str) -> dict[str, str]:
                  "## Latest recorded state", ""]
         events = project["events"]
         for kind, label in [("checkpoint", "Latest checkpoint"), ("handoff", "Latest handoff")]:
-            latest = next((e for e in reversed(events) if e["kind"] == kind), None)
+            latest = next((e for e in reversed(events) if e["kind"] == kind and not (e.get("event_metadata") or {}).get("candidate")), None)
             lines.append(render_event(latest, label) if latest else f"### {label}\n\nNone recorded.\n")
-        lines.extend(["## Event history", "", "Newest first. A later question or decision does not automatically resolve or supersede an earlier one.", ""])
+        lines.extend(["## Event history", "", "Newest first. History includes resolved questions and superseded decisions. Lifecycle changes require explicit metadata; candidate progress is not verified state.", ""])
         for kind, title in [("decision", "Decisions"), ("question", "Questions"), ("note", "Notes"), ("checkpoint", "Checkpoints"), ("handoff", "Handoffs")]:
             lines.extend([f"## {title}", ""])
             matching = [e for e in reversed(events) if e["kind"] == kind]

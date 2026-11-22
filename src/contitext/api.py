@@ -19,6 +19,7 @@ from contitext.db import create_database_engine, create_session_factory
 from contitext.repository import BindingConflictError, BindingNotFoundError, IdempotencyConflictError, ProjectCreationConflictError, Repository
 from contitext.projector import Projector
 from contitext.schemas import (
+    EventMetadata,
     BindProjectRequest,
     CreateProjectRequest,
     HandoffRequest,
@@ -48,6 +49,7 @@ class RecordBody(BaseModel):
     event_kind: RecordEventKind
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
+    event_metadata: EventMetadata | None = None
 
 
 class HandoffBody(BaseModel):
@@ -63,6 +65,7 @@ class HandoffBody(BaseModel):
     current: list[str] = Field(default_factory=list)
     blockers: list[str] = Field(default_factory=list)
     idempotency_key: str = Field(min_length=1)
+    event_metadata: EventMetadata | None = None
 
 
 def create_app(
@@ -185,8 +188,8 @@ def create_app(
         return service.current_project(identity, scope_id)
 
     @app.get("/v1/projects/{project_id:path}/context")
-    def context(project_id: str, identity: PrincipalIdentity = Depends(principal)):
-        return service.get_context(identity, project_id)
+    def context(project_id: str, task_id: str | None = None, token_budget: int | None = Query(default=None, ge=1024, le=32000), identity: PrincipalIdentity = Depends(principal)):
+        return service.get_context(identity, project_id, task_id=task_id, token_budget=token_budget)
 
     @app.get("/v1/projects/{project_id:path}/search")
     def search(

@@ -60,7 +60,7 @@ def test_upgrade_downgrade_reupgrade_and_schema(
         assert {column["name"] for column in inspector.get_columns("context_events")} == {
             "event_id", "project_id", "principal_id", "scope_id", "session_id",
             "agent_id", "source_kind", "source_id", "event_kind", "payload",
-            "idempotency_key", "created_at",
+            "idempotency_key", "created_at", "event_metadata",
         }
         assert {
             index["name"] for index in inspector.get_indexes("context_events")
@@ -164,3 +164,30 @@ def test_database_constraints_reject_invalid_values_and_duplicates(
                 connection.execute(insert_event, duplicate)
     finally:
         engine.dispose()
+
+
+def test_080_upgrade_preserves_data_and_refuses_lossy_downgrade(test_database_url, postgres_available, monkeypatch, tmp_path):
+    from contitext.upgrade import inspect_upgrade, compare_snapshot, write_snapshot
+    monkeypatch.setenv("CONTITEXT_TEST_DATABASE_URL", test_database_url)
+    reset_schema(test_database_url)
+    config = alembic_config()
+    command.upgrade(config, "0001_foundation")
+    from test_upgrade import seed_legacy
+    seed_legacy(test_database_url)
+    command.upgrade(config, "0003_workspaces")
+    snapshot = tmp_path / "before.json"
+    before = inspect_upgrade(test_database_url)
+    assert before["ok"]
+    write_snapshot(before, snapshot)
+    command.upgrade(config, "head")
+    after = inspect_upgrade(test_database_url)
+    compare_snapshot(after, snapshot)
+    assert after["ok"] and after["comparison"]["matches"]
+    engine = create_engine(test_database_url)
+    with engine.begin() as c:
+        c.execute(text("UPDATE context_events SET event_metadata = CAST(:meta AS jsonb)"), {"meta": '{"candidate":true}'})
+    with pytest.raises(RuntimeError, match="context metadata exists"):
+        command.downgrade(config, "0003_workspaces")
+    with engine.connect() as c:
+        assert c.scalar(text("SELECT version_num FROM alembic_version")) == "0004_context_metadata"
+    engine.dispose()

@@ -1,1 +1,1 @@
-HEAD_REVISION = "0003_workspaces"
+HEAD_REVISION = "0004_context_metadata"

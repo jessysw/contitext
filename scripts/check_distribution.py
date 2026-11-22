@@ -26,6 +26,7 @@ for name, path in archives.items():
             for source in (root / 'src/contitext').rglob('*.py'):
                 assert archive.read(source.relative_to(root / 'src').as_posix()) == source.read_bytes(), 'wheel source differs from checkout'
         assert any(x.endswith('contitext/migrations/versions/0003_workspaces.py') for x in names), 'missing migration'
+        assert any(x.endswith('contitext/migrations/versions/0004_context_metadata.py') for x in names), 'missing context metadata migration'
         assert any(x.endswith('contitext/upgrade.py') for x in names), 'missing upgrade command'
     else:
         with tarfile.open(path) as archive:

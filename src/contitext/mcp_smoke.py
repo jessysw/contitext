@@ -117,6 +117,7 @@ async def run_smoke() -> None:
                 "agent_id": "contitext-mcp-smoke",
                 "source_kind": "hermes",
                 "source_id": f"contitext-mcp-smoke-handoff:{run_id}",
+                "event_metadata": {"task_id": f"smoke-{run_id}"},
                 "summary": f"contitext mcp smoke handoff {run_id}",
                 "next_action": "complete deployed MCP smoke",
                 "completed": ["bind", "current", "get", "record", "search"],
@@ -132,6 +133,13 @@ async def run_smoke() -> None:
             }), "context_get")
             if hydrated.get("overview", {}).get("project_id") != canonical_reference:
                 raise RuntimeError("MCP context_get returned the wrong project")
+
+            assembled = _structured(await session.call_tool("context_get", {
+                "project_id": project_id, "task_id": f"smoke-{run_id}", "token_budget": 4000,
+            }), "context_get")
+            if (assembled.get("context", {}).get("handoff", {}).get("event_id") != handoff.get("event_id")
+                    or assembled.get("used_budget", 4001) > 4000):
+                raise RuntimeError("MCP task-aware context assembly failed")
 
             durable = _structured(await session.call_tool("context_search", {
                 "project_id": project_id,

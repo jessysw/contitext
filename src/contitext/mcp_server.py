@@ -23,6 +23,8 @@ from contitext.schemas import (
     HandoffRequest,
     ProjectBinding,
     ProjectContext,
+    EventMetadata,
+    AssembledContext,
     RecordEventKind,
     RecordContextRequest,
 )
@@ -47,8 +49,11 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
         return service.current_project(identity(), scope_id)
 
     @server.tool(name="context_get", structured_output=True)
-    def context_get(project_id: str) -> ProjectContext:
-        return service.get_context(identity(), project_id)
+    def context_get(project_id: str, task_id: str | None = None, token_budget: int | None = None) -> dict[str, Any]:
+        """Get legacy context, or request task-aware assembly with a conservative token budget."""
+        # Keep the original top-level object: an MCP union return annotation
+        # wraps it in {"result": ...}, which would break existing clients.
+        return service.get_context(identity(), project_id, task_id=task_id, token_budget=token_budget).model_dump(mode="json")
 
     @server.tool(name="context_search", structured_output=True)
     def context_search(
@@ -72,6 +77,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
         event_kind: RecordEventKind,
         payload: dict[str, Any],
         idempotency_key: str,
+        event_metadata: EventMetadata | None = None,
     ) -> ContextEventResult:
         return service.record_context(identity(), RecordContextRequest(
             project_id=project_id,
@@ -83,6 +89,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
             event_kind=event_kind,
             payload=payload,
             idempotency_key=idempotency_key,
+            event_metadata=event_metadata,
         ))
 
     @server.tool(name="context_handoff", structured_output=True)
@@ -99,6 +106,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
         completed: list[str] | None = None,
         current: list[str] | None = None,
         blockers: list[str] | None = None,
+        event_metadata: EventMetadata | None = None,
     ) -> ContextEventResult:
         return service.create_handoff(identity(), HandoffRequest(
             project_id=project_id,
@@ -113,6 +121,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
             current=current or [],
             blockers=blockers or [],
             idempotency_key=idempotency_key,
+            event_metadata=event_metadata,
         ))
 
     @server.tool(name="project_list", structured_output=True)

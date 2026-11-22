@@ -108,6 +108,9 @@ class ContextEvent(Base):
         UniqueConstraint("project_id", "idempotency_key", name="uq_context_events_project_idempotency"),
         Index("ix_context_events_project_created_event", "project_id", "created_at", "event_id"),
         Index("ix_context_events_project_kind_created", "project_id", "event_kind", "created_at"),
+        Index("ix_context_events_meta_task_id", "project_id", text("(event_metadata->>'task_id')")),
+        Index("ix_context_events_meta_supersedes", "project_id", text("(event_metadata->>'supersedes')")),
+        Index("ix_context_events_meta_resolves", "project_id", text("(event_metadata->>'resolves')")),
         Index("ix_context_events_project_source", "project_id", "source_kind", "source_id"),
         Index("ix_context_events_payload_search", text("to_tsvector('simple', lower(coalesce(payload::text, '')))"), postgresql_using="gin"),
     )
@@ -122,6 +125,7 @@ class ContextEvent(Base):
     source_id: Mapped[str] = mapped_column(Text, nullable=False)
     event_kind: Mapped[str] = mapped_column(Text, nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    event_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
