@@ -56,7 +56,7 @@ def test_onboarding_operator_commands_and_two_client_continuity(migrated_databas
     assert len(run("project", "list")["projects"]) == 2
     assert run("project", "update", "second", "--status", "paused")["status"] == "paused"
     member = run("principal", "create", "Reader")["id"]
-    run("workspace", "member", "grant", "legacy", member, "--operator")
+    run("workspace", "member", "grant", values["CONTITEXT_COMPATIBILITY_WORKSPACE"], member)
     run("access", "grant", "second", member, "--role", "reader")
     assert len(run("project", "show", "second")["access"]) == 2
 
@@ -88,7 +88,7 @@ def test_onboarding_operator_commands_and_two_client_continuity(migrated_databas
 
     # Revocation is effective on the next request, and bootstrap never restores it.
     engine = create_engine(migrated_database_url)
-    service = ContextService(Repository(create_session_factory(engine)))
+    service = ContextService(Repository(create_session_factory(engine), compatibility_workspace=values["CONTITEXT_COMPATIBILITY_WORKSPACE"]))
     tokens = TokenStore.from_json(json.dumps({"reader-test-only": {"principal_id": member, "name": "Reader"}}))
     http = TestClient(create_app(service=service, token_store=tokens))
     headers = {"Authorization": "Bearer reader-test-only"}

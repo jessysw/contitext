@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import select, delete, text
+from sqlalchemy import select, delete, text, exists
 from sqlalchemy.exc import SQLAlchemyError
 
 from contitext.auth import AuthenticationError
@@ -41,8 +41,23 @@ class SeedACL(BaseModel):
     role: Literal["reader", "writer", "owner"]
 
 
+class SeedWorkspace(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    slug: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    display_name: str = Field(min_length=1)
+
+
+class SeedMembership(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    workspace: str = Field(min_length=1)
+    principal_id: UUID
+    role: Literal["member", "owner"]
+
+
 class SeedDocument(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    workspaces: list[SeedWorkspace] = Field(default_factory=list)
+    memberships: list[SeedMembership] = Field(default_factory=list)
     projects: list[SeedProject] = Field(default_factory=list)
     principals: list[SeedPrincipal] = Field(default_factory=list)
     acls: list[SeedACL] = Field(default_factory=list)
@@ -60,6 +75,21 @@ def seed_database(database_url: str, document: SeedDocument, *, if_empty: bool =
     if any(item.principal_id not in principal_ids for item in document.acls):
         raise ValueError("every ACL principal must appear in seed principals")
 
+    resolver = ProjectResolver()
+    workspace_slugs = {item.slug for item in document.workspaces}
+    if len(workspace_slugs) != len(document.workspaces):
+        raise ValueError("seed contains duplicate workspace slugs")
+    memberships = {(item.workspace, item.principal_id) for item in document.memberships}
+    if len(memberships) != len(document.memberships):
+        raise ValueError("seed contains duplicate memberships")
+    if any(item.principal_id not in principal_ids for item in document.memberships):
+        raise ValueError("every membership principal must appear in seed principals")
+    if any(item.workspace not in workspace_slugs for item in document.memberships):
+        raise ValueError("every membership workspace must appear in seed workspaces")
+    normalized = [resolver.split(item.id) for item in document.projects]
+    if len(set(normalized)) != len(normalized):
+        raise ValueError("seed project references resolve to duplicate projects")
+
     engine = create_database_engine(database_url)
     factory = create_session_factory(engine)
     try:
@@ -70,10 +100,30 @@ def seed_database(database_url: str, document: SeedDocument, *, if_empty: bool =
                 session.execute(text("LOCK TABLE projects, principals IN SHARE ROW EXCLUSIVE MODE"))
                 if session.execute(select(Project.id).limit(1)).first() or session.execute(select(Principal.id).limit(1)).first():
                     return {"projects": 0, "principals": 0, "acls": 0}
-            resolver = ProjectResolver()
+            if if_empty and document.workspaces and "legacy" not in workspace_slugs:
+                # Only discard the empty migration placeholder during a guarded
+                # first bootstrap. Never remove a workspace containing data/grants.
+                session.execute(delete(Workspace).where(
+                    Workspace.id == UUID("00000000-0000-4000-8000-000000000001"), Workspace.slug == "legacy",
+                    ~exists(select(Project.id).where(Project.workspace_id == Workspace.id)),
+                    ~exists(select(WorkspaceMember.principal_id).where(WorkspaceMember.workspace_id == Workspace.id)),
+                ))
             for item in document.principals:
                 session.execute(insert(Principal).values(id=item.id, name=item.name).on_conflict_do_update(
                     index_elements=[Principal.id], set_={"name": item.name}))
+            for item in document.workspaces:
+                workspace = session.scalar(select(Workspace).where(Workspace.slug == item.slug).with_for_update(key_share=True))
+                if workspace is None:
+                    owners = [m.principal_id for m in document.memberships if m.workspace == item.slug and m.role == "owner"]
+                    if not owners:
+                        raise ValueError("each new seeded workspace needs an explicit owner membership")
+                    workspace = create_workspace(session, item.slug, item.display_name, owners[0])
+                else:
+                    if not item.display_name.strip():
+                        raise ValueError("workspace name must not be blank")
+                    workspace.display_name = item.display_name
+            for item in sorted(document.memberships, key=lambda m: m.role != "owner"):
+                change_membership(session, item.workspace, None, item.principal_id, item.role, operator=True)
             project_map = {}
             for item in document.projects:
                 workspace_slug, slug = resolver.split(item.id)

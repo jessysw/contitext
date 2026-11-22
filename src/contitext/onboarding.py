@@ -11,6 +11,8 @@ from uuid import uuid4
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--workspace", default="personal", help="Initial workspace slug; does not select a conversation project.")
+    parser.add_argument("--workspace-name", default=None, help="Workspace display name.")
     parser.add_argument("--project", default="demo", help="Initial project identifier; never a conversation default.")
     parser.add_argument("--name", default=None, help="Project display name.")
     parser.add_argument("--principal-name", default="Local operator")
@@ -18,7 +20,11 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def initialize(args) -> dict:
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", args.project):
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", args.workspace):
+        raise ValueError("workspace must be a valid slug of 1–128 characters")
+    if args.workspace_name is not None and not args.workspace_name.strip():
+        raise ValueError("workspace name must not be empty")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", args.project):
         raise ValueError("project must contain only letters, numbers, dots, underscores, or hyphens")
     if not args.principal_name.strip() or (args.name is not None and not args.name.strip()):
         raise ValueError("names must not be empty")
@@ -26,6 +32,8 @@ def initialize(args) -> dict:
     password, token = secrets.token_hex(24), secrets.token_urlsafe(32)
     identity = {"principal_id": principal, "name": args.principal_name}
     seed = {
+        "workspaces": [{"slug": args.workspace, "display_name": args.workspace_name or args.workspace}],
+        "memberships": [{"workspace": args.workspace, "principal_id": principal, "role": "owner"}],
         "projects": [{"id": args.project, "display_name": args.name or args.project, "status": "active"}],
         "principals": [{"id": principal, "name": identity["name"]}],
         "acls": [{"project_id": args.project, "principal_id": principal, "role": "owner"}],
@@ -39,7 +47,7 @@ def initialize(args) -> dict:
     values = {
         "POSTGRES_USER": "contitext", "POSTGRES_DB": "contitext", "POSTGRES_PASSWORD": password,
         "DATABASE_URL": database_url, "CONTITEXT_PORT": "18791",
-        "CONTITEXT_COMPATIBILITY_WORKSPACE": "legacy",
+        "CONTITEXT_COMPATIBILITY_WORKSPACE": args.workspace,
         "CONTITEXT_AUTH_TOKENS": literal_json({token: identity}),
         "CONTITEXT_SEED_JSON": literal_json(seed),
         "CONTITEXT_MCP_TOKEN": token, "CONTITEXT_SMOKE_PROJECT_ID": args.project,
@@ -53,7 +61,8 @@ def initialize(args) -> dict:
     fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as stream:
         stream.write("\n".join(lines) + "\n")
-    return {"configuration": str(args.output.resolve()), "project_id": args.project, "principal_id": principal}
+    return {"configuration": str(args.output.resolve()), "workspace": args.workspace,
+            "project_id": args.project, "project_reference": f"{args.workspace}/{args.project}", "principal_id": principal}
 
 
 def main(argv=None) -> None:
