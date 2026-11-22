@@ -9,10 +9,10 @@ sessions, and machines. Contitext is a small, self-hosted Python service backed 
 PostgreSQL, with REST and eight MCP tools. No LLM API key or embedding service is required.
 
 An agent finishes a session by recording what changed and what comes next. Another
-agent explicitly selects the same project, reads that context, and continues from
-the recorded handoff.
+agent resumes from the same project context, selected manually or resolved through
+opt-in trusted mappings, and continues from the recorded handoff.
 
-**Current release: 0.8.2.**
+**Current stable release: [0.8.2](https://github.com/jessysw/contitext/releases/tag/v0.8.2).**
 Install with `python -m pip install contitext` or pin `contitext==0.8.2` for a
 reproducible setup. This release adds Copilot, Cursor, OpenCode and Gemini CLI
 integration, optional native lifecycle adapters, and hook diagnostics. Project
@@ -21,7 +21,6 @@ deployments should follow [the 0.8.2 upgrade guide](docs/upgrading-to-0.8.2.md).
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
 installation paths, two independently authenticated agents and a visible handoff.
-For an existing 0.7.1 installation, use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
 
 See [release validation](docs/acceptance-0.8.2.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
@@ -120,10 +119,15 @@ existing app container and shares its database.
 | `context_handoff` | Record completed work, current work, blockers, and the next action |
 | `context_search` | Search project events using PostgreSQL full-text search |
 
-No project is inferred from the working directory or repository name. Each caller
-uses a stable conversation scope and explicitly selects a project. Project ACLs
-are enforced on the server. [API contracts and limits](https://github.com/jessysw/contitext/blob/main/docs/api.md) describe what
-the server enforces and what the agent protocol requires.
+Each caller uses a stable conversation scope. By default, select a project with
+`!! contitext use`. With [trusted local mappings](docs/project-resolution.md) and
+an enabled lifecycle adapter, Contitext can resolve and bind an unbound scope
+automatically from a configured full Git remote or directory. Existing selections
+take precedence; unmatched or ambiguous mappings do not bind a project. Agents
+read the resulting binding and never guess a project from a repository name.
+Workspace membership and project ACLs are enforced on the server.
+[API contracts and limits](https://github.com/jessysw/contitext/blob/main/docs/api.md)
+describe what the server enforces and what the agent protocol requires.
 
 ## Commands
 
@@ -163,9 +167,11 @@ CLI options, compatibility entry points, and conversation scope behavior.
 
 ## Optional automation
 
-Start with the explicit workflow above. Then configure [trusted project mappings](docs/project-resolution.md)
-and [session-start hooks](docs/session-hooks.md) to load the selected project in
-supported agents. Manual selections always win. [Context assembly](docs/context-assembly.md)
+**Automatic project resolution and startup context loading are supported and
+opt-in.** Start with the explicit workflow above, then configure
+[trusted project mappings](docs/project-resolution.md) and enable the
+[lifecycle adapter for your client](docs/agent-coverage.md). Manual selections
+always win. [Context assembly](docs/context-assembly.md)
 selects effective decisions, open questions and the relevant task handoff within
 a documented budget. [Candidate checkpoints](docs/checkpoints.md) add opt-in
 progress capture and durable retry; they do not create approved decisions.
@@ -182,6 +188,8 @@ server can use the local Python client for hooks without exposing PostgreSQL.
   portable native/Docker/SSH MCP client configuration.
 - Project discovery filtered by caller access, and atomic creation owned by the
   authenticated caller without an owner UUID or implicit conversation switch.
+- Opt-in deterministic project resolution, startup context loading, bounded
+  context assembly, and candidate checkpoints through supported lifecycle adapters.
 - Atomic validation that every event or handoff write matches the caller's conversation binding.
 - A durable, append-only event store with caller identity and source provenance.
 - Reader, writer, and owner project ACLs shared by REST and MCP.
