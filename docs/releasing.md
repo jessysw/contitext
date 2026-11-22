@@ -43,11 +43,13 @@ the repository's maintainers as the project grows.
 
 ## Candidate acceptance before publication
 
-The current prepared version is `0.8.0rc1`. A candidate build is not a stable
-release. See [recorded acceptance](acceptance-0.8.md). Keep the tracker open until
+The current candidate version is `0.8.0rc1`. Candidate publication and stable
+promotion are distinct operations. See [recorded acceptance](acceptance-0.8.md). Keep the tracker open until
 2–3 independent developers complete the first-use path and blockers are resolved.
 Record their actual timings and friction; automated tests cannot fulfill this gate.
-Only after release approval should a matching candidate tag/workflow be published.
+After automated and controlled installation gates pass, a matching candidate
+tag and prerelease may be published for external evaluation. Independent first-use
+trials are required for stable promotion, not for distributing that candidate.
 Promoting to stable 0.8.0 requires a new aligned version, tests and release PR; never
 replace an uploaded artifact. No tag, PyPI upload or Registry publication occurs
 as a side effect of merging release preparation.

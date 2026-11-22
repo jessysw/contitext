@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0rc1 — prepared, not yet published
+## 0.8.0rc1 — 2026-11-22 (prerelease)
 
 - Define the self-hosted release plan, workspace/identity boundaries and acceptance gates.
 - Add opt-in database-backed credentials with hash-only storage, private one-time

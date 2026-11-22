@@ -1,9 +1,9 @@
 # Workspaces and project namespaces
 
-**Unreleased:** this guide describes the Workspace implementation on `main`
-toward 0.8. It is not available in the published 0.7.1 package. The upgrade
+This guide describes Workspace support in the 0.8.0rc1 candidate. It is not
+available in stable 0.7.1. The upgrade
 rehearsal and two-agent guides are implemented; final acceptance is tracked in the
-[0.8 plan](v0.8-plan.md). Do not apply development migrations to a live service.
+[0.8 plan](v0.8-plan.md). Rehearse candidate migrations against a copy before changing a live service.
 
 ## Names and identities
 

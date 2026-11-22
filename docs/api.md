@@ -93,4 +93,4 @@ Project membership and ACL checks apply to every project operation, including
 existing bindings and exports. Lists are ordered by workspace slug, then project
 slug; pagination cursors belong to the caller. Search cursors also belong to the
 actual project UUID and query. See [workspaces](workspaces.md) for the migration
-boundary and trusted operator model. This section describes unreleased 0.8 work.
+boundary and trusted operator model. This section applies to the 0.8.0rc1 candidate.
