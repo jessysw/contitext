@@ -9,6 +9,10 @@ on POSIX systems. It requires Python 3.11 or newer. Hermes configuration is read
 using PyYAML from its existing Python environment; use `--yaml-python` if that
 interpreter is elsewhere. No packages are installed by this script.
 
+Development source additionally supports Copilot, Cursor, OpenCode and Gemini
+CLI; see the [unreleased client coverage](agent-coverage.md) for configuration
+paths, version differences and the distinction between MCP and native hooks.
+
 ## Connect an agent
 
 Obtain the installer from the public repository. Use the installer from the same release as your server.

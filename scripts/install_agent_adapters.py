@@ -16,7 +16,7 @@ import tomllib
 
 from agent_jsonc import InstallError, parse_jsonc, member, insert_object_member
 
-TARGETS = ('codex', 'claude', 'zed', 'hermes', 'openclaw')
+TARGETS = ('codex', 'claude', 'zed', 'hermes', 'openclaw', 'copilot', 'cursor', 'opencode', 'gemini')
 BEGIN = '<!-- BEGIN CONTITEXT MANAGED BLOCK -->'
 END = '<!-- END CONTITEXT MANAGED BLOCK -->'
 
@@ -38,7 +38,7 @@ def markdown(existing, protocol, target, legacy_markers):
     return (existing.rstrip()+'\n\n' if existing.strip() else '')+block+'\n'
 
 
-def migrated_entry(servers, wrapper, legacy):
+def migrated_entry(servers, wrapper, legacy, style='standard'):
     matches=[key for key in ['contitext',*legacy] if key in servers]
     if len(matches)>1:
         raise InstallError('both old and new server entries exist; resolve the duplicate before installing')
@@ -46,9 +46,12 @@ def migrated_entry(servers, wrapper, legacy):
     if not isinstance(previous,dict):raise InstallError('server configuration must be an object')
     previous=dict(previous)
     managed_launchers = {str(wrapper), str(wrapper.parent/'contitext-mcp-client')}
-    if matches==['contitext'] and previous.get('command') not in managed_launchers:
+    previous_command=previous.get('command')
+    if style=='opencode' and isinstance(previous_command,list) and len(previous_command)==1:
+        previous_command=previous_command[0]
+    if matches==['contitext'] and (not isinstance(previous_command,str) or previous_command not in managed_launchers):
         raise InstallError('existing Contitext entry uses another launcher; preserve it or migrate explicitly')
-    for key in ['command','args','env','env_vars','url','headers','bearer_token_env_var','cwd','type','transport']:
+    for key in ['command','args','env','environment','env_vars','url','headers','bearer_token_env_var','cwd','type','transport']:
         previous.pop(key,None)
     original_tools={'project_bind','project_current','context_get','context_search','context_record','context_handoff'}
     tool_filter=previous.get('toolFilter')
@@ -56,7 +59,8 @@ def migrated_entry(servers, wrapper, legacy):
         previous['toolFilter']={**tool_filter,'include':[*tool_filter['include'],'project_list','project_create']}
     if isinstance(previous.get('enabled_tools'),list) and set(previous['enabled_tools'])==original_tools:
         previous['enabled_tools']=[*previous['enabled_tools'],'project_list','project_create']
-    previous.update(command=str(wrapper),args=[])
+    if style=='opencode':previous.update(type='local',command=[str(wrapper)])
+    else:previous.update(command=str(wrapper),args=[])
     return previous,matches[0] if matches else None
 
 
@@ -66,13 +70,13 @@ def node_value(text,node):
     return node.value
 
 
-def json_config(text, path, wrapper, legacy, defaults=None):
+def json_config(text, path, wrapper, legacy, defaults=None, style='standard'):
     text=text if text.strip() else '{}\n'
     root,_=parse_jsonc(text);node=root
     for index,key in enumerate(path):
         child=member(node,key)
         if child is None:
-            entry,_=migrated_entry({},wrapper,legacy)
+            entry,_=migrated_entry({},wrapper,legacy,style)
             for k,v in (defaults or {}).items():entry.setdefault(k,v)
             value={'contitext':entry}
             for part in reversed(path[index+1:]):value={part:value}
@@ -81,7 +85,7 @@ def json_config(text, path, wrapper, legacy, defaults=None):
         if child.kind!='object':raise InstallError('MCP configuration section must be an object')
         node=child
     servers={key:node_value(text,value) for key,value,_ in node.members if key in ['contitext',*legacy]}
-    entry,old=migrated_entry(servers,wrapper,legacy)
+    entry,old=migrated_entry(servers,wrapper,legacy,style)
     for k,v in (defaults or {}).items():entry.setdefault(k,v)
     if old=='contitext' and servers[old]==entry:return text
     rendered='"contitext": '+json.dumps(entry,indent=2)
@@ -92,6 +96,20 @@ def json_config(text, path, wrapper, legacy, defaults=None):
     else:result=insert_object_member(text,node,rendered)
     parse_jsonc(result)
     return result.rstrip()+'\n'
+
+
+def opencode_config(text,wrapper,legacy,major):
+    document=node_value(text,parse_jsonc(text)[0]) if text.strip() else {}
+    mcp=document.get('mcp',{})
+    if not isinstance(mcp,dict):raise InstallError('OpenCode mcp configuration must be an object')
+    if major==1 and 'servers' in mcp:
+        raise InstallError('OpenCode V2 configuration found; select --opencode-major 2')
+    if major==2:
+        reserved={'servers','timeout','protocol','disabled','codemode','pool'}
+        if set(mcp)-reserved:
+            raise InstallError('OpenCode V1 or unknown MCP layout; use --opencode-major 1 or migrate it explicitly')
+    return json_config(text,['mcp'] if major==1 else ['mcp','servers'],wrapper,legacy,
+                       {'enabled':True} if major==1 else None,style='opencode')
 
 
 def toml_value(value):
@@ -192,6 +210,7 @@ def main(argv=None):
     parser.add_argument('--replace-marker',action='append',default=[])
     parser.add_argument('--replace-skill',action='append',default=[])
     parser.add_argument('--yaml-python',help='Hermes Python interpreter with PyYAML; defaults to its installed venv when available.')
+    parser.add_argument('--opencode-major',type=int,choices=[1,2],default=2,help='Explicit OpenCode configuration generation; defaults to current V2. Existing other layouts are never migrated implicitly.')
     args=parser.parse_args(argv)
     home=args.home.expanduser().absolute()
     originals={}
@@ -216,8 +235,15 @@ def main(argv=None):
         for wrapper in wrappers.values():
             read(wrapper)
             plan[wrapper]=('#!/bin/sh\nset -eu\nexec '+shlex.join([config['command'],*config.get('args',[])])+'\n').encode()
-        instruction_paths={'codex':home/'.codex/AGENTS.md','claude':home/'.claude/CLAUDE.md','zed':home/'.config/zed/AGENTS.md','hermes':home/'.hermes/skills/contitext/SKILL.md','openclaw':home/'.openclaw/skills/contitext/SKILL.md'}
-        config_paths={'codex':home/'.codex/config.toml','claude':home/'.claude.json','zed':home/'.config/zed/settings.json','hermes':home/'.hermes/config.yaml','openclaw':home/'.openclaw/openclaw.json'}
+        instruction_paths={'codex':home/'.codex/AGENTS.md','claude':home/'.claude/CLAUDE.md','zed':home/'.config/zed/AGENTS.md','hermes':home/'.hermes/skills/contitext/SKILL.md','openclaw':home/'.openclaw/skills/contitext/SKILL.md',
+                           'copilot':home/'.copilot/copilot-instructions.md','cursor':home/'.cursor/skills/contitext/SKILL.md','opencode':home/'.config/opencode/AGENTS.md','gemini':home/'.gemini/GEMINI.md'}
+        config_paths={'codex':home/'.codex/config.toml','claude':home/'.claude.json','zed':home/'.config/zed/settings.json','hermes':home/'.hermes/config.yaml','openclaw':home/'.openclaw/openclaw.json',
+                      'copilot':home/'.copilot/mcp-config.json','cursor':home/'.cursor/mcp.json','opencode':home/'.config/opencode/opencode.json','gemini':home/'.gemini/settings.json'}
+        if 'opencode' in args.target:
+            plain=config_paths['opencode'];commented=plain.with_suffix('.jsonc')
+            safe_path(plain,home);safe_path(commented,home)
+            if plain.exists() and commented.exists():raise InstallError('both OpenCode JSON and JSONC configurations exist; select one before installing')
+            if commented.exists():config_paths['opencode']=commented
         yaml_python=args.yaml_python
         if not yaml_python:
             candidate=home/'.hermes/hermes-agent/venv/bin/python'
@@ -226,7 +252,7 @@ def main(argv=None):
             wrapper=wrappers[target]
             path=instruction_paths[target];safe_path(path,home)
             existing=read(path)
-            if target in ('hermes','openclaw'):
+            if target in ('hermes','openclaw','cursor'):
                 for old in args.replace_skill:
                     legacy=path.parent.parent/old/'SKILL.md';safe_path(legacy,home)
                     if legacy.exists():
@@ -246,9 +272,12 @@ def main(argv=None):
             original=read(path)
             if target=='codex':updated=codex_config(original,wrapper,args.replace_server)
             elif target=='hermes':updated=hermes_config(original,wrapper,args.replace_server,yaml_python)
+            elif target=='opencode':updated=opencode_config(original,wrapper,args.replace_server,args.opencode_major)
             else:
-                parts={'claude':['mcpServers'],'zed':['context_servers'],'openclaw':['mcp','servers']}[target]
+                parts={'claude':['mcpServers'],'zed':['context_servers'],'openclaw':['mcp','servers'],
+                       'copilot':['mcpServers'],'cursor':['mcpServers'],'gemini':['mcpServers']}[target]
                 defaults={'connectionTimeoutMs':60000,'requestTimeoutMs':120000} if target=='openclaw' else None
+                if target=='copilot':defaults={'type':'stdio','tools':['*']}
                 updated=json_config(original,parts,wrapper,args.replace_server,defaults)
                 for label in args.replace_marker:
                     for boundary in ('BEGIN','END'):

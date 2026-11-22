@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in user-level MCP/instruction installers for Copilot, Cursor, OpenCode
+  and Gemini CLI. Preserve restrictions and unrelated configuration; require an
+  explicit OpenCode major-version layout and document runtime/profile differences.
+
 ## 0.8.1 — 2026-11-22
 
 - Add opt-in candidate progress capture after responses, explicit intermediate

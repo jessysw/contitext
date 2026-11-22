@@ -115,3 +115,63 @@ def test_complete_legacy_allowlist_expands_but_custom_restrictions_survive():
     restricted={'command':str(wrapper),'toolFilter':{'include':['context_get']},'enabled_tools':['context_get']}
     entry,_=a.migrated_entry({'contitext':restricted},wrapper,[])
     assert entry['toolFilter']['include']==['context_get'] and entry['enabled_tools']==['context_get']
+
+
+@pytest.mark.parametrize('major',[1,2])
+def test_expanded_clients_preserve_settings_and_execute_literal_launcher(tmp_path,capsys,major):
+    home=tmp_path/'home';home.mkdir()
+    config=tmp_path/'client.json'
+    config.write_text(json.dumps({'command':'/bin/echo','args':['literal $(false); `false`']}))
+    configs={
+        'copilot':home/'.copilot/mcp-config.json',
+        'cursor':home/'.cursor/mcp.json',
+        'gemini':home/'.gemini/settings.json',
+        'opencode':home/'.config/opencode/opencode.jsonc',
+    }
+    for target,path in configs.items():
+        path.parent.mkdir(parents=True,exist_ok=True)
+        body={'other':{'command':'keep','args':[]}}
+        section={'mcpServers':body} if target!='opencode' else {'mcp':body if major==1 else {'servers':body}}
+        path.write_text('// Preserve this comment\n'+json.dumps({'unrelated':'keep',**section}))
+    args=['--home',str(home),'--config',str(config),'--opencode-major',str(major)]
+    for target in configs:args+=['--target',target]
+    a.main(args+['--dry-run']);capsys.readouterr()
+    assert not (home/'.local').exists()
+    a.main(args);capsys.readouterr()
+    for target,path in configs.items():
+        content=path.read_text();assert content.startswith('// Preserve this comment')
+        doc=a.node_value(content,a.parse_jsonc(content)[0]);assert doc['unrelated']=='keep'
+        servers=doc['mcpServers'] if target!='opencode' else doc['mcp'] if major==1 else doc['mcp']['servers']
+        assert servers['other']=={'command':'keep','args':[]}
+        entry=servers['contitext'];command=entry['command']
+        if target=='opencode':
+            assert entry['type']=='local' and isinstance(command,list) and 'args' not in entry
+        else:command=[command,*entry['args']]
+        assert subprocess.check_output(command,text=True).strip()=='literal $(false); `false`'
+        if target=='copilot':assert entry['type']=='stdio' and entry['tools']==['*']
+        if target=='gemini':assert 'trust' not in entry
+    a.main(args);assert json.loads(capsys.readouterr().out)['changed']==[]
+    assert '!! contitext' in (home/'.gemini/GEMINI.md').read_text()
+    assert '!! contitext' in (home/'.copilot/copilot-instructions.md').read_text()
+    assert (home/'.cursor/skills/contitext/SKILL.md').read_text().startswith('---\nname: contitext')
+
+
+def test_opencode_layout_is_explicit_and_disabled_entry_survives():
+    wrapper=Path('/tmp/wrapper')
+    with pytest.raises(a.InstallError):a.opencode_config('{"mcp":{"existing":{"type":"local"}}}',wrapper,[],2)
+    with pytest.raises(a.InstallError):a.opencode_config('{"mcp":{"servers":{}}}',wrapper,[],1)
+    for major,flag in [(1,'enabled'),(2,'disabled')]:
+        previous={'command':[str(wrapper)],'type':'local',flag:major==2,'timeout':99}
+        value={'mcp':{'contitext':previous} if major==1 else {'servers':{'contitext':previous}}}
+        out=a.opencode_config(json.dumps(value),wrapper,[],major)
+        current=json.loads(out)['mcp'];current=current if major==1 else current['servers']
+        assert current['contitext'][flag]==previous[flag] and current['contitext']['timeout']==99
+        assert a.opencode_config(out,wrapper,[],major)==out
+
+
+def test_opencode_conflicting_files_refuse_before_any_write(tmp_path):
+    home=tmp_path/'home';root=home/'.config/opencode';root.mkdir(parents=True)
+    for name in ['opencode.json','opencode.jsonc']:(root/name).write_text('{}')
+    config=tmp_path/'client.json';config.write_text('{"command":"/bin/true"}')
+    with pytest.raises(SystemExit):a.main(['--home',str(home),'--config',str(config),'--target','opencode'])
+    assert not (home/'.local').exists()
