@@ -35,6 +35,7 @@ class BindBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     project_id: str = Field(min_length=1)
     session_id: str = Field(min_length=1)
+    if_unbound: bool = Field(default=False, strict=True)
 
 
 class RecordBody(BaseModel):
@@ -176,7 +177,7 @@ def create_app(
     @app.put("/v1/scopes/{scope_id}/binding")
     def bind(scope_id: str, body: BindBody, identity: PrincipalIdentity = Depends(principal)):
         return service.bind_project(identity, BindProjectRequest(
-            project_id=body.project_id, scope_id=scope_id, session_id=body.session_id,
+            project_id=body.project_id, scope_id=scope_id, session_id=body.session_id, if_unbound=body.if_unbound,
         ))
 
     @app.get("/v1/scopes/{scope_id}/binding")

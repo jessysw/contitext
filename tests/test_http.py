@@ -62,6 +62,9 @@ def test_all_http_routes_and_idempotency(migrated_database_url: str) -> None:
         bound = client.put("/v1/scopes/scope/binding", headers=auth(), json={"project_id": "alpha", "session_id": "session"})
         assert bound.status_code == 200 and bound.json()["project_id"] == "alpha"
         assert client.get("/v1/scopes/scope/binding", headers=auth()).json()["project_id"] == "alpha"
+        preserved = client.put("/v1/scopes/scope/binding", headers=auth(), json={"project_id": "alpha", "session_id": "automatic", "if_unbound": True})
+        assert preserved.json() == bound.json()
+        assert client.put("/v1/scopes/scope/binding", headers=auth(), json={"project_id": "alpha", "session_id": "automatic", "if_unbound": "true"}).status_code == 422
         first = client.post("/v1/projects/alpha/events", headers=auth(), json=event_body())
         retry = client.post("/v1/projects/alpha/events", headers=auth(), json=event_body())
         assert first.status_code == 201 and retry.json()["event_id"] == first.json()["event_id"]

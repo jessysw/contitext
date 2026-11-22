@@ -36,9 +36,10 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
         return principal() if callable(principal) else principal
 
     @server.tool(name="project_bind", structured_output=True)
-    def project_bind(scope_id: str, project_id: str, session_id: str) -> ProjectBinding:
+    def project_bind(scope_id: str, project_id: str, session_id: str, if_unbound: bool = False) -> ProjectBinding:
+        """Bind explicitly, or preserve any existing authorized binding when if_unbound is true."""
         return service.bind_project(identity(), BindProjectRequest(
-            project_id=project_id, scope_id=scope_id, session_id=session_id,
+            project_id=project_id, scope_id=scope_id, session_id=session_id, if_unbound=if_unbound,
         ))
 
     @server.tool(name="project_current", structured_output=True)

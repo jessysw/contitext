@@ -116,3 +116,38 @@ def test_concurrent_binds_to_distinct_scopes_preserve_all(
         } == set(scopes)
     finally:
         engine.dispose()
+
+
+def test_automatic_bind_preserves_manual_binding_and_revocation(migrated_database_url):
+    first, _ = seed_access(migrated_database_url)
+    service, engine = make_service(migrated_database_url)
+    try:
+        manual = service.bind_project(first, request('beta', 'auto-scope', 'manual-session'))
+        automatic = BindProjectRequest(project_id='alpha', scope_id='auto-scope', session_id='auto-session', if_unbound=True)
+        assert service.bind_project(first, automatic) == manual
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM project_acl WHERE principal_id=:p AND project_id=(SELECT id FROM projects WHERE slug='beta')"), {'p':first.principal_id})
+        with pytest.raises(BindingNotFoundError):service.current_project(first,'auto-scope')
+        with pytest.raises(ProjectNotFoundError):service.bind_project(first, automatic)
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT p.slug FROM scope_bindings b JOIN projects p ON p.id=b.project_id WHERE b.scope_id='auto-scope'")).scalar_one()=='beta'
+    finally:
+        engine.dispose()
+
+
+def test_manual_selection_wins_concurrent_automatic_attempts(migrated_database_url):
+    from threading import Barrier
+    first, _ = seed_access(migrated_database_url)
+    service, engine = make_service(migrated_database_url)
+    try:
+        for index in range(12):
+            barrier=Barrier(2);scope=f'race:{index}'
+            def bind(auto):
+                barrier.wait()
+                return service.bind_project(first, BindProjectRequest(project_id='alpha' if auto else 'beta',scope_id=scope,session_id='auto' if auto else 'manual',if_unbound=auto))
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                list(pool.map(bind,[True,False]))
+            bound=service.current_project(first,scope)
+            assert bound.project_id=='beta' and bound.session_id=='manual'
+    finally:
+        engine.dispose()

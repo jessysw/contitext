@@ -94,3 +94,13 @@ existing bindings and exports. Lists are ordered by workspace slug, then project
 slug; pagination cursors belong to the caller. Search cursors also belong to the
 actual project UUID and query. See [workspaces](workspaces.md) for the migration
 boundary and trusted operator model. This section applies to 0.8.0.
+
+## Atomic automatic binding (unreleased)
+
+`project_bind` and `PUT /v1/scopes/{scope_id}/binding` accept optional
+`if_unbound: true`. The default remains manual replacement. Automatic binding
+inserts only if no row exists for the authenticated principal and scope; otherwise
+it returns the existing authorized binding without changing its session or time.
+A revoked existing project is not replaced. Discovery clients must inspect the
+MCP tool schema before using this capability and may not fall back to a blind
+manual bind on older servers. No schema migration or new MCP tool is required.

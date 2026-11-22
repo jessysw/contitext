@@ -135,7 +135,23 @@ class Repository:
             statement = insert(ScopeBinding).values(
                 principal_id=principal.principal_id, scope_id=request.scope_id,
                 project_id=project.id, session_id=request.session_id,
-            ).on_conflict_do_update(
+            )
+            if request.if_unbound:
+                statement = statement.on_conflict_do_nothing(
+                    index_elements=[ScopeBinding.principal_id, ScopeBinding.scope_id],
+                ).returning(ScopeBinding)
+                binding = session.execute(statement).scalar_one_or_none()
+                if binding is None:
+                    # A manual selection may have won the race. Never update it,
+                    # including its session ID/timestamp, or fall through after revocation.
+                    binding = session.execute(select(ScopeBinding).where(
+                        ScopeBinding.principal_id == principal.principal_id,
+                        ScopeBinding.scope_id == request.scope_id,
+                    ).with_for_update()).scalar_one()
+                    existing = self.resolver.resolve_uuid(session, principal.principal_id, binding.project_id)
+                    return self._binding_result(binding, existing.reference)
+                return self._binding_result(binding, project.reference)
+            statement = statement.on_conflict_do_update(
                 index_elements=[ScopeBinding.principal_id, ScopeBinding.scope_id],
                 set_={"project_id": project.id, "session_id": request.session_id, "updated_at": func.now()},
             ).returning(ScopeBinding)

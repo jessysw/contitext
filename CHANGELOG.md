@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in, connection-scoped local project mappings and authorization-checked
+  MCP resolution. Preserve manual selections with atomic bind-if-unbound; reject
+  ambiguous remotes and never infer a project from a basename.
+- Plan the remaining 0.8.x session hooks, context assembly and automatic progress
+  as focused deliveries without assigning a fixed patch version to each feature.
+
 ## 0.8.0 — 2026-11-22
 
 - Release workspace isolation, managed credentials, upgrade integrity checks and

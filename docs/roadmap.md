@@ -34,13 +34,12 @@ a prerequisite for a release.
 
 ## Before v1.0
 
-The [v0.8.x plan](v0.8-plan.md) records the completed self-hosting work. The next
-feature milestone is v0.9.x: opt-in project resolution, session hooks and optional
-memory integration, guided by actual use cases. The current explicit binding
-behavior remains authoritative.
+The [v0.8.0 plan](v0.8-plan.md) records the completed self-hosting work.
+The [subsequent 0.8.x plan](automation-0.8.md) covers deterministic project
+resolution, nonblocking session start, bounded task-aware context assembly and
+checkpoint/end automation, in that order. Versions follow validated scope rather
+than a fixed feature-to-patch schedule. Explicit selection remains authoritative.
 
-- Add question resolution, decision supersession, and task-scoped handoff selection
-  with explicit lifecycle semantics and regression tests.
 - Rehearse migration and rollback with private deployments using private tooling;
   no private project data belongs in this repository.
 - Add a tested SuperLocalMemory companion example: Contitext owns project state
@@ -48,9 +47,11 @@ behavior remains authoritative.
   planned, not an integration shipped in v0.5.
 - Improve onboarding for different MCP clients based on actual user feedback.
 
-## Project lifecycle and repository associations (not implemented)
+## Project lifecycle and repository associations
 
-Consider optional repository metadata independently of conversation bindings.
+Private local mappings are implemented in development; see
+[project resolution](project-resolution.md). Shared repository metadata remains
+a separate possible feature, independent of conversation bindings.
 A project can cover several repositories, and a repository can support multiple
 context projects. Associations should help discovery without inferring a default
 project from a working directory. Repository moves, multiple remotes, and private
@@ -64,6 +65,6 @@ deletion, including its effects on bindings and references.
 
 ## Later, if users need it
 
-Broader context assembly, memory/knowledge integrations, and an authenticated
+Broader memory/knowledge integrations and an authenticated
 remote MCP transport. A hosted service is a separate operational and security
 decision; no hosted availability or service-level guarantee is promised here.
