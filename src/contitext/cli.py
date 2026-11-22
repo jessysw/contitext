@@ -40,7 +40,8 @@ def main(argv: list[str] | None = None) -> None:
     hooks = commands.add_parser("hooks", help="Install opt-in session start hooks.")
     hook_commands = hooks.add_subparsers(dest="hook_action", required=True)
     hook_install = hook_commands.add_parser("install")
-    hook_install.add_argument("--client", choices=["codex", "claude"], required=True)
+    from contitext.hook_contracts import CLIENTS
+    hook_install.add_argument("--client", choices=CLIENTS, required=True)
     hook_install.add_argument("--config", type=Path, required=True, help="Explicit client hooks/settings JSON to merge.")
     hook_install.add_argument("--connection", type=Path, required=True)
     hook_install.add_argument("--mappings", type=Path, required=True)
@@ -51,11 +52,12 @@ def main(argv: list[str] | None = None) -> None:
     hook_status.add_argument("--state-dir", type=Path, required=True)
     for action in ("flush", "checkpoint"):
         operation = hook_commands.add_parser(action)
-        operation.add_argument("--client", choices=["codex", "claude"], required=True)
+        operation.add_argument("--client", choices=CLIENTS, required=True)
         operation.add_argument("--connection", type=Path, required=True)
         operation.add_argument("--mappings", type=Path, required=True)
         operation.add_argument("--state-dir", type=Path, required=True)
         operation.add_argument("--session-id", required=True)
+        operation.add_argument("--conversation-id", help="Required stable conversation ID for Cursor.")
         operation.add_argument("--source-id", help="Stable milestone identifier for an explicit intermediate candidate.")
         operation.add_argument("--task-id")
 
@@ -137,6 +139,10 @@ def main(argv: list[str] | None = None) -> None:
                 from contitext.outbox import stage, status
                 args.timeout, args.max_bytes = 3, 12000
                 event = {"hook_event_name":"Checkpoint", "session_id":args.session_id}
+                if args.client == 'cursor':
+                    if not args.conversation_id:
+                        raise ResolutionError('Cursor checkpoint/flush requires --conversation-id')
+                    event['conversation_id'] = args.conversation_id
                 if args.hook_action == "checkpoint":
                     if not args.source_id:
                         raise ResolutionError("checkpoint requires --source-id")

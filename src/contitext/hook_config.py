@@ -8,6 +8,7 @@ import os
 from contextlib import nullcontext
 
 from contitext.resolution import ResolutionError, load_connection, load_mappings, mapping_lock, read_local_json
+from contitext.hook_contracts import additions as native_additions
 
 
 def install(args):
@@ -30,21 +31,19 @@ def install(args):
         command += ' --state-dir ' + shlex.quote(str(state_dir)) + ' --timeout 2'
     elif state_dir is not None:
         raise ResolutionError('--state-dir requires --checkpoints')
-    handler = {'type': 'command', 'command': command, 'timeout': 3 if getattr(args,'checkpoints',False) else 5}
-    if args.client == 'codex':
-        handler['additionalContextLimit'] = 4000
-    entry = {'matcher': 'startup|resume|clear|compact|fork', 'hooks': [handler]}
-    additions = {'SessionStart':[entry]}
-    if getattr(args,'checkpoints',False):
-        for event in ['Stop','PreCompact','SessionEnd'] + (['Interrupt'] if args.client == 'codex' else []):
-            additions[event] = [{'hooks':[{'type':'command','command':command,'timeout':3}]}]
+    additions = native_additions(args.client, command, getattr(args,'checkpoints',False))
+    flat = args.client in ('copilot', 'cursor')
     # Parent creation is an explicit installer action; never done by a running hook.
     if not args.config.parent.exists():
         if args.dry_run:
-            return {'changed': True, 'fragment': {'hooks': additions}}
+            return {'changed': True, 'fragment': {**({'version': 1} if flat else {}), 'hooks': additions}}
         args.config.parent.mkdir(parents=True, mode=0o700)
     with nullcontext() if args.dry_run else mapping_lock(args.config):
         data = read_local_json(args.config) if args.config.exists() or args.config.is_symlink() else {}
+        if flat:
+            if data.get('version', 1) != 1:
+                raise ResolutionError('unsupported hook configuration version')
+            data.setdefault('version', 1)
         hooks = data.setdefault('hooks', {})
         if not isinstance(hooks, dict):
             raise ResolutionError('existing hooks must be a JSON object')
@@ -54,9 +53,10 @@ def install(args):
             if not isinstance(entries, list):
                 raise ResolutionError('existing hooks must be lists')
             for group in entries:
-                if not isinstance(group, dict) or not isinstance(group.get('hooks'), list):
+                if not isinstance(group, dict) or (not flat and not isinstance(group.get('hooks'), list)):
                     raise ResolutionError('existing hook group is malformed')
-                if group not in groups and any(isinstance(h, dict) and 'contitext.hooks' in str(h.get('command', '')) for h in group['hooks']):
+                handlers = [group] if flat else group['hooks']
+                if group not in groups and any(isinstance(h, dict) and 'contitext.hooks' in str(h.get('command', '')) for h in handlers):
                     raise ResolutionError('another Contitext hook is configured; review and remove it explicitly before replacing')
             for group in groups:
                 if group not in entries:

@@ -1,6 +1,8 @@
 # Session start hooks
 
 Available in 0.8.1; the hook remains opt-in.
+The 0.8.2 development branch additionally supports
+[Copilot CLI, Cursor desktop and Gemini CLI](command-hook-clients.md).
 It loads context through the same MCP command used by your agent. There is no
 new service and no database credential on a remote client. Native Python,
 Docker Compose and SSH connections are supported on macOS and Linux.

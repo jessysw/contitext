@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add native lifecycle adapters for Copilot CLI, Cursor desktop and Gemini CLI,
+  including bounded startup, exact conversation identity, candidate capture where
+  final response text is available, and safe retries without transcript ingestion.
+
 - Add opt-in user-level MCP/instruction installers for Copilot, Cursor, OpenCode
   and Gemini CLI. Preserve restrictions and unrelated configuration; require an
   explicit OpenCode major-version layout and document runtime/profile differences.
