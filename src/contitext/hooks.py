@@ -185,7 +185,7 @@ def main(argv=None):
                 try: stage(args,event)
                 except Exception: args.capture_failed = True  # Still retry earlier durable work.
             result = run_supervised(args, data)
-        if event.get('hook_event_name') != 'PreCompact' or args.client not in ('codex','claude'):
+        if args.worker or event.get('hook_event_name') != 'PreCompact' or args.client not in ('codex','claude'):
             print(json.dumps(result if args.worker else output(args.client, result)))
     except (Exception, SystemExit):
         # Never echo paths, prompt text, server stderr, credentials or tracebacks.

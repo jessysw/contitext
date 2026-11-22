@@ -87,13 +87,19 @@ def additions(client, command, checkpoints, timeout=None):
                     handler[key] = (math.ceil(budget) + 1) * (1000 if client == 'gemini' else 1)
         return base
     if client in ('codex', 'claude'):
-        handler = {'type': 'command', 'command': command, 'timeout': 3 if checkpoints else 5}
+        handler = {'type': 'command', 'command': command, 'timeout': 4 if checkpoints else 5}
         if client == 'codex':
             handler['additionalContextLimit'] = 4000
         result = {'SessionStart': [{'matcher': 'startup|resume|clear|compact|fork', 'hooks': [handler]}]}
         if checkpoints:
             for event in ['Stop', 'PreCompact', 'SessionEnd'] + (['Interrupt'] if client == 'codex' else []):
-                result[event] = [{'hooks': [{'type': 'command', 'command': command, 'timeout': 3}]}]
+                end = client == 'codex' and event in ('SessionEnd', 'Interrupt')
+                event_command = command
+                if end:
+                    argv = shlex.split(command)
+                    argv[argv.index('--timeout') + 1] = '2'
+                    event_command = shlex.join(argv)
+                result[event] = [{'hooks': [{'type': 'command', 'command': event_command, 'timeout': 3 if end else 4}]}]
         return result
     result = {}
     for event, canonical in EVENTS[client].items():

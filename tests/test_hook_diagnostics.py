@@ -82,3 +82,15 @@ def test_worker_failure_is_reported_without_blocking_parent(tmp_path):
     result,_=invoke(args,{'hook_event_name':'SessionStart','session_id':'offline','cwd':str(tmp_path)})
     assert result=={}
     assert status(args.state_dir)['last_run']['outcome']=='worker_error'
+
+
+def test_compaction_worker_acknowledges_without_native_stdout(tmp_path):
+    import subprocess
+    args=configured(tmp_path)
+    command=[sys.executable,'-m','contitext.hooks','--client','codex',
+             '--connection',str(args.connection),'--mappings',str(args.mappings)]
+    event=json.dumps({'hook_event_name':'PreCompact','session_id':'test-session'})
+    worker=subprocess.run([*command,'--worker'],input=event,text=True,capture_output=True,timeout=5)
+    assert worker.returncode==0 and json.loads(worker.stdout)=={} and not worker.stderr
+    native=subprocess.run(command,input=event,text=True,capture_output=True,timeout=5)
+    assert native.returncode==0 and not native.stdout and not native.stderr

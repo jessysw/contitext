@@ -66,8 +66,9 @@ advertises it, and otherwise uses the bounded legacy bundle.
 The installer uses Python isolated mode so repository files and `PYTHONPATH`
 cannot replace the hook package. A separate worker has a three-second deadline. The supervisor terminates its
 local process group on timeout and exits successfully with no context on malformed
-input, ambiguous mapping, unavailable server or denied access. Generated runtime
-configuration also sets a five-second outer timeout. Startup may wait briefly for
+input, ambiguous mapping, unavailable server or denied access. Startup-only configuration sets a five-second outer timeout. Capture-enabled
+command hooks allow at least four seconds externally; Codex end/interrupt hooks
+retain a two-second worker and three-second outer limit. Startup may wait briefly for
 this bounded load; failure never asks the client to block or continue a turn.
 No stale disk cache is injected after failure. Use `contitext resolve` for explicit
 diagnostics, or `!! contitext use <project-id>` to select a project manually.

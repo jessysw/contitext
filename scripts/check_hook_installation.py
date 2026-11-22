@@ -64,7 +64,10 @@ for client in ('codex','claude','copilot','cursor','gemini','hermes','openclaw',
     if client=='copilot':event={'sessionId':session,'cwd':str(args.directory),'source':'new'}
     if client=='cursor':event.update(hook_event_name='sessionStart',conversation_id=session)
     if client=='hermes':event['conversation_id']=session
-    assert client+':'+session in json.dumps(invoke(command,event))
+    loaded=invoke(command,event)
+    if client+':'+session not in json.dumps(loaded):
+        diagnostic=invoke([cli,'hooks','status','--state-dir',str(state)])
+        raise AssertionError(client+' startup did not load context: '+json.dumps(diagnostic.get('last_run')))
     checkpoint=[cli,'hooks','checkpoint',*common,'--state-dir',str(state),'--session-id',session,'--source-id','acceptance-turn']
     if client in ('cursor','hermes'):checkpoint+=['--conversation-id',session]
     for _ in range(2):

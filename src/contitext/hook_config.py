@@ -28,7 +28,7 @@ def install(args):
         if state_dir.exists():
             from contitext.outbox import private_directory
             private_directory(state_dir)
-        command += ' --state-dir ' + shlex.quote(str(state_dir)) + ' --timeout 2'
+        command += ' --state-dir ' + shlex.quote(str(state_dir)) + ' --timeout 3'
     elif state_dir is not None:
         raise ResolutionError('--state-dir requires --checkpoints')
     timeout = getattr(args,'worker_timeout',None)

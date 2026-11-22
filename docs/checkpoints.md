@@ -47,8 +47,9 @@ blocks are redacted before persistence. The excerpt is capped at 2400 UTF-8 byte
 plus a truncation marker. Pattern redaction is not a guarantee that every possible
 secret or private fact is recognized; enable capture only for suitable sessions.
 
-Local atomic writes and directory fsync precede network delivery. A two-second
-worker deadline fits the generated three-second runtime timeout. Failure returns
+Local atomic writes and directory fsync precede network delivery. Ordinary workers
+have a three-second deadline, with an outer runtime budget of at least four seconds.
+Codex end/interrupt workers remain capped at two seconds under its three-second limit. Failure returns
 success without blocking, asking for continuation or echoing private content.
 The queue holds at most 256 candidates; full queues preserve existing records and
 skip new capture until reviewed/drained. Each attempt sends at most eight matching

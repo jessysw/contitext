@@ -122,7 +122,8 @@ def test_installer_is_opt_in_and_only_emits_supported_events(tmp_path):
     args.client='claude';args.config=tmp_path/'claude.json'
     install(args)
     assert 'Interrupt' not in json.loads(args.config.read_text())['hooks']
-    assert all(h['timeout']==3 for groups in hooks.values() for g in groups for h in g['hooks'])
+    assert all(h['timeout']==(3 if event in ('SessionEnd','Interrupt') else 4)
+               for event,groups in hooks.items() for g in groups for h in g['hooks'])
 
 
 def test_outbox_refuses_symlinks_and_capacity_without_overwriting(tmp_path):
