@@ -2,7 +2,7 @@
 
 This guide takes you from a fresh installation to a project handoff that another
 agent session can read, then shows the same data in Obsidian. It uses Contitext
-0.7.1, Docker Compose, and one local MCP client. No paid API or LLM key is needed
+the unreleased 0.8 source, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
 by Contitext; your agent has its own requirements.
 
 You need Git, Docker with Compose, Python 3.11–3.14, and an installed supported
@@ -14,7 +14,7 @@ and then continue at step 2 using the native connection example below.
 ## 1. Start your service
 
 ```sh
-git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch main --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project welcome --name "Welcome"
 docker compose up --build -d --wait
@@ -24,10 +24,11 @@ docker compose exec -T app contitext doctor
 Expected: the containers become healthy and `doctor` prints `"ok": true`.
 Bootstrap creates a private `.env` with credentials and an initial project.
 Neither creating `welcome` nor starting the service selects a project in a chat.
-Keep `.env` private; it is not a shell script. Re-running bootstrap preserves an
+The initial workspace is `personal`; short IDs resolve only there through explicit
+configuration. Use `personal/welcome` to make the namespace visible. Keep `.env` private; it is not a shell script. Re-running bootstrap preserves an
 existing configuration by refusing to overwrite it.
 
-## 2. Connect one agent
+## 2. Connect the first agent
 
 From the same checkout, generate a connection file for this local Compose stack:
 
@@ -97,13 +98,15 @@ Expected: the agent confirms actual MCP writes. A natural-language promise to
 remember is not a stored record. If an MCP call fails, fix the connection and
 verify the result before continuing.
 
-## 5. Resume in another session
+## 5. Connect a second identity and resume
 
-Open a fresh session in the same client, or another client connected to the same
-Contitext service and authorized identity. Send:
+Follow [Two independently authenticated agents](two-agents.md) to provision Agent B,
+grant workspace membership and a project ACL, issue its private credential, and
+install its own connection. Use `personal/first-project` in that guide. Then open
+a fresh session in Agent B and send:
 
 ```text
-!! contitext use first-project
+!! contitext use personal/first-project
 !! contitext status
 ```
 
@@ -146,7 +149,7 @@ existing-install permissions, remote copies, supervision, and refresh failures.
 
 - **Unknown chat command or only six tools:** update the adapter and reload MCP.
 - **No selected project:** send an explicit `!! contitext use first-project`.
-- **Project not found:** check the project ID and the configured identity's grants.
+- **Project not found:** use `workspace/project` and check both workspace membership and project ACL. Run `doctor` with that client's credential file.
 - **Empty or stale reader:** check `SYNC-STATUS.md`, its timestamp, and
   `docker compose --profile reader logs --tail 30 reader`.
 - **Permission denied in the reader:** follow the UID/GID steps for existing

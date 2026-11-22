@@ -21,8 +21,10 @@ def test_registry_package_ownership_and_version_match_distribution():
     assert package["registryType"] == "pypi"
     assert package["transport"] == {"type": "stdio"}
     assert "remotes" not in manifest
-    required = {"DATABASE_URL", "CONTITEXT_AUTH_TOKENS", "CONTITEXT_MCP_TOKEN"}
-    assert {item["name"] for item in package["environmentVariables"]} == required
+    required = {"DATABASE_URL", "CONTITEXT_MCP_TOKEN"}
+    secret = required | {"CONTITEXT_AUTH_TOKENS"}
+    assert {item["name"] for item in package["environmentVariables"]} == secret | {"CONTITEXT_AUTH_MODE", "CONTITEXT_COMPATIBILITY_WORKSPACE"}
     for item in package["environmentVariables"]:
-        assert item["isRequired"] is True and item["isSecret"] is True
+        assert item["isRequired"] == (item["name"] in required)
+        assert item["isSecret"] == (item["name"] in secret)
         assert not {"value", "default", "choices", "variables"}.intersection(item)

@@ -11,3 +11,6 @@ reader-vault
 runtime
 tests
 client.json
+
+private-clients
+client-*.json

@@ -18,3 +18,7 @@ reader-vault/
 *.dump
 *.log
 client.json
+
+# Local client connection files and private credential overlays.
+client-*.json
+private-clients/

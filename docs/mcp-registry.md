@@ -16,6 +16,10 @@ provide a database, account, or credentials. Each deployment retains its own
 project data. This release exposes MCP over stdio; the REST API is not a remote
 MCP endpoint.
 
+The main-branch manifest is release-preparation metadata, not a new Registry
+publication. Published 0.7.1 uses config-mode credentials; the workspace and
+database-mode settings below require the unreleased 0.8 source.
+
 ## Prepare your deployment
 
 Choose either path in the [installation guide](installation.md). For native use,
@@ -37,9 +41,13 @@ the MCP process through your client's secure configuration:
 | --- | --- |
 | `DATABASE_URL` | Your reachable, migrated PostgreSQL database URL using `postgresql+psycopg://` |
 | `CONTITEXT_AUTH_TOKENS` | A JSON object mapping your generated credentials to `principal_id` and `name` values, matching seeded principals |
-| `CONTITEXT_MCP_TOKEN` | The credential from that object to use for this client |
+| `CONTITEXT_MCP_TOKEN` | This client's credential from the selected authentication mode |
+| `CONTITEXT_AUTH_MODE` | `config` (default) or `database`; the JSON token map is required only in config mode |
+| `CONTITEXT_COMPATIBILITY_WORKSPACE` | Optional explicit workspace for short IDs; otherwise use `workspace/project` |
 
-All three are marked secret and required in the Registry manifest. No live values
+The URL and client token are required secrets. The legacy JSON map is a
+conditional secret; mode and compatibility namespace are optional non-secret
+settings. No live values
 are published. Generate your own credentials; never commit them to a repository
 or paste them into a public issue. Database access is a trusted administrator
 capability. Provide each client only the credential entries it needs and grant
@@ -62,15 +70,15 @@ command is:
 }
 ```
 
-Supply the three environment variables through your client's configuration or
+Supply the applicable environment variables through your client's configuration or
 environment inheritance mechanism. Formats differ between clients. An empty
 environment will not work, and registration does not automatically install or
 configure the server in every client.
 
 If a manual client can access a native installation's protected configuration file,
 its command may instead be `uvx --python 3.12 contitext==0.7.1 --env-file
-/absolute/private.env mcp`. This explicitly loads the same three variables; it
-does not change the Registry manifest's required inputs.
+/absolute/private.env mcp`. This explicitly loads the private configuration; it does not change the Registry
+manifest's inputs.
 
 Load the [agent protocol](../integrations/PROJECT-CONTEXT-PROTOCOL.md) into your
 client's instruction mechanism, then restart its MCP session. In agent chat, use

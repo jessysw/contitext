@@ -1,8 +1,8 @@
 # Managed credentials (unreleased)
 
 This is the first implementation batch of the [0.8.x plan](v0.8-plan.md).
-It is not available in the currently published 0.7.1 package. Workspace support
-and the complete 0.8 upgrade workflow are not yet implemented. The examples are
+It is not available in the currently published 0.7.1 package. Workspace support and the upgrade/recovery workflow are implemented on main;
+full release acceptance is tracked separately. The examples are
 for testing unreleased source; use a tagged release for production deployments.
 
 ## Identity and trust
@@ -54,8 +54,7 @@ shortcut: it may contain revoked credentials.
 
 ## Issue and inspect
 
-Provision a principal with the existing operator CLI and grant the intended
-project access. Issue a separately named credential for each agent installation:
+Provision a principal, grant workspace membership and the intended project ACL. Issue a separately named credential for each agent installation:
 
 ```bash
 contitext --env-file /private/path/server.env principal create "Second agent"
@@ -73,8 +72,9 @@ issues, shared agent configuration, logs or chats. No later command can retrieve
 the plaintext token. Optional expiry is measured in seconds; omit it for no expiry.
 
 When configuring a trusted MCP launch, retain its protected database configuration
-and select this agent's token as `CONTITEXT_MCP_TOKEN`. Do not replace an entire
-server environment file with this token-only file. Separate client-only remote
+and select this agent's token as `CONTITEXT_MCP_TOKEN`. Use `client-config --credential-file` to overlay this token-only file on the
+shared protected configuration; see [the two-agent guide](two-agents.md). Do not
+replace an entire server environment file with this token-only file. Separate client-only remote
 onboarding remains part of later transport work, not this credential feature.
 
 ## Rotate and revoke

@@ -59,6 +59,15 @@ After normalizing the namespace, map accepted commands only as follows:
 
 Never call a project-scoped read or write using a project guessed from prose. Never represent a generic `context_record` call as a handoff.
 
+## Workspace-qualified project references
+
+A project reference can be `workspace/project`. Preserve this exact reference in
+tool arguments. Short IDs work only when the server has explicitly configured a
+compatibility workspace. Never infer a workspace, expand a short ID yourself, or
+try other workspaces after a not-found response. Use returned project references
+when reporting results. Workspace membership and project ACLs are both required;
+listing and creation still do not bind a conversation.
+
 ## Project identity and repositories
 
 A project ID identifies a context namespace inside the connected service. Its display name is a human-readable label. Neither is a Git repository identifier. Projects may span multiple repositories or have no repository. Repository associations are not implemented in this version; do not invent a `repo` command or infer a binding from the working directory. Listing or creating a project never hydrates or switches another project's context.

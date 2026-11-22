@@ -11,11 +11,11 @@ interpreter is elsewhere. No packages are installed by this script.
 
 ## Connect an agent
 
-Obtain the installer from the public repository. Use the v0.7.1 installer with
-the v0.7.1 server. The protocol includes project listing and creation:
+Obtain the installer from the public repository. Use the installer from the same release or candidate commit as your server.
+The examples below cover unreleased 0.8 source. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch main --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -50,7 +50,10 @@ is older than 3.11, set `CONTITEXT_INSTALL_PYTHON` to an existing supported Pyth
 
 The installer:
 
-- Creates `~/.local/bin/contitext-mcp-client` with safely quoted command arguments.
+- Creates `~/.local/bin/contitext-mcp-TARGET` with safely quoted arguments, one
+  launcher per client so configuring Claude cannot change Codex's credential.
+- Migrates selected entries from the old shared launcher, preserving that file
+  and unselected clients. Custom launchers still require explicit migration.
 - Adds the `contitext` MCP entry to the selected clients' user configuration.
 - Installs the canonical protocol in each client's instruction or skill file.
 - Preserves unrelated configuration and instructions.
@@ -71,6 +74,17 @@ MCP status command to check the connection, then start with:
 
 `!! ctx` is the shortcut and `!! context` remains a compatibility alias. Installation
 does not select a default project, create a project, or migrate server data.
+
+## Independent identities
+
+Add `--credential-file /absolute/agent-b.env` to `client-config` and install its
+JSON only for the intended `--target`. The file stays on the server. Native
+launches load the shared config then the token overlay; Compose uses
+`docker compose run --env-from-file`, which must appear in your installed
+`docker compose run --help`. Upgrade Compose separately if it lacks this option.
+No secret values enter shared JSON or shell command arguments. See the complete
+[two-agent walkthrough](two-agents.md). Multiple targets in one installer call
+intentionally receive the same connection; use separate calls for different identities.
 
 ## Replace an existing adapter
 

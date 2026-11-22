@@ -13,7 +13,8 @@ agent explicitly selects the same project, reads that context, and continues fro
 the recorded handoff.
 
 **New to Contitext? Follow [Getting started](https://github.com/jessysw/contitext/blob/main/docs/getting-started.md)**
-from installation to your first cross-session handoff.
+from installation to your first cross-agent handoff. The main-branch guide targets
+unreleased 0.8; for published 0.7.1 use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
 
 **v0.7.1 adds a human-readable Markdown reader**, including optional automatic
 refresh and Obsidian instructions. See [Read your context](https://github.com/jessysw/contitext/blob/main/docs/obsidian.md).
