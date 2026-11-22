@@ -44,6 +44,7 @@ def migrated_database_url(
     postgres_available: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
+    monkeypatch.setenv("CONTITEXT_COMPATIBILITY_WORKSPACE", "legacy")
     engine = create_engine(test_database_url)
     try:
         with engine.begin() as connection:

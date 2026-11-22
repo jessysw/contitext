@@ -183,11 +183,11 @@ def create_app(
     def current(scope_id: str, identity: PrincipalIdentity = Depends(principal)):
         return service.current_project(identity, scope_id)
 
-    @app.get("/v1/projects/{project_id}/context")
+    @app.get("/v1/projects/{project_id:path}/context")
     def context(project_id: str, identity: PrincipalIdentity = Depends(principal)):
         return service.get_context(identity, project_id)
 
-    @app.get("/v1/projects/{project_id}/search")
+    @app.get("/v1/projects/{project_id:path}/search")
     def search(
         project_id: str,
         q: str = Query(min_length=1),
@@ -197,19 +197,19 @@ def create_app(
     ):
         return service.search_context(identity, project_id, q, limit=limit, cursor=cursor)
 
-    @app.post("/v1/projects/{project_id}/events", status_code=201)
+    @app.post("/v1/projects/{project_id:path}/events", status_code=201)
     def record(project_id: str, body: RecordBody, identity: PrincipalIdentity = Depends(principal)):
         return service.record_context(identity, RecordContextRequest(
             project_id=project_id, **body.model_dump(),
         ))
 
-    @app.post("/v1/projects/{project_id}/handoffs", status_code=201)
+    @app.post("/v1/projects/{project_id:path}/handoffs", status_code=201)
     def handoff(project_id: str, body: HandoffBody, identity: PrincipalIdentity = Depends(principal)):
         return service.create_handoff(identity, HandoffRequest(
             project_id=project_id, **body.model_dump(),
         ))
 
-    @app.post("/v1/projects/{project_id}/projection")
+    @app.post("/v1/projects/{project_id:path}/projection")
     def project(project_id: str, identity: PrincipalIdentity = Depends(principal)):
         if projection is not None:
             return projection(identity, project_id)

@@ -39,6 +39,7 @@ def initialize(args) -> dict:
     values = {
         "POSTGRES_USER": "contitext", "POSTGRES_DB": "contitext", "POSTGRES_PASSWORD": password,
         "DATABASE_URL": database_url, "CONTITEXT_PORT": "18791",
+        "CONTITEXT_COMPATIBILITY_WORKSPACE": "legacy",
         "CONTITEXT_AUTH_TOKENS": literal_json({token: identity}),
         "CONTITEXT_SEED_JSON": literal_json(seed),
         "CONTITEXT_MCP_TOKEN": token, "CONTITEXT_SMOKE_PROJECT_ID": args.project,

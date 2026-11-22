@@ -43,7 +43,7 @@ def test_reader_exports_only_accessible_data_without_mutation(migrated_database_
             service.create_project(identity, CreateProjectRequest(project_id=project, display_name=project.title()))
             record(service, identity, project, project + " checkpoint")
         with engine.begin() as c:
-            c.execute(text("UPDATE project_acl SET role='reader' WHERE project_id='visible'"))
+            c.execute(text("UPDATE project_acl SET role='reader' WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='visible')"))
         before = database_state(engine)
         data = snapshot(engine, caller)
         assert [p['id'] for p in data] == ['visible'] and data[0]['role'] == 'reader'
@@ -75,7 +75,7 @@ def test_refresh_discovers_new_projects_and_removes_revoked_generated_files(migr
         service.create_project(caller, CreateProjectRequest(project_id='second', display_name='Second'))
         record(service, caller, 'second', 'Ready for review')
         with engine.begin() as c:
-            c.execute(text("DELETE FROM project_acl WHERE project_id='first'"))
+            c.execute(text("DELETE FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='first')"))
         folder.publish(snapshot(engine, caller))
         assert not old.exists()
         assert (folder.path / project_filename('second')).is_file()

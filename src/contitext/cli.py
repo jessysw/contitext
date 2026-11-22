@@ -83,10 +83,10 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(run(args))
         except (AuthenticationError, ConfigurationError, ValueError, OSError, ProjectionSafetyError):
             parser.error("cannot start reader; check authentication, output ownership, permissions, and configuration")
-    if args.command in {"init", "project", "principal", "access", "credential", "doctor", "client-config"}:
+    if args.command in {"init", "workspace", "project", "principal", "access", "credential", "doctor", "client-config"}:
         from contitext.admin import manage
         from contitext.config import ConfigurationError
-        from contitext.auth import AuthenticationError
+        from contitext.auth import AuthenticationError, ProjectNotFoundError
         from contitext.repository import ProjectCreationConflictError
         from contitext.service import WriterFencedError
         from contitext.diagnostics import doctor, client_config
@@ -118,7 +118,7 @@ def main(argv: list[str] | None = None) -> None:
             parser.error("configuration already exists; preserved without changes")
         except ValidationError:
             parser.error("invalid identifier or empty name; check command arguments")
-        except (ValueError, ConfigurationError, AuthenticationError, ProjectCreationConflictError, WriterFencedError) as exc:
+        except (ValueError, ConfigurationError, AuthenticationError, ProjectNotFoundError, ProjectCreationConflictError, WriterFencedError) as exc:
             parser.error(str(exc))
         except SQLAlchemyError:
             parser.error("database operation failed; check connectivity, migrations, and identifiers")

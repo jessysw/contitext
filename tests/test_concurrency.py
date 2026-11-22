@@ -39,15 +39,9 @@ def test_concurrent_event_inserts_are_complete_and_exactly_once(
 
         with engine.connect() as connection:
             total = connection.execute(
-                text("SELECT count(*) FROM context_events WHERE project_id = 'alpha'")
+                text("SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')")
             ).scalar_one()
-            duplicate_groups = connection.execute(text("""
-                SELECT count(*) FROM (
-                    SELECT idempotency_key FROM context_events
-                    WHERE project_id = 'alpha'
-                    GROUP BY idempotency_key HAVING count(*) <> 1
-                ) AS duplicates
-            """)).scalar_one()
+            duplicate_groups = connection.execute(text("\n                SELECT count(*) FROM (\n                    SELECT idempotency_key FROM context_events\n                    WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')\n                    GROUP BY idempotency_key HAVING count(*) <> 1\n                ) AS duplicates\n            ")).scalar_one()
         assert total == count
         assert duplicate_groups == 0
     finally:
@@ -67,7 +61,7 @@ def test_concurrent_retries_of_one_key_return_one_event(
         assert len({event.event_id for event in events}) == 1
         with engine.connect() as connection:
             assert connection.execute(
-                text("SELECT count(*) FROM context_events WHERE project_id='alpha'")
+                text("SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')")
             ).scalar_one() == 1
     finally:
         engine.dispose()

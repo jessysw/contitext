@@ -28,13 +28,13 @@ def test_seed_is_idempotent_and_updates_metadata(migrated_database_url: str) -> 
     try:
         with engine.connect() as connection:
             assert connection.execute(text(
-                "SELECT display_name, status FROM projects WHERE id='alpha'"
+                "SELECT display_name, status FROM projects WHERE id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')"
             )).one() == ("Alpha Updated", "paused")
             assert connection.execute(text(
                 "SELECT name FROM principals WHERE id=:id"
             ), {"id": principal_id}).scalar_one() == "Operator Updated"
             assert connection.execute(text(
-                "SELECT role FROM project_acl WHERE project_id='alpha' AND principal_id=:id"
+                "SELECT role FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha') AND principal_id=:id"
             ), {"id": principal_id}).scalar_one() == "owner"
             assert connection.execute(text("SELECT count(*) FROM projects")).scalar_one() == 1
             assert connection.execute(text("SELECT count(*) FROM principals")).scalar_one() == 1

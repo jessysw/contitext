@@ -23,6 +23,8 @@ Development toward 0.8 is described in the [self-hosted release plan](docs/v0.8-
 Features marked **Unreleased** are not included in the published 0.7.1 package.
 Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).
 
+> Unreleased Workspace development: see [workspaces and project namespaces](docs/workspaces.md). Published 0.7.1 behavior is unchanged.
+
 ## Installation options
 
 Both options run the same Contitext implementation and expose the same eight MCP

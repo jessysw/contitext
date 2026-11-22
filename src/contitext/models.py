@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
@@ -15,10 +15,36 @@ class Base(DeclarativeBase):
     pass
 
 
+class Workspace(Base):
+    __tablename__ = "workspaces"
+    __table_args__ = (CheckConstraint("slug ~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' AND length(slug) <= 128", name="ck_workspaces_slug"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, server_default=text("gen_random_uuid()"))
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class WorkspaceMember(Base):
+    __tablename__ = "workspace_members"
+    __table_args__ = (CheckConstraint("role IN ('member', 'owner')", name="ck_workspace_members_role"),)
+
+    workspace_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="CASCADE"), primary_key=True)
+    principal_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("principals.id", ondelete="CASCADE"), primary_key=True)
+    role: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class Project(Base):
     __tablename__ = "projects"
 
-    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "slug", name="uq_projects_workspace_slug"),
+        CheckConstraint("slug ~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' AND length(slug) <= 128", name="ck_projects_slug"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4, server_default=text("gen_random_uuid()"))
+    workspace_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False)
+    slug: Mapped[str] = mapped_column(Text, nullable=False)
     display_name: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -36,7 +62,7 @@ class ProjectACL(Base):
     __tablename__ = "project_acl"
     __table_args__ = (CheckConstraint("role IN ('reader', 'writer', 'owner')", name="ck_project_acl_role"),)
 
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
     principal_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("principals.id", ondelete="CASCADE"), primary_key=True)
     role: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -70,7 +96,7 @@ class ScopeBinding(Base):
 
     principal_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("principals.id", ondelete="CASCADE"), primary_key=True)
     scope_id: Mapped[str] = mapped_column(Text, primary_key=True)
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     session_id: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -87,7 +113,7 @@ class ContextEvent(Base):
     )
 
     event_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     principal_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("principals.id", ondelete="RESTRICT"), nullable=False)
     scope_id: Mapped[str] = mapped_column(Text, nullable=False)
     session_id: Mapped[str] = mapped_column(Text, nullable=False)
@@ -105,7 +131,7 @@ class ContextEvent(Base):
 class ProjectionOffset(Base):
     __tablename__ = "projection_offsets"
 
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
     last_event_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_event_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("context_events.event_id", ondelete="SET NULL"), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

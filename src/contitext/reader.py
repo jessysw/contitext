@@ -49,13 +49,12 @@ def snapshot(engine, identity, project_ids: list[str] | None = None) -> list[dic
         session.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
         if session.get(Principal, identity.principal_id) is None:
             raise AuthenticationError("authenticated principal is not provisioned")
-        rows = session.execute(select(Project, ProjectACL.role).join(ProjectACL).where(
-            ProjectACL.principal_id == identity.principal_id,
-        ).order_by(Project.id)).all()
-        allowed = {p.id for p, _ in rows}
-        if project_ids is not None and set(project_ids) - allowed:
-            raise ProjectNotFoundError("project not found or not accessible")
-        selected = [p.id for p, _ in rows if project_ids is None or p.id in project_ids]
+        from contitext.namespaces import ProjectResolver
+        resolver = ProjectResolver()
+        rows = session.execute(resolver.authorized(identity.principal_id).order_by(Project.id)).all()
+        selected = {p.id for p, _, _ in rows}
+        if project_ids is not None:
+            selected = {resolver.resolve(session, identity.principal_id, ref, lock=False).id for ref in project_ids}
         events = defaultdict(list)
         if selected:
             for e in session.scalars(select(ContextEvent).where(
@@ -66,8 +65,8 @@ def snapshot(engine, identity, project_ids: list[str] | None = None) -> list[dic
                     "created_at": e.created_at.astimezone(timezone.utc).isoformat(),
                     "agent_id": e.agent_id, "source_kind": e.source_kind, "source_id": e.source_id,
                 })
-        return [{"id": p.id, "name": p.display_name, "status": p.status, "role": role,
-                 "events": events[p.id]} for p, role in rows if p.id in selected]
+        return sorted([{"id": resolver.reference(p, w), "name": p.display_name, "status": p.status, "role": role,
+                        "events": events[p.id]} for p, w, role in rows if p.id in selected], key=lambda p: p["id"])
 
 
 def render_payload(payload: dict) -> str:

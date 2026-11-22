@@ -58,6 +58,14 @@ class Settings:
         if testing and "test" not in database_url.rsplit("/", 1)[-1].lower():
             raise ConfigurationError("test database URL must name a dedicated test database")
 
+        workspace = values.get("CONTITEXT_COMPATIBILITY_WORKSPACE", "").strip()
+        if workspace:
+            from contitext.namespaces import validate_slug
+            try:
+                validate_slug(workspace)
+            except ValueError as exc:
+                raise ConfigurationError("invalid CONTITEXT_COMPATIBILITY_WORKSPACE") from exc
+
         token_store = None
         if auth_tokens_json and auth_mode == "config":
             try:

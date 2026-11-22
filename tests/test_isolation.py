@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 import json
 from uuid import uuid4
 
@@ -37,14 +40,15 @@ def test_unknown_and_unauthorized_projects_are_indistinguishable(
     try:
         with engine.begin() as connection:
             connection.execute(
-                text("INSERT INTO projects (id, display_name, status) VALUES ('alpha', 'Alpha', 'active')")
+                text("INSERT INTO projects (slug, workspace_id, display_name, status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001', 'Alpha', 'active')")
             )
             connection.execute(
                 text("INSERT INTO principals (id, name) VALUES (:id, 'Allowed'), (:denied, 'Denied')"),
                 {"id": allowed, "denied": denied},
             )
+            seed_members(connection)
             connection.execute(
-                text("INSERT INTO project_acl (project_id, principal_id, role) VALUES ('alpha', :id, 'reader')"),
+                text("INSERT INTO project_acl (project_id, principal_id, role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :id, 'reader')"),
                 {"id": allowed},
             )
 

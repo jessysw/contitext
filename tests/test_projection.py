@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
@@ -24,9 +27,10 @@ def setup(database_url: str, tmp_path: Path):
     owner = PrincipalIdentity(uuid4(), "Owner")
     writer = PrincipalIdentity(uuid4(), "Writer")
     with engine.begin() as connection:
-        connection.execute(text("INSERT INTO projects (id,display_name,status) VALUES ('alpha','Alpha','active')"))
+        connection.execute(text("INSERT INTO projects (slug, workspace_id,display_name,status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001','Alpha','active')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:owner,'Owner'),(:writer,'Writer')"), {"owner": owner.principal_id, "writer": writer.principal_id})
-        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:owner,'owner'),('alpha',:writer,'writer')"), {"owner": owner.principal_id, "writer": writer.principal_id})
+        seed_members(connection)
+        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:owner,'owner'),((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:writer,'writer')"), {"owner": owner.principal_id, "writer": writer.principal_id})
     project = tmp_path / "projects" / "alpha"
     (project / "HANDOFFS").mkdir(parents=True)
     curated = {}
@@ -75,7 +79,7 @@ def test_fresh_repeated_partial_restart_and_curated_preservation(migrated_databa
 
         # Simulate an offset lag after files were atomically committed; markers prevent duplication.
         with engine.begin() as connection:
-            connection.execute(text("DELETE FROM projection_offsets WHERE project_id='alpha'"))
+            connection.execute(text("DELETE FROM projection_offsets WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')"))
         restarted = ContextService(Repository(create_session_factory(engine)), Projector(create_session_factory(engine), tmp_path / "projects"))
         recovered = restarted.project_context(owner, "alpha")
         assert len(recovered.projected_event_ids) == 5 and recovered.files_changed == []

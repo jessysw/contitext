@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
@@ -20,17 +23,15 @@ def seed_access(database_url: str) -> tuple[PrincipalIdentity, PrincipalIdentity
     try:
         with engine.begin() as connection:
             connection.execute(
-                text("""INSERT INTO projects (id, display_name, status)
-                VALUES ('alpha', 'Alpha', 'active'), ('beta', 'Beta', 'active')""")
+                text("INSERT INTO projects (slug, workspace_id, display_name, status)\n                VALUES ('alpha', '00000000-0000-4000-8000-000000000001', 'Alpha', 'active'), ('beta', '00000000-0000-4000-8000-000000000001', 'Beta', 'active')")
             )
             connection.execute(
                 text("INSERT INTO principals (id, name) VALUES (:first, 'First'), (:second, 'Second')"),
                 {"first": first.principal_id, "second": second.principal_id},
             )
+            seed_members(connection)
             connection.execute(
-                text("""INSERT INTO project_acl (project_id, principal_id, role)
-                VALUES ('alpha', :first, 'reader'), ('beta', :first, 'writer'),
-                       ('beta', :second, 'reader')"""),
+                text("INSERT INTO project_acl (project_id, principal_id, role)\n                VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :first, 'reader'), ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :first, 'writer'),\n                       ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :second, 'reader')"),
                 {"first": first.principal_id, "second": second.principal_id},
             )
     finally:

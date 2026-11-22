@@ -16,12 +16,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from contitext.auth import AuthenticationError
 from contitext.config import ConfigurationError, Settings
 from contitext.db import create_database_engine, create_session_factory
-from contitext.models import Principal, Project, ProjectACL
+from contitext.models import Principal, Project, ProjectACL, Workspace, WorkspaceMember
+from contitext.namespaces import ProjectResolver
+from contitext.workspaces import create_workspace, workspace_for_admin, change_membership
 
 
 class SeedProject(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$")
     display_name: str = Field(min_length=1)
     status: str = Field(min_length=1)
 
@@ -68,36 +70,32 @@ def seed_database(database_url: str, document: SeedDocument, *, if_empty: bool =
                 session.execute(text("LOCK TABLE projects, principals IN SHARE ROW EXCLUSIVE MODE"))
                 if session.execute(select(Project.id).limit(1)).first() or session.execute(select(Principal.id).limit(1)).first():
                     return {"projects": 0, "principals": 0, "acls": 0}
-            for item in document.projects:
-                session.execute(
-                    insert(Project)
-                    .values(id=item.id, display_name=item.display_name, status=item.status)
-                    .on_conflict_do_update(
-                        index_elements=[Project.id],
-                        set_={"display_name": item.display_name, "status": item.status},
-                    )
-                )
+            resolver = ProjectResolver()
             for item in document.principals:
-                session.execute(
-                    insert(Principal)
-                    .values(id=item.id, name=item.name)
-                    .on_conflict_do_update(
-                        index_elements=[Principal.id], set_={"name": item.name}
-                    )
-                )
+                session.execute(insert(Principal).values(id=item.id, name=item.name).on_conflict_do_update(
+                    index_elements=[Principal.id], set_={"name": item.name}))
+            project_map = {}
+            for item in document.projects:
+                workspace_slug, slug = resolver.split(item.id)
+                workspace = session.scalar(select(Workspace).where(Workspace.slug == workspace_slug))
+                if workspace is None:
+                    raise ValueError("create the workspace before seeding projects")
+                project = session.execute(insert(Project).values(
+                    id=uuid4(), workspace_id=workspace.id, slug=slug,
+                    display_name=item.display_name, status=item.status,
+                ).on_conflict_do_update(index_elements=[Project.workspace_id, Project.slug],
+                    set_={"display_name": item.display_name, "status": item.status}).returning(Project)).scalar_one()
+                project_map[item.id] = project
             for item in document.acls:
-                session.execute(
-                    insert(ProjectACL)
-                    .values(
-                        project_id=item.project_id,
-                        principal_id=item.principal_id,
-                        role=item.role,
-                    )
-                    .on_conflict_do_update(
-                        index_elements=[ProjectACL.project_id, ProjectACL.principal_id],
-                        set_={"role": item.role},
-                    )
-                )
+                project = project_map[item.project_id]
+                # Applying an explicit operator seed provisions membership, never
+                # workspace ownership. --if-empty prevents resurrection on restart.
+                session.execute(insert(WorkspaceMember).values(
+                    workspace_id=project.workspace_id, principal_id=item.principal_id, role="member",
+                ).on_conflict_do_nothing())
+                session.execute(insert(ProjectACL).values(
+                    project_id=project.id, principal_id=item.principal_id, role=item.role,
+                ).on_conflict_do_update(index_elements=[ProjectACL.project_id, ProjectACL.principal_id], set_={"role": item.role}))
     finally:
         engine.dispose()
     return {
@@ -163,29 +161,73 @@ def add_management_commands(commands) -> None:
         if name == "grant":
             action.add_argument("--role", choices=["reader", "writer", "owner"], required=True)
 
+    workspace = commands.add_parser("workspace", help="Manage workspace membership; database operators are trusted.")
+    actions = workspace.add_subparsers(dest="action", required=True)
+    listing = actions.add_parser("list")
+    listing.add_argument("--operator", action="store_true", help="Trusted database operator: list all workspaces.")
+    create = actions.add_parser("create")
+    create.add_argument("slug")
+    create.add_argument("--name", required=True)
+    create.add_argument("--owner", type=UUID, help="Trusted operator override; defaults to the authenticated caller.")
+    member = actions.add_parser("member")
+    member_actions = member.add_subparsers(dest="member_action", required=True)
+    for name in ("list", "grant", "revoke"):
+        action = member_actions.add_parser(name)
+        action.add_argument("slug")
+        action.add_argument("--operator", action="store_true", help="Use trusted database operator authority instead of a workspace owner credential.")
+        if name != "list":
+            action.add_argument("principal_id", type=UUID)
+        if name == "grant":
+            action.add_argument("--role", choices=["member", "owner"], default="member")
 
-def _metadata(project: Project) -> dict:
-    return {"id": project.id, "display_name": project.display_name, "status": project.status}
+
+def _metadata(project: Project, workspace: Workspace, resolver: ProjectResolver) -> dict:
+    return {"id": resolver.reference(project, workspace), "uuid": str(project.id),
+            "workspace": workspace.slug, "display_name": project.display_name, "status": project.status}
 
 
 def manage(args) -> dict:
     settings = Settings.from_env(require_auth=False)
     engine = create_database_engine(settings.database_url)
+    factory = create_session_factory(engine)
+    resolver = ProjectResolver()
+
+    def caller():
+        token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
+        if not token:
+            raise AuthenticationError("configure CONTITEXT_MCP_TOKEN or use the explicit trusted operator option")
+        return settings.credential_resolver(factory).resolve(token)
+
     try:
         if args.command == "project" and args.action == "create" and args.owner is None:
-            token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
-            if not token:
-                raise AuthenticationError("configure CONTITEXT_MCP_TOKEN for the selected authentication mode, or supply --owner from principal list")
             from contitext.repository import Repository
             from contitext.schemas import CreateProjectRequest
             from contitext.service import ContextService
-            identity = settings.credential_resolver(create_session_factory(engine)).resolve(token)
-            created = ContextService(Repository(create_session_factory(engine))).create_project(
-                identity, CreateProjectRequest(project_id=args.project_id, display_name=args.name),
-            )
+            identity = caller()
+            created = ContextService(Repository(factory)).create_project(
+                identity, CreateProjectRequest(project_id=args.project_id, display_name=args.name))
             return {"id": created.project_id, "display_name": created.display_name,
                     "status": created.status, "owner": str(identity.principal_id)}
-        with create_session_factory(engine).begin() as session:
+        with factory.begin() as session:
+            if args.command == "workspace":
+                if args.action == "create":
+                    owner = args.owner or caller().principal_id
+                    workspace = create_workspace(session, args.slug, args.name, owner)
+                    return {"id": str(workspace.id), "slug": workspace.slug, "name": workspace.display_name, "owner": str(owner)}
+                identity = None if args.operator else caller().principal_id
+                if args.action == "list":
+                    statement = select(Workspace)
+                    if not args.operator:
+                        statement = statement.join(WorkspaceMember).where(WorkspaceMember.principal_id == identity)
+                    return {"workspaces": [{"id": str(w.id), "slug": w.slug, "name": w.display_name}
+                                           for w in session.scalars(statement.order_by(Workspace.slug))]}
+                if args.member_action == "list":
+                    workspace = workspace_for_admin(session, args.slug, identity, operator=args.operator)
+                    return {"members": [{"principal_id": str(m.principal_id), "role": m.role}
+                                        for m in session.scalars(select(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace.id).order_by(WorkspaceMember.principal_id))]}
+                changed = change_membership(session, args.slug, identity, args.principal_id,
+                                            args.role if args.member_action == "grant" else None, operator=args.operator)
+                return {"workspace": args.slug, "principal_id": str(args.principal_id), "changed": changed}
             if args.command == "principal":
                 if args.action == "list":
                     return {"principals": [{"id": str(p.id), "name": p.name} for p in session.scalars(select(Principal).order_by(Principal.name, Principal.id))]}
@@ -195,39 +237,47 @@ def manage(args) -> dict:
                 session.add(Principal(id=item.id, name=item.name))
                 return {"id": str(item.id), "name": item.name}
             if args.command == "project" and args.action == "list":
-                return {"projects": [_metadata(p) for p in session.scalars(select(Project).order_by(Project.id))]}
+                return {"projects": [_metadata(p, w, resolver) for p, w in session.execute(select(Project, Workspace).join(Workspace).order_by(Workspace.slug, Project.slug))]}
+            workspace_slug, slug = resolver.split(args.project_id)
+            workspace = session.scalar(select(Workspace).where(Workspace.slug == workspace_slug))
+            if workspace is None:
+                raise ValueError("workspace does not exist")
             if args.command == "project" and args.action == "create":
                 item = SeedProject(id=args.project_id, display_name=args.name, status="active")
-                if session.get(Project, item.id):
+                if session.scalar(select(Project).where(Project.workspace_id == workspace.id, Project.slug == slug)):
                     raise ValueError("project already exists; use project update for metadata changes")
-                if session.get(Principal, args.owner) is None:
-                    raise ValueError("owner principal does not exist")
-                project = Project(**item.model_dump())
+                if session.get(WorkspaceMember, (workspace.id, args.owner)) is None:
+                    raise ValueError("owner must be a workspace member")
+                project = Project(id=uuid4(), workspace_id=workspace.id, slug=slug, display_name=item.display_name, status=item.status)
                 session.add(project)
                 session.flush()
-                session.add(ProjectACL(project_id=item.id, principal_id=args.owner, role="owner"))
-                return {**_metadata(project), "owner": str(args.owner)}
-            # Serialize administrative changes to this project's grants and metadata.
-            project = session.execute(select(Project).where(Project.id == args.project_id).with_for_update()).scalar_one_or_none()
+                session.add(ProjectACL(project_id=project.id, principal_id=args.owner, role="owner"))
+                return {**_metadata(project, workspace, resolver), "owner": str(args.owner)}
+            project = session.execute(select(Project).where(Project.workspace_id == workspace.id, Project.slug == slug).with_for_update(key_share=True)).scalar_one_or_none()
             if project is None:
                 raise ValueError("project does not exist")
             if args.command == "project" and args.action == "update":
                 if args.name is None and args.status is None:
                     raise ValueError("provide --name or --status")
-                item = SeedProject(id=project.id, display_name=args.name if args.name is not None else project.display_name, status=args.status if args.status is not None else project.status)
+                item = SeedProject(id=args.project_id, display_name=args.name if args.name is not None else project.display_name, status=args.status if args.status is not None else project.status)
                 project.display_name, project.status = item.display_name, item.status
-                return _metadata(project)
+                return _metadata(project, workspace, resolver)
             if args.action in ("list", "show"):
                 grants = [{"principal_id": str(acl.principal_id), "name": name, "role": acl.role}
-                          for acl, name in session.execute(select(ProjectACL, Principal.name).join(Principal).where(ProjectACL.project_id == args.project_id).order_by(Principal.name, Principal.id))]
-                return {**_metadata(project), "access": grants}
+                          for acl, name in session.execute(select(ProjectACL, Principal.name).join(Principal).where(ProjectACL.project_id == project.id).order_by(Principal.name, Principal.id))]
+                return {**_metadata(project, workspace, resolver), "access": grants}
             if session.get(Principal, args.principal_id) is None:
                 raise ValueError("principal does not exist")
             if args.action == "grant":
-                session.execute(insert(ProjectACL).values(project_id=args.project_id, principal_id=args.principal_id, role=args.role).on_conflict_do_update(index_elements=[ProjectACL.project_id, ProjectACL.principal_id], set_={"role": args.role}))
-                return {"project_id": args.project_id, "principal_id": str(args.principal_id), "role": args.role}
-            result = session.execute(delete(ProjectACL).where(ProjectACL.project_id == args.project_id, ProjectACL.principal_id == args.principal_id))
-            return {"project_id": args.project_id, "principal_id": str(args.principal_id), "revoked": bool(result.rowcount)}
+                member = session.execute(select(WorkspaceMember).where(
+                    WorkspaceMember.workspace_id == workspace.id, WorkspaceMember.principal_id == args.principal_id,
+                ).with_for_update(read=True)).scalar_one_or_none()
+                if member is None:
+                    raise ValueError("grant workspace membership before project access")
+                session.execute(insert(ProjectACL).values(project_id=project.id, principal_id=args.principal_id, role=args.role).on_conflict_do_update(index_elements=[ProjectACL.project_id, ProjectACL.principal_id], set_={"role": args.role}))
+                return {"project_id": resolver.reference(project, workspace), "principal_id": str(args.principal_id), "role": args.role}
+            result = session.execute(delete(ProjectACL).where(ProjectACL.project_id == project.id, ProjectACL.principal_id == args.principal_id))
+            return {"project_id": resolver.reference(project, workspace), "principal_id": str(args.principal_id), "revoked": bool(result.rowcount)}
     finally:
         engine.dispose()
 

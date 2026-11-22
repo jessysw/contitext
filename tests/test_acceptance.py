@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
@@ -87,11 +90,7 @@ def test_integrated_http_mcp_concurrency_restart_isolation_and_projection(
     outsider = PrincipalIdentity(UUID("22222222-2222-4222-8222-222222222222"), "Acceptance Outsider")
     engine = create_engine(migrated_database_url, pool_size=20, max_overflow=40)
     with engine.begin() as connection:
-        connection.execute(text("""
-            INSERT INTO projects (id, display_name, status) VALUES
-              ('alpha', 'Alpha Acceptance', 'active'),
-              ('beta', 'Beta Isolated', 'active')
-        """))
+        connection.execute(text("\n            INSERT INTO projects (slug, workspace_id, display_name, status) VALUES\n              ('alpha', '00000000-0000-4000-8000-000000000001', 'Alpha Acceptance', 'active'),\n              ('beta', '00000000-0000-4000-8000-000000000001', 'Beta Isolated', 'active')\n        "))
         connection.execute(
             text("INSERT INTO principals (id, name) VALUES (:owner, :owner_name), (:outsider, :outsider_name)"),
             {
@@ -101,12 +100,9 @@ def test_integrated_http_mcp_concurrency_restart_isolation_and_projection(
                 "outsider_name": outsider.name,
             },
         )
+        seed_members(connection)
         connection.execute(
-            text("""
-                INSERT INTO project_acl (project_id, principal_id, role) VALUES
-                  ('alpha', :owner, 'owner'),
-                  ('beta', :outsider, 'owner')
-            """),
+            text("\n                INSERT INTO project_acl (project_id, principal_id, role) VALUES\n                  ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :owner, 'owner'),\n                  ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :outsider, 'owner')\n            "),
             {"owner": owner.principal_id, "outsider": outsider.principal_id},
         )
 
@@ -196,11 +192,7 @@ def test_integrated_http_mcp_concurrency_restart_isolation_and_projection(
         assert http_retry.json()["event_id"] == results[56][1]["event_id"]
 
         with engine.connect() as connection:
-            rows = connection.execute(text("""
-                SELECT event_id::text, source_kind, source_id, event_kind
-                FROM context_events WHERE project_id = 'alpha'
-                ORDER BY idempotency_key
-            """)).mappings().all()
+            rows = connection.execute(text("\n                SELECT event_id::text, source_kind, source_id, event_kind\n                FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')\n                ORDER BY idempotency_key\n            ")).mappings().all()
         assert len(rows) == 72
         assert {row["event_id"] for row in rows} == set(returned_ids)
         assert {(row["source_kind"], row["source_id"]) for row in rows} == set(SOURCE_IDS.items())
@@ -289,10 +281,10 @@ def test_integrated_http_mcp_concurrency_restart_isolation_and_projection(
 
         with engine.connect() as connection:
             assert connection.execute(text(
-                "SELECT count(*) FROM context_events WHERE project_id = 'alpha'"
+                "SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')"
             )).scalar_one() == 72
             assert connection.execute(text(
-                "SELECT count(*) FROM context_events WHERE project_id = 'beta'"
+                "SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta')"
             )).scalar_one() == 0
     finally:
         http.close()

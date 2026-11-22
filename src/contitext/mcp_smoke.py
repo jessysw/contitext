@@ -38,6 +38,10 @@ def _structured(result: Any, operation: str) -> dict[str, Any]:
 
 async def run_smoke() -> None:
     project_id = _required_env("CONTITEXT_SMOKE_PROJECT_ID")
+    from contitext.namespaces import ProjectResolver
+    resolver = ProjectResolver()
+    workspace_slug, project_slug = resolver.split(project_id)
+    canonical_reference = project_slug if workspace_slug == resolver.compatibility_workspace else project_id
     _required_env("CONTITEXT_MCP_TOKEN")
     run_id = uuid4().hex
     scope_id = f"contitext-mcp-smoke-{run_id}"
@@ -59,7 +63,7 @@ async def run_smoke() -> None:
             # The smoke command is explicitly for synthetic data in a test deployment.
             _structured(await session.call_tool("project_list", {}), "project_list")
             created = _structured(await session.call_tool("project_create", {
-                "project_id": f"smoke-{run_id}", "display_name": "Synthetic smoke project",
+                "project_id": f"{workspace_slug}/smoke-{run_id}", "display_name": "Synthetic smoke project",
             }), "project_create")
             if created.get("role") != "owner":
                 raise RuntimeError("project_create did not grant the caller ownership")
@@ -69,13 +73,13 @@ async def run_smoke() -> None:
                 "project_id": project_id,
                 "session_id": session_id,
             }), "project_bind")
-            if bound.get("project_id") != project_id:
+            if bound.get("project_id") != canonical_reference:
                 raise RuntimeError("MCP project_bind returned the wrong project")
 
             current = _structured(await session.call_tool("project_current", {
                 "scope_id": scope_id,
             }), "project_current")
-            if current.get("project_id") != project_id:
+            if current.get("project_id") != canonical_reference:
                 raise RuntimeError("MCP project_current returned the wrong project")
 
             _structured(await session.call_tool("context_get", {
@@ -126,7 +130,7 @@ async def run_smoke() -> None:
             hydrated = _structured(await session.call_tool("context_get", {
                 "project_id": project_id,
             }), "context_get")
-            if hydrated.get("overview", {}).get("project_id") != project_id:
+            if hydrated.get("overview", {}).get("project_id") != canonical_reference:
                 raise RuntimeError("MCP context_get returned the wrong project")
 
             durable = _structured(await session.call_tool("context_search", {

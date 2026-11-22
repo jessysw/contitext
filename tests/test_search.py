@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from uuid import uuid4
 
 import pytest
@@ -16,9 +19,10 @@ def build_service(database_url: str):
     engine = create_engine(database_url)
     principal = PrincipalIdentity(uuid4(), "Search User")
     with engine.begin() as connection:
-        connection.execute(text("INSERT INTO projects (id, display_name, status) VALUES ('alpha','Alpha','active'),('beta','Beta','paused')"))
+        connection.execute(text("INSERT INTO projects (slug, workspace_id, display_name, status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001','Alpha','active'),('beta', '00000000-0000-4000-8000-000000000001','Beta','paused')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'Search User')"), {"id": principal.principal_id})
-        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:id,'writer'),('beta',:id,'writer')"), {"id": principal.principal_id})
+        seed_members(connection)
+        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:id,'writer'),((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'),:id,'writer')"), {"id": principal.principal_id})
     return engine, principal, ContextService(Repository(create_session_factory(engine)))
 
 
@@ -82,6 +86,7 @@ def test_search_unknown_and_unauthorized_are_indistinguishable(migrated_database
     denied = PrincipalIdentity(uuid4(), "Denied")
     with engine.begin() as connection:
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'Denied')"), {"id": denied.principal_id})
+        seed_members(connection)
     try:
         failures = []
         for project in ("alpha", "missing"):

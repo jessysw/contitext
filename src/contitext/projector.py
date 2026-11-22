@@ -17,7 +17,8 @@ from sqlalchemy import select, text, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from contitext.auth import PrincipalIdentity, require_project_access
+from contitext.auth import PrincipalIdentity
+from contitext.namespaces import ProjectResolver
 from contitext.locking import acquire_project_transaction_lock
 from contitext.models import ContextEvent, ProjectionOffset, ProjectACL
 from contitext.schemas import ContextEventResult, ProjectionResult
@@ -43,8 +44,10 @@ class Projector:
         *,
         filesystem_hook: Callable[[str], None] | None = None,
         legacy_marker_prefixes: tuple[str, ...] = (),
+        compatibility_workspace: str | None = None,
     ) -> None:
         self._session_factory = session_factory
+        self.resolver = ProjectResolver(compatibility_workspace)
         self._projects_root = Path(projects_root).expanduser().absolute()
         self._filesystem_hook = filesystem_hook
         if any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", prefix) for prefix in legacy_marker_prefixes):
@@ -66,9 +69,10 @@ class Projector:
         changed: list[str] = []
         projected_ids = []
         with self._session_factory.begin() as session:
-            require_project_access(session, principal.principal_id, project_id, "owner")
+            project = self.resolver.resolve(session, principal.principal_id, project_id, "owner")
+            project_id = project.id
             acquire_project_transaction_lock(session, project_id)
-            with self._open_project_dir(project_id) as project_fd:
+            with self._open_project_dir(project.reference) as project_fd:
                 offset = session.get(ProjectionOffset, project_id)
                 statement = select(ContextEvent).join(
                     ProjectACL,
@@ -85,7 +89,7 @@ class Projector:
                 )).scalars())
 
                 for event in events:
-                    relative = self._project_event(project_fd, event)
+                    relative = self._project_event(project_fd, event, project.reference)
                     if relative is not None:
                         changed.append(relative)
                     projected_ids.append(event.event_id)
@@ -118,7 +122,7 @@ class Projector:
                     last_event_id = None
 
         return ProjectionResult(
-            project_id=project_id,
+            project_id=project.reference,
             projected_event_ids=projected_ids,
             files_changed=sorted(set(changed)),
             last_event_created_at=last_created_at,
@@ -127,19 +131,20 @@ class Projector:
 
     @contextmanager
     def _open_project_dir(self, project_id: str) -> Iterator[int]:
-        if not project_id or project_id in (".", "..") or "/" in project_id or "\\" in project_id:
+        parts = project_id.split("/")
+        if len(parts) > 2 or any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", p) for p in parts):
             raise ProjectionSafetyError("unsafe project path")
-        root_fd = self._open_absolute_directory(self._projects_root, "projects root")
+        directory_fd = self._open_absolute_directory(self._projects_root, "projects root")
         try:
-            project_fd = self._open_child_directory(root_fd, project_id, f"project {project_id}")
-            try:
-                if self._filesystem_hook is not None:
-                    self._filesystem_hook("project")
-                yield project_fd
-            finally:
-                os.close(project_fd)
+            for part in parts:
+                next_fd = self._open_child_directory(directory_fd, part, f"project {project_id}")
+                os.close(directory_fd)
+                directory_fd = next_fd
+            if self._filesystem_hook is not None:
+                self._filesystem_hook("project")
+            yield directory_fd
         finally:
-            os.close(root_fd)
+            os.close(directory_fd)
 
     def _open_absolute_directory(self, path: Path, label: str) -> int:
         if not path.is_absolute():
@@ -172,8 +177,9 @@ class Projector:
         except OSError as exc:
             raise ProjectionSafetyError(f"unsafe {label}: {exc}") from exc
 
-    def _project_event(self, project_fd: int, event: ContextEvent) -> str | None:
-        rendered = render_event(ContextEventResult.model_validate(event, from_attributes=True))
+    def _project_event(self, project_fd: int, event: ContextEvent, reference: str) -> str | None:
+        from contitext.repository import Repository
+        rendered = render_event(Repository._event_result(event, reference))
         markers = [f"<!-- {prefix}:event:{event.event_id}:begin -->" for prefix in self._marker_prefixes]
         if event.event_kind == "handoff":
             handoffs_fd = self._open_child_directory(project_fd, "HANDOFFS", "HANDOFFS")
