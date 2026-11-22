@@ -8,7 +8,15 @@
 - Reauthenticate database credentials for each HTTP request, MCP tool call and
   Markdown reader refresh; preserve the default configuration authentication mode.
 - Add an additive credential migration and refuse destructive downgrade once
-  credential history exists. Workspace and namespace implementation is pending.
+  credential history exists.
+- Add workspace membership, immutable project UUIDs, workspace-local slugs and
+  explicit qualified references across REST, MCP, bindings, search and exports.
+- Preserve historical data and permissions through a transactional migration;
+  add owned workspace bootstrap and read-only upgrade integrity checks.
+- Add per-client launchers and protected credential overlays so configuring a
+  second agent cannot silently change the first agent's connection.
+- Add workspace-aware diagnostics, a two-identity first-use tutorial, and
+  namespace-aware reader, installer and Registry configuration guidance.
 
 ## 0.7.1 — 2026-11-18
 

@@ -25,13 +25,30 @@ Project ID, display name, and repository are independent concepts. This release
 has no repository association field or command. A project may span multiple
 repositories or have none; working-directory changes never select a project.
 
+## Workspace-qualified references
+
+In 0.8 source, `workspace/project` is the unambiguous reference, for example
+`!! contitext create personal/research --name "Research"`. Short IDs work only
+inside the explicitly configured compatibility workspace (`personal` after fresh
+init, `legacy` after the documented upgrade). Workspace membership permits
+creation; membership plus a project ACL permits access. No config selects a chat.
+
 ## Terminal CLI
+
+Repeat `--env-file` before the subcommand to load shared configuration then a
+private client credential overlay; later files win without interpolation.
+`client-config --credential-file /absolute/agent.env` generates that launch safely.
 
 Run `contitext --help` to list commands. Use `contitext <command> --help` for
 command-specific options. Help and version output do not require a database.
 
 | Command | Purpose |
 | --- | --- |
+| `contitext workspace list` | List accessible workspaces and membership roles |
+| `contitext workspace create team --name "Team"` | Create a workspace owned by the authenticated caller |
+| `contitext workspace member grant team PRINCIPAL_UUID` | Grant membership as workspace owner |
+| `contitext credential issue PRINCIPAL_UUID --name "Agent" --output /private/agent.env` | Issue a managed credential to a new private file |
+| `contitext upgrade-check --snapshot /private/before.json` | Save a read-only integrity baseline before migration |
 | `contitext --version` | Print the installed package version |
 | `contitext init --project research --name "Research"` | Generate private `.env` and initial project seed; does not contact the database |
 | `contitext --env-file /absolute/private.env doctor` | Check configuration, schema, MCP identity, and grants without writing |

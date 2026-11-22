@@ -1,6 +1,6 @@
 # Obsidian and the Markdown reader
 
-Contitext 0.7.1 can export a human-readable copy of project state and history.
+Contitext can export a human-readable copy of project state and history.
 Open it in Obsidian or any Markdown reader without asking an agent. The exporter
 needs no Obsidian API, plugin, subscription, or LLM. Obsidian is optional.
 
@@ -67,7 +67,9 @@ Your app and database can continue running.
 ## Native Python
 
 Use the same protected configuration as the service. The configured MCP identity
-must have at least reader access to the projects you want to export:
+must have workspace membership and at least reader access to the projects you
+want to export. Add a second `--env-file /absolute/reader-token.env` before
+`export` to use a dedicated managed credential:
 
 ```sh
 contitext --env-file /absolute/private.env export --output /absolute/reader-vault
@@ -91,10 +93,10 @@ new projects created later. To choose projects explicitly, repeat `--project`:
 
 ```sh
 contitext --env-file /absolute/private.env export --output /absolute/reader-vault \
-  --project research --project documentation --watch 60
+  --project personal/research --project team/documentation --watch 60
 ```
 
-No owner UUID or conversation binding is needed. Export reads ACLs and events in
+No owner UUID or conversation binding is needed. Export reads membership, ACLs and events in
 a consistent read-only transaction. It does not change events, bindings, or
 legacy projection offsets. Export requires trusted database connectivity plus
 the configured token; it is not a new public HTTP or MCP endpoint.
@@ -113,7 +115,7 @@ Obsidian refreshes notes when external files change. See the official
 Use a **new, dedicated folder**, not an existing personal vault, source checkout,
 or old curated context folder. Contitext refuses unrelated nonempty directories,
 symlinks, concurrent exporters, and folders assigned to another identity. Obsidian's
-`.obsidian` settings are preserved. Generated project filenames contain an ID and
+`.obsidian` settings are preserved. Generated project filenames contain a qualified namespace and
 a short stable digest to avoid case-insensitive filename collisions; use the index
 for human-readable project names.
 
@@ -153,12 +155,14 @@ transfer tools if they preserve the one-way direction and private access.
   means the copy may be stale even when the last recorded result was OK.
 - A successful full refresh removes previously generated pages for revoked or
   deleted projects. A failed refresh retains prior files. Already downloaded
-  copies and separately copied content cannot be recalled by revoking an ACL.
+  copies and separately copied content cannot be recalled by revoking membership, an ACL or a credential. Token rejection fails the whole
+  refresh and retains a marked stale copy; a successful all-project refresh after
+  membership/ACL removal omits the now-inaccessible projects.
 - The exporter reads complete event history. Large deployments should select
   projects or increase the interval rather than treating this as an incremental
   database replication system.
 - This reading copy does not include arbitrary curated Markdown that was never
   recorded in the database. Keep those documents separately. The older owner-only
   REST projection into curated files remains available and unchanged.
-- No new database schema, Obsidian plugin, hosted service, or bidirectional editing
-  protocol is introduced.
+- The reader requires the matching server schema. No Obsidian plugin, hosted
+  service or bidirectional editing protocol is introduced.

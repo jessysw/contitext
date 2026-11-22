@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> None:
         prog="contitext", description="Project continuity for AI agents.",
     )
     parser.add_argument("--version", action="version", version=version("contitext"))
-    parser.add_argument("--env-file", type=Path, help="Explicit dotenv configuration file; never loaded implicitly.")
+    parser.add_argument("--env-file", type=Path, action="append", default=[], help="Explicit dotenv file; repeat for ordered overrides. Never loaded implicitly.")
     commands = parser.add_subparsers(dest="command", required=True)
     from contitext.onboarding import add_arguments
     add_arguments(commands.add_parser("init", help="Create private configuration and an initial project seed."))
@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> None:
     client.add_argument("--executable", default="contitext", help="Installed executable path on the server.")
     client.add_argument("--ssh", help="Optional existing SSH host alias or user@host.")
     client.add_argument("--compose-project", help="Compose project name when deployment uses --project-name/-p.")
+    client.add_argument("--credential-file", help="Absolute private token dotenv path on the server; overrides the shared client's token.")
     commands.add_parser("migrate", help="Apply database migrations.")
     api = commands.add_parser("serve", help="Run the REST API.")
     api.add_argument("--host", default="127.0.0.1")
@@ -69,12 +70,12 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if args.command == "export" and args.watch is not None and args.watch < 10:
         parser.error("--watch must be at least 10 seconds")
-    if args.env_file:
+    for env_file in args.env_file:
         from dotenv import dotenv_values
-        if not args.env_file.is_file():
+        if not env_file.is_file():
             parser.error("configuration file does not exist")
         try:
-            values = dotenv_values(args.env_file, interpolate=False)
+            values = dotenv_values(env_file, interpolate=False)
         except (OSError, UnicodeError):
             parser.error("cannot read configuration file")
         os.environ.update({key: value for key, value in values.items() if value is not None})

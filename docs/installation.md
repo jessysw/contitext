@@ -1,6 +1,6 @@
 # Installation and operation
 
-Contitext 0.7.1 supports two installation paths. Both use the same code, PostgreSQL
+The unreleased 0.8 source supports two installation paths. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
@@ -13,12 +13,20 @@ tested matrix. No paid service or private source repository is required.
 
 ## Option 1: Python package
 
-Install from PyPI in a virtual environment:
+For this unreleased candidate, clone the public source first and install it in a
+virtual environment. Published 0.7.1 does not include workspace/credential commands:
+
+```sh
+git clone --branch main https://github.com/jessysw/contitext.git
+cd contitext
+```
+
+Then install:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.7.1
+python -m pip install .
 ```
 
 Create a PostgreSQL 16+ database with your normal database administration tools.
@@ -68,7 +76,7 @@ Requires Docker with Compose, Git, and Python 3.11–3.14 for the dependency-fre
 bootstrap script. A separate host Python environment for Contitext is unnecessary.
 
 ```sh
-git clone --branch v0.7.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch main --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project research --name "Research"
 docker compose up --build -d --wait
@@ -95,6 +103,10 @@ If you used `docker compose -p NAME`, add `--compose-project NAME` when generati
 client configuration. For the synthetic demo, use the default `demo` bootstrap
 and follow the [README quick start](../README.md).
 
+For separate identities and private credential overlays, follow
+[Two independently authenticated agents](two-agents.md). Existing deployments
+must follow [the 0.8 upgrade guide](upgrading-to-0.8.md) before changing binaries.
+
 ## Agent installation
 
 Use the [repeatable adapter installer](agent-installation.md) to configure Codex,
@@ -113,8 +125,9 @@ steps. The [command reference](commands.md) lists options and chat commands.
 Operator commands require trusted database access; they are not MCP tools.
 `admin seed` explicitly upserts the supplied document and does not revoke omitted
 entries. `admin seed --if-empty` preserves later administration on an established
-deployment. Configured bearer credentials map to principal UUIDs; project ACLs
-control what those identities can access. A project is never selected for a
+deployment. Credentials map to principal UUIDs; both workspace membership and project ACLs
+control access. Fresh bootstrap creates the explicitly configured `personal`
+workspace, and qualified references use `workspace/project`. See [workspaces](workspaces.md). A project is never selected for a
 conversation merely because it was created or exists in a working directory.
 
 ## Remote use
@@ -126,7 +139,8 @@ on that server. No particular host, key, account, or path is built into the pack
 
 For remote REST access, use TLS and appropriate network controls. Do not expose
 PostgreSQL publicly. Docker and database access are trusted operator capabilities,
-not a tenant isolation boundary. Token changes require REST/MCP process restarts;
+not a tenant isolation boundary. Config-mode token changes require process restarts. In database mode, revocation
+is checked on each invocation; see [credentials](credentials.md). Membership and
 ACL changes are checked on subsequent requests without restarting.
 
 ## Human-readable Markdown reader

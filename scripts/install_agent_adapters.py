@@ -45,7 +45,8 @@ def migrated_entry(servers, wrapper, legacy):
     previous=servers[matches[0]] if matches else {}
     if not isinstance(previous,dict):raise InstallError('server configuration must be an object')
     previous=dict(previous)
-    if matches==['contitext'] and previous.get('command')!=str(wrapper):
+    managed_launchers = {str(wrapper), str(wrapper.parent/'contitext-mcp-client')}
+    if matches==['contitext'] and previous.get('command') not in managed_launchers:
         raise InstallError('existing Contitext entry uses another launcher; preserve it or migrate explicitly')
     for key in ['command','args','env','env_vars','url','headers','bearer_token_env_var','cwd','type','transport']:
         previous.pop(key,None)
@@ -210,9 +211,11 @@ def main(argv=None):
         for name in args.replace_server+args.replace_skill:
             if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',name):raise InstallError('invalid legacy name')
         protocol=(Path(__file__).resolve().parent.parent/'integrations/PROJECT-CONTEXT-PROTOCOL.md').read_text()
-        wrapper=home/'.local/bin/contitext-mcp-client'
-        read(wrapper)
-        plan={wrapper:('#!/bin/sh\nset -eu\nexec '+shlex.join([config['command'],*config.get('args',[])])+'\n').encode()}
+        wrappers={target:home/('.local/bin/contitext-mcp-'+target) for target in dict.fromkeys(args.target)}
+        plan={}
+        for wrapper in wrappers.values():
+            read(wrapper)
+            plan[wrapper]=('#!/bin/sh\nset -eu\nexec '+shlex.join([config['command'],*config.get('args',[])])+'\n').encode()
         instruction_paths={'codex':home/'.codex/AGENTS.md','claude':home/'.claude/CLAUDE.md','zed':home/'.config/zed/AGENTS.md','hermes':home/'.hermes/skills/contitext/SKILL.md','openclaw':home/'.openclaw/skills/contitext/SKILL.md'}
         config_paths={'codex':home/'.codex/config.toml','claude':home/'.claude.json','zed':home/'.config/zed/settings.json','hermes':home/'.hermes/config.yaml','openclaw':home/'.openclaw/openclaw.json'}
         yaml_python=args.yaml_python
@@ -220,6 +223,7 @@ def main(argv=None):
             candidate=home/'.hermes/hermes-agent/venv/bin/python'
             yaml_python=str(candidate) if candidate.is_file() else sys.executable
         for target in dict.fromkeys(args.target):
+            wrapper=wrappers[target]
             path=instruction_paths[target];safe_path(path,home)
             existing=read(path)
             if target in ('hermes','openclaw'):
@@ -263,8 +267,8 @@ def main(argv=None):
             for path,data in changes.items():
                 if (path.read_bytes() if path.exists() else None)!=originals[path]:raise InstallError('configuration changed during installation; backups retained')
                 if data is None:path.unlink()
-                else:atomic(path,data,0o755 if path==wrapper else (stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600))
-        print(json.dumps({'status':'dry-run' if args.dry_run else 'installed','targets':list(dict.fromkeys(args.target)),'changed':[str(p) for p in changes],'backup':str(backup) if changes and not args.dry_run else None,'launcher':str(wrapper),'reload_required':bool(changes)},indent=2))
+                else:atomic(path,data,0o755 if path in wrappers.values() else (stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600))
+        print(json.dumps({'status':'dry-run' if args.dry_run else 'installed','targets':list(dict.fromkeys(args.target)),'changed':[str(p) for p in changes],'backup':str(backup) if changes and not args.dry_run else None,'launchers':{k:str(v) for k,v in wrappers.items()},'reload_required':bool(changes)},indent=2))
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as exc:
         # Configuration can contain secrets. Do not print parser payloads or child stderr.
         message=str(exc) if isinstance(exc,InstallError) else 'invalid configuration or inaccessible file; no credentials printed'

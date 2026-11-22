@@ -1,6 +1,6 @@
 # Self-hosting and replacing an existing deployment
 
-This guide covers Contitext 0.7.1 for trusted personal or small-team deployments.
+This guide covers the unreleased 0.8 source for trusted personal or small-team deployments.
 Choose the [Python package or Docker Compose installation](installation.md); both
 provide the commands below. PostgreSQL 16+ is required. No private repository,
 cloud account, LLM API key, or hosted control plane is needed.
@@ -57,7 +57,8 @@ contitext project list
 contitext project show client-work
 contitext project update client-work --status paused
 contitext principal create "Second operator"
-contitext access grant client-work PRINCIPAL_UUID --role reader
+contitext workspace member grant personal PRINCIPAL_UUID
+contitext access grant personal/client-work PRINCIPAL_UUID --role reader
 contitext access list client-work
 contitext access revoke client-work PRINCIPAL_UUID
 ```
@@ -72,21 +73,21 @@ A status such as `paused` is metadata, not a permission switch.
 
 Project discovery and self-owned creation are also exposed through MCP/REST.
 Principal administration, ACL management, and creating on another owner's behalf remain trusted database-operator capabilities. An authenticated,
-provisioned identity may create its own projects even before it has any grants;
+provisioned identity with workspace membership may create projects in that workspace
+even before it has any project grants;
 this grants no access to existing projects. A bearer `owner` role does not grant
 shell/database administration. For an explicit operator override, use
 `project create ID --name NAME --owner UUID`; obtain UUIDs with `principal list`.
 An operator can revoke the last owner and recover with `access grant`; history
 is not deleted. Omitting an entry from a seed does not revoke it.
 
-Principal creation does not issue a credential. For separate caller identities,
-generate a random token privately, add its `{principal_id, name}` mapping to
-`CONTITEXT_AUTH_TOKENS` in the protected server configuration, and give the client
-that token as `CONTITEXT_MCP_TOKEN`. Restart/recreate the REST server and all MCP
-processes after token additions/removals; tokens are loaded at process start.
-For Compose, use `docker compose up -d --force-recreate app`, then reconnect MCP
-clients. ACL changes take effect without that restart. A single trusted operator
-may use the bootstrap identity in multiple agents with distinct scope IDs.
+Principal creation does not issue a credential. Use the complete
+[two-agent setup](two-agents.md) to enable database-mode credentials, grant
+membership and project ACLs, and install separate connections. Database-mode
+revocation takes effect on the next invocation, including an existing MCP session.
+Config-mode token mapping changes require process restarts. A single trusted
+operator can also share one identity, but separate credentials/principals make
+agent-specific revocation and project permissions possible.
 This release does not provide OAuth, a token administration UI, or tenant hosting.
 
 ## Connect clients and verify continuity

@@ -28,7 +28,7 @@ def test_full_and_backup(tmp_path,capsys):
  a.main(argv+['--dry-run']);assert not (home/'.local').exists();capsys.readouterr()
  a.main(argv); first=json.loads(capsys.readouterr().out)
  assert (Path(first['backup'])/'.codex/config.toml').read_text()=='model="original"\n'
- assert subprocess.check_output([str(home/'.local/bin/contitext-mcp-client')],text=True).strip()=='literal $(false); `false`'
+ assert subprocess.check_output([str(home/'.local/bin/contitext-mcp-codex')],text=True).strip()=='literal $(false); `false`'
  a.main(argv);assert json.loads(capsys.readouterr().out)['changed']==[]
 
 def test_symlink_and_ambiguity(tmp_path):
@@ -60,7 +60,28 @@ def test_concurrent_change_is_preserved(tmp_path, monkeypatch, capsys):
     with pytest.raises(SystemExit):
         a.main(['--home',str(home),'--config',str(config),'--target','codex','--target','claude'])
     assert codex.read_text()=='model="concurrent"\n'
-    assert not (home/'.local/bin/contitext-mcp-client').exists()
+    assert not (home/'.local/bin/contitext-mcp-codex').exists()
+
+
+def test_per_agent_launchers_preserve_other_client_and_old_shared_launcher(tmp_path, capsys):
+    home=tmp_path/'home'; (home/'.local/bin').mkdir(parents=True)
+    shared=home/'.local/bin/contitext-mcp-client'
+    shared.write_text('#!/bin/sh\nexec /bin/echo old\n')
+    (home/'.codex').mkdir()
+    (home/'.codex/config.toml').write_text('[mcp_servers.contitext]\ncommand='+json.dumps(str(shared))+'\n')
+    config=tmp_path/'client.json'
+    config.write_text('{"command":"/bin/echo","args":["agent-a"]}')
+    a.main(['--home',str(home),'--config',str(config),'--target','codex'])
+    capsys.readouterr()
+    first=(home/'.local/bin/contitext-mcp-codex').read_bytes()
+    config.write_text('{"command":"/bin/echo","args":["agent-b"]}')
+    a.main(['--home',str(home),'--config',str(config),'--target','claude'])
+    result=json.loads(capsys.readouterr().out)
+    assert set(result['launchers'])=={'claude'}
+    assert (home/'.local/bin/contitext-mcp-codex').read_bytes()==first
+    assert shared.read_text()=='#!/bin/sh\nexec /bin/echo old\n'
+    for target, expected in [('codex','agent-a'),('claude','agent-b')]:
+        assert subprocess.check_output([str(home/('.local/bin/contitext-mcp-'+target))],text=True).strip()==expected
 
 
 def test_managed_skill_migration_is_repeatable(tmp_path, capsys):

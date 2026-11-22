@@ -17,12 +17,21 @@
       "version": "0.7.1",
       "runtimeHint": "uvx",
       "runtimeArguments": [
-        {"type": "named", "name": "--python", "value": "3.12"}
+        {
+          "type": "named",
+          "name": "--python",
+          "value": "3.12"
+        }
       ],
       "packageArguments": [
-        {"type": "positional", "value": "mcp"}
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
       ],
-      "transport": {"type": "stdio"},
+      "transport": {
+        "type": "stdio"
+      },
       "environmentVariables": [
         {
           "name": "DATABASE_URL",
@@ -33,17 +42,31 @@
         },
         {
           "name": "CONTITEXT_AUTH_TOKENS",
-          "description": "JSON token store mapping credentials to seeded principal_id and name values. See setup instructions.",
+          "description": "Required only in config authentication mode: protected token-to-principal JSON mapping.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "CONTITEXT_MCP_TOKEN",
+          "description": "This client credential, valid in the selected authentication mode. Membership and project ACLs are required.",
           "format": "string",
           "isRequired": true,
           "isSecret": true
         },
         {
-          "name": "CONTITEXT_MCP_TOKEN",
-          "description": "This client's credential from CONTITEXT_AUTH_TOKENS; its principal must have explicit project ACLs.",
+          "name": "CONTITEXT_AUTH_MODE",
+          "description": "config (default) or database. Database mode accepts managed credentials only.",
           "format": "string",
-          "isRequired": true,
-          "isSecret": true
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "CONTITEXT_COMPATIBILITY_WORKSPACE",
+          "description": "Optional explicit workspace for short project IDs. Without it use workspace/project. Never selects a conversation project.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": false
         }
       ]
     }
