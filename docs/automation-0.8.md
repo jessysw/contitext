@@ -46,9 +46,12 @@ support rather than claiming every MCP client provides the same lifecycle.
 
 ## Evidence and status
 
-- A: implemented on the project-resolution branch; review, full CI and merge
-  tracked in the associated PR. See [project resolution](project-resolution.md).
-- B, C, D: planned; acceptance criteria above are not completion claims.
+- A: merged in [PR #15](https://github.com/jessysw/contitext/pull/15); all seven CI
+  jobs passed. See [project resolution](project-resolution.md).
+- B: implemented in development; see [session start hooks](session-hooks.md).
+  The associated PR tracks full CI and merge. Native hooks cover Codex and Claude;
+  other MCP clients retain the explicit workflow.
+- C, D: planned; acceptance criteria above are not completion claims.
 - Published baseline: [0.8.0 release](https://github.com/jessysw/contitext/releases/tag/v0.8.0).
 - Existing self-hosting and migration work: [0.8.0 plan](v0.8-plan.md).
 

@@ -37,6 +37,14 @@ def main(argv: list[str] | None = None) -> None:
     add_management_commands(commands)
     from contitext.credentials import add_arguments as add_credentials
     add_credentials(commands)
+    hooks = commands.add_parser("hooks", help="Install opt-in session start hooks (unreleased).")
+    hook_commands = hooks.add_subparsers(dest="hook_action", required=True)
+    hook_install = hook_commands.add_parser("install")
+    hook_install.add_argument("--client", choices=["codex", "claude"], required=True)
+    hook_install.add_argument("--config", type=Path, required=True, help="Explicit client hooks/settings JSON to merge.")
+    hook_install.add_argument("--connection", type=Path, required=True)
+    hook_install.add_argument("--mappings", type=Path, required=True)
+    hook_install.add_argument("--dry-run", action="store_true")
     mappings = commands.add_parser("mapping", help="Manage explicit local workspace/project mappings (unreleased).")
     mapping_commands = mappings.add_subparsers(dest="mapping_action", required=True)
     for action in ("add", "list", "remove"):
@@ -101,6 +109,14 @@ def main(argv: list[str] | None = None) -> None:
         except (OSError, UnicodeError):
             parser.error("cannot read configuration file")
         os.environ.update({key: value for key, value in values.items() if value is not None})
+    if args.command == "hooks":
+        from contitext.hook_config import install
+        from contitext.resolution import ResolutionError
+        try:
+            print(json.dumps(install(args), indent=2))
+        except (ResolutionError, OSError):
+            parser.error("hook configuration failed; check trusted paths, permissions and existing hooks")
+        return
     if args.command in {"mapping", "resolve"}:
         import asyncio
         from contitext.resolution import ResolutionError, edit_mapping
