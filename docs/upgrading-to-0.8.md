@@ -1,12 +1,12 @@
 # Upgrade and recovery for Workspace support
 
-Use this procedure to rehearse the 0.8.0rc1 candidate against a copy of
-your database. The published 0.7.1 service has not been changed automatically.
-Complete the release acceptance gates before a live cutover.
+Use this procedure to rehearse an upgrade to 0.8.0 against a copy of your database.
+Installing the release does not migrate an existing database or restart a running
+service. Complete the deployment checks below before a live cutover.
 
 ## New installation
 
-Candidate `contitext init` creates private configuration for one owned
+In 0.8.0, `contitext init` creates private configuration for one owned
 `personal` workspace and the requested initial project. The slug is configurable:
 
 ```sh

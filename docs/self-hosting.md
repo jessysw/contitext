@@ -1,6 +1,6 @@
 # Self-hosting and replacing an existing deployment
 
-This guide covers Contitext 0.8.0rc1 for trusted personal or small-team deployments.
+This guide covers Contitext 0.8.0 for trusted personal or small-team deployments.
 Choose the [Python package or Docker Compose installation](installation.md); both
 provide the commands below. PostgreSQL 16+ is required. No private repository,
 cloud account, LLM API key, or hosted control plane is needed.

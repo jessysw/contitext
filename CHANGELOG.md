@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — 2026-11-22
+
+- Release workspace isolation, managed credentials, upgrade integrity checks and
+  the complete native/Docker two-agent workflow as the normal 0.8 release.
+- Align package, Registry, installation examples and security documentation with
+  the stable version; preserve the runtime behavior validated for 0.8.0rc1.
+- Use maintainer review, full CI and documented operational rehearsals for release
+  acceptance. External testers and prerelease numbering are optional.
+
 ## 0.8.0rc1 — 2026-11-22 (prerelease)
 
 - Define the self-hosted release plan, workspace/identity boundaries and acceptance gates.
