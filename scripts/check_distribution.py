@@ -25,6 +25,8 @@ for name, path in archives.items():
             assert '<!-- mcp-name: io.github.jessysw/contitext -->' in metadata.get_payload(), 'missing Registry ownership marker'
             for source in (root / 'src/contitext').rglob('*.py'):
                 assert archive.read(source.relative_to(root / 'src').as_posix()) == source.read_bytes(), 'wheel source differs from checkout'
+            for source in (root / 'src/contitext/plugin_templates').glob('*.mjs'):
+                assert archive.read(source.relative_to(root / 'src').as_posix()) == source.read_bytes(), 'missing or stale native plugin template'
         assert any(x.endswith('contitext/migrations/versions/0003_workspaces.py') for x in names), 'missing migration'
         assert any(x.endswith('contitext/migrations/versions/0004_context_metadata.py') for x in names), 'missing context metadata migration'
         assert any(x.endswith('contitext/upgrade.py') for x in names), 'missing upgrade command'
@@ -35,6 +37,7 @@ for name, path in archives.items():
             names = [x.name for x in members]
         assert any(x.endswith('/docs/acceptance-0.8.md') for x in names), 'missing acceptance guide'
         assert any(x.endswith('/scripts/check_distribution.py') for x in names), 'missing distribution check'
+        assert any(x.endswith('/plugin_templates/opencode.mjs') for x in names), 'missing native plugin templates'
     for member in names:
         parts = PurePosixPath(member).parts
         assert not member.startswith('/') and '..' not in parts, 'unsafe archive path'

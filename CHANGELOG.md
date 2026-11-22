@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Export optional native adapters for Hermes memory-provider lifecycle, OpenClaw
+  prompt/finalization hooks, and OpenCode 2 context/events. Preserve explicit
+  scope bindings, keep compression lineage private, and require runtime-owned
+  activation and permission review.
+
 - Add native lifecycle adapters for Copilot CLI, Cursor desktop and Gemini CLI,
   including bounded startup, exact conversation identity, candidate capture where
   final response text is available, and safe retries without transcript ingestion.
