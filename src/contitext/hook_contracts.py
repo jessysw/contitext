@@ -2,6 +2,7 @@
 from pathlib import Path
 
 CLIENTS = ('codex', 'claude', 'copilot', 'cursor', 'gemini')
+PLUGIN_CLIENTS = ('hermes', 'openclaw', 'opencode')
 EVENTS = {
     'copilot': {'sessionStart': 'SessionStart', 'agentStop': 'Stop',
                 'preCompact': 'PreCompact', 'sessionEnd': 'SessionEnd'},
@@ -15,7 +16,7 @@ EVENTS = {
 def normalize(client, event, native_event=None):
     if not isinstance(event, dict):
         raise ValueError('invalid event')
-    if client in ('codex', 'claude'):
+    if client in ('codex', 'claude', *PLUGIN_CLIENTS):
         return event
     name = native_event or event.get('hook_event_name')
     expected = EVENTS[client].get(name)

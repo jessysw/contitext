@@ -13,8 +13,8 @@ import sys
 
 from contitext.hook_transport import hook_connection
 from contitext.resolution import load_connection, load_mappings
-from contitext.session_client import call, resolve_with_client
-from contitext.hook_contracts import CLIENTS, normalize, output
+from contitext.session_client import UnboundScope, call, resolve_with_client
+from contitext.hook_contracts import CLIENTS, PLUGIN_CLIENTS, normalize, output
 
 MAX_INPUT = 65536
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,199}\Z')
@@ -24,7 +24,7 @@ def identity(client, event):
     session = event.get('session_id')
     if not isinstance(session, str) or not ID.fullmatch(session):
         raise ValueError('unsupported session identity')
-    conversation = event.get('conversation_id') if client == 'cursor' else session
+    conversation = event.get('conversation_id') if client in ('cursor', 'hermes') else session
     if not isinstance(conversation, str) or not ID.fullmatch(conversation):
         raise ValueError('unsupported conversation identity')
     return f'{client}:{conversation}', session
@@ -58,12 +58,19 @@ async def session_start(args, event, connector=hook_connection):
         return {}
     scope, session = identity(args.client, event)
     cwd = event.get('cwd')
-    if not isinstance(cwd, str) or not Path(cwd).is_absolute():
-        return {}
+    directory = Path(cwd) if isinstance(cwd, str) and Path(cwd).is_absolute() else None
     connection = load_connection(args.connection)
     async with connector(connection) as client:
-        resolved = await resolve_with_client(client, lambda: load_mappings(args.mappings, connection),
-                                             Path(cwd), scope, session, bind=True)
+        if directory is None:
+            # A missing/ambiguous cwd cannot select a project. An explicit runtime
+            # binding can still hydrate without inventing any filesystem identity.
+            try:
+                resolved = {'status': 'bound', 'binding': await call(client, 'project_current', {'scope_id': scope})}
+            except UnboundScope:
+                return {}
+        else:
+            resolved = await resolve_with_client(client, lambda: load_mappings(args.mappings, connection),
+                                                 directory, scope, session, bind=True)
         if resolved['status'] != 'bound':
             return {}
         binding = resolved['binding']
@@ -139,7 +146,7 @@ def main(argv=None):
     parser.add_argument('--state-dir', type=Path, help='Opt in to private progress capture and replay.')
     parser.add_argument('--task-id', help='Explicit task identity; never inferred from a title or directory.')
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('--client', choices=CLIENTS, required=True)
+    parser.add_argument('--client', choices=CLIENTS + PLUGIN_CLIENTS, required=True)
     parser.add_argument('--event', help='Native event name for event-name-free runtimes.')
     parser.add_argument('--connection', type=Path, required=True)
     parser.add_argument('--mappings', type=Path, required=True)

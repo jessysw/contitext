@@ -65,8 +65,9 @@ explicit alternate OS-home installation root, not a runtime profile selector.
 
 Native hooks cover Codex and Claude Code through [session hooks](session-hooks.md),
 and Copilot CLI, Cursor desktop and Gemini CLI through their
-[native command contracts](command-hook-clients.md). Plugin adapters remain tracked
-in [issue #20](https://github.com/jessysw/contitext/issues/20). Do not install one
+[native command contracts](command-hook-clients.md). Optional
+[native plugin adapters](plugin-clients.md) cover Hermes, OpenClaw and OpenCode 2.
+Review their distinct activation and identity boundaries. Do not install one
 runtime's hook configuration into another runtime.
 
 Installer regression tests exercise real generated launchers, literal argument

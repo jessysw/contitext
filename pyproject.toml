@@ -51,6 +51,9 @@ release = ["build>=1.2,<2.0", "twine>=6,<7"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+contitext = ["plugin_templates/*.py", "plugin_templates/*.mjs"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

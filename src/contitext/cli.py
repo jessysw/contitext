@@ -37,10 +37,20 @@ def main(argv: list[str] | None = None) -> None:
     add_management_commands(commands)
     from contitext.credentials import add_arguments as add_credentials
     add_credentials(commands)
+    plugins = commands.add_parser('plugins', help='Export optional native runtime adapters for review.')
+    plugin_commands = plugins.add_subparsers(dest='plugin_action', required=True)
+    plugin_export = plugin_commands.add_parser('export')
+    plugin_export.add_argument('--client', choices=['hermes','openclaw','opencode'], required=True)
+    plugin_export.add_argument('--output', type=Path, required=True)
+    plugin_export.add_argument('--connection', type=Path, required=True)
+    plugin_export.add_argument('--mappings', type=Path, required=True)
+    plugin_export.add_argument('--checkpoints', action='store_true')
+    plugin_export.add_argument('--state-dir', type=Path)
+    plugin_export.add_argument('--dry-run', action='store_true')
     hooks = commands.add_parser("hooks", help="Install opt-in session start hooks.")
     hook_commands = hooks.add_subparsers(dest="hook_action", required=True)
     hook_install = hook_commands.add_parser("install")
-    from contitext.hook_contracts import CLIENTS
+    from contitext.hook_contracts import CLIENTS, PLUGIN_CLIENTS
     hook_install.add_argument("--client", choices=CLIENTS, required=True)
     hook_install.add_argument("--config", type=Path, required=True, help="Explicit client hooks/settings JSON to merge.")
     hook_install.add_argument("--connection", type=Path, required=True)
@@ -52,12 +62,12 @@ def main(argv: list[str] | None = None) -> None:
     hook_status.add_argument("--state-dir", type=Path, required=True)
     for action in ("flush", "checkpoint"):
         operation = hook_commands.add_parser(action)
-        operation.add_argument("--client", choices=CLIENTS, required=True)
+        operation.add_argument("--client", choices=CLIENTS + PLUGIN_CLIENTS, required=True)
         operation.add_argument("--connection", type=Path, required=True)
         operation.add_argument("--mappings", type=Path, required=True)
         operation.add_argument("--state-dir", type=Path, required=True)
         operation.add_argument("--session-id", required=True)
-        operation.add_argument("--conversation-id", help="Required stable conversation ID for Cursor.")
+        operation.add_argument("--conversation-id", help="Required stable conversation ID for Cursor or Hermes.")
         operation.add_argument("--source-id", help="Stable milestone identifier for an explicit intermediate candidate.")
         operation.add_argument("--task-id")
 
@@ -125,6 +135,14 @@ def main(argv: list[str] | None = None) -> None:
         except (OSError, UnicodeError):
             parser.error("cannot read configuration file")
         os.environ.update({key: value for key, value in values.items() if value is not None})
+    if args.command == 'plugins':
+        from contitext.plugin_export import export
+        from contitext.resolution import ResolutionError
+        try:
+            print(json.dumps(export(args), indent=2))
+        except (ResolutionError, OSError, ValueError):
+            parser.error('plugin export failed; check explicit paths, private state and a new output directory')
+        return
     if args.command == "hooks":
         from contitext.hook_config import install
         from contitext.resolution import ResolutionError
@@ -139,9 +157,9 @@ def main(argv: list[str] | None = None) -> None:
                 from contitext.outbox import stage, status
                 args.timeout, args.max_bytes = 3, 12000
                 event = {"hook_event_name":"Checkpoint", "session_id":args.session_id}
-                if args.client == 'cursor':
+                if args.client in ('cursor','hermes'):
                     if not args.conversation_id:
-                        raise ResolutionError('Cursor checkpoint/flush requires --conversation-id')
+                        raise ResolutionError('Cursor/Hermes checkpoint/flush requires --conversation-id')
                     event['conversation_id'] = args.conversation_id
                 if args.hook_action == "checkpoint":
                     if not args.source_id:
