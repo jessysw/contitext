@@ -1,4 +1,4 @@
-# Native plugin clients (0.8.2 development)
+# Native plugin clients
 
 Hermes, OpenClaw and OpenCode already support explicit Contitext MCP calls.
 The optional adapters below add native context loading and progress candidates.

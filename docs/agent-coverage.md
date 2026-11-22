@@ -1,8 +1,7 @@
-# Agent coverage (unreleased)
+# Agent coverage
 
-The expanded installer targets below are development work for 0.8.2. The published
-0.8.1 installer covers Codex, Claude Code, Zed, Hermes and OpenClaw. A successful
-MCP connection is distinct from instruction loading and native lifecycle hooks.
+The 0.8.2 installer covers the nine clients below. A successful MCP connection
+is distinct from instruction loading, native lifecycle hooks and runtime trust.
 
 ## MCP and instructions
 

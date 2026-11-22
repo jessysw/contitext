@@ -1,9 +1,10 @@
 # 0.8.2 client coverage plan
 
-Status: development after stable 0.8.1; publication follows final acceptance.
+Status: implementation complete in PRs #21–#24; stable 0.8.2 release acceptance
+is tracked in the final release PR and [release evidence](acceptance-0.8.2.md).
 Track the complete effort in [issue #20](https://github.com/jessysw/contitext/issues/20).
 
-Deliver four complete implementation PRs followed by one release-preparation PR:
+Delivery sequence: four complete implementation PRs followed by one release-preparation PR:
 
 1. **MCP and instruction coverage:** Copilot, Cursor, OpenCode and Gemini CLI;
    preserve the existing clients, handle versioned configuration layouts, and

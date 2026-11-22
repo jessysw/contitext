@@ -1,7 +1,7 @@
 # Session start hooks
 
 Available in 0.8.1; the hook remains opt-in.
-The 0.8.2 development branch additionally supports
+Version 0.8.2 additionally supports
 [Copilot CLI, Cursor desktop and Gemini CLI](command-hook-clients.md).
 It loads context through the same MCP command used by your agent. There is no
 new service and no database credential on a remote client. Native Python,
@@ -10,7 +10,7 @@ Docker Compose and SSH connections are supported on macOS and Linux.
 ## Set up
 
 First configure a trusted connection and private mappings using
-[project resolution](project-resolution.md). Install compatible 0.8.1 builds on the client and server; older servers can hydrate an already-selected scope
+[project resolution](project-resolution.md). Use a 0.8.2 client and a server at 0.8.1 or later; older servers can hydrate an already-selected scope
 but cannot automatically bind one without the new atomic binding capability.
 Rehearse upgrades in a separate installation before changing a live service.
 
@@ -75,7 +75,8 @@ diagnostics, or `!! contitext use <project-id>` to select a project manually.
 
 ## Supported runtime contract
 
-Native adapters currently cover Codex and Claude Code command hooks. They use
+This page covers Codex and Claude Code command hooks; other clients have
+[command-hook](command-hook-clients.md) or [plugin](plugin-clients.md) adapters. They use
 `session_id`, `cwd`, `hook_event_name` and `source`, returning the runtime's
 `hookSpecificOutput.additionalContext` JSON shape. Contract-shaped subprocess
 fixtures and a real MCP service are tested; this is not a claim of automated GUI
