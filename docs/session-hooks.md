@@ -56,7 +56,8 @@ accident. A binding made manually in the same scope wins over local mappings.
 The hook resolves an unbound scope using explicit mappings, reads that project's
 context, then rechecks the binding. A change during hydration discards the result.
 It does not switch an existing binding, invent a project, read a transcript,
-record conversation content or run an LLM. Authorization is checked by the server.
+record conversation content or run an LLM in startup-only mode.
+Optional [checkpoint capture](checkpoints.md) requires an additional explicit opt-in. Authorization is checked by the server.
 Retrieved text is labeled untrusted data, with a 12,000-byte startup cap; entries
 that do not fit are omitted. The loader requests [context assembly](context-assembly.md) when the server
 advertises it, and otherwise uses the bounded legacy bundle.

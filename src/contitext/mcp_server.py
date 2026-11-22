@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import Annotated, Any, Callable
 
 from pydantic import Field
@@ -78,6 +79,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
         payload: dict[str, Any],
         idempotency_key: str,
         event_metadata: EventMetadata | None = None,
+        expected_binding_updated_at: datetime | None = None,
     ) -> ContextEventResult:
         return service.record_context(identity(), RecordContextRequest(
             project_id=project_id,
@@ -90,6 +92,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Ca
             payload=payload,
             idempotency_key=idempotency_key,
             event_metadata=event_metadata,
+            expected_binding_updated_at=expected_binding_updated_at,
         ))
 
     @server.tool(name="context_handoff", structured_output=True)

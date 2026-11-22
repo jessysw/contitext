@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add opt-in candidate progress capture after responses, explicit intermediate
+  checkpoints, and bounded compaction/end/interruption retries. Persist private
+  pending work before network delivery; pin replay to the exact authorized
+  binding and reject stale timestamps atomically.
+
 - Add explicit task/candidate/lifecycle metadata and bounded context assembly.
   Select relevant handoffs, effective decisions and unresolved questions while
   preserving immutable history and the existing eight MCP tool names.

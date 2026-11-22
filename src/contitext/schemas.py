@@ -86,6 +86,7 @@ class RecordContextRequest(BaseModel):
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
     event_metadata: EventMetadata | None = None
+    expected_binding_updated_at: datetime | None = None
 
 
 class StoreContextEventRequest(BaseModel):
@@ -103,6 +104,7 @@ class StoreContextEventRequest(BaseModel):
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
     event_metadata: EventMetadata | None = None
+    expected_binding_updated_at: datetime | None = None
 
 
 class HandoffRequest(BaseModel):

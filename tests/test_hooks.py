@@ -32,13 +32,14 @@ def configured(tmp_path, command=None):
 
 def invoke(args, event, timeout=10):
     started = time.monotonic()
+    extra = ['--state-dir',str(args.state_dir)] if getattr(args,'state_dir',None) else []
     result = subprocess.run([sys.executable, '-m', 'contitext.hooks', '--client', args.client,
                              '--connection', str(args.connection), '--mappings', str(args.mappings),
-                             '--timeout', str(args.timeout)], input=json.dumps(event),
+                             '--timeout', str(args.timeout), *extra], input=json.dumps(event),
                             text=True, capture_output=True, timeout=timeout)
     assert result.returncode == 0
     assert not result.stderr
-    return json.loads(result.stdout), time.monotonic() - started
+    return json.loads(result.stdout or '{}'), time.monotonic() - started
 
 
 def test_installer_preserves_idempotence_backups_and_requires_review(tmp_path):
