@@ -9,6 +9,8 @@ with an older ordering timestamp.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ PROJECT_TRANSACTION_LOCK_SQL = text(
 )
 
 
-def acquire_project_transaction_lock(session: Session, project_id: str) -> None:
+def acquire_project_transaction_lock(session: Session, project_id: UUID) -> None:
     """Serialize a project's event insertion and projection transactions."""
 
     session.execute(PROJECT_TRANSACTION_LOCK_SQL, {"project_id": project_id})

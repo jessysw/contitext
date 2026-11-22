@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from alembic import command
 from dotenv import dotenv_values
@@ -28,7 +28,7 @@ from contitext.config import ConfigurationError, Settings
 from contitext.credentials import DatabaseTokenStore, digest, import_config, issue, revoke, rotate
 from contitext.db import create_session_factory
 from contitext.mcp_server import server_from_env
-from contitext.models import Credential, CredentialAudit, Principal, Project, ProjectACL
+from contitext.models import Credential, CredentialAudit, Principal, Project, ProjectACL, WorkspaceMember
 from contitext import reader
 from test_migrations import alembic_config, reset_schema
 
@@ -38,11 +38,14 @@ def credentials(migrated_database_url, monkeypatch):
     engine = create_engine(migrated_database_url)
     factory = create_session_factory(engine)
     owner, other = uuid4(), uuid4()
+    project_id = uuid4()
+    workspace_id = UUID("00000000-0000-4000-8000-000000000001")
     with factory.begin() as session:
         session.add_all([Principal(id=owner, name="Owner"), Principal(id=other, name="Other"),
-                         Project(id="alpha", display_name="Alpha", status="active")])
+                         Project(id=project_id, workspace_id=workspace_id, slug="alpha", display_name="Alpha", status="active")])
         session.flush()
-        session.add(ProjectACL(project_id="alpha", principal_id=owner, role="owner"))
+        session.add(ProjectACL(project_id=project_id, principal_id=owner, role="owner"))
+        session.add(WorkspaceMember(workspace_id=workspace_id, principal_id=owner, role="member"))
     monkeypatch.setenv("DATABASE_URL", migrated_database_url)
     monkeypatch.setenv("CONTITEXT_AUTH_MODE", "database")
     monkeypatch.delenv("CONTITEXT_AUTH_TOKENS", raising=False)
@@ -327,7 +330,7 @@ def test_existing_schema_data_survives_migration_and_populated_downgrade_is_bloc
         tables = ["projects", "principals", "project_acl", "scope_bindings", "context_events", "projection_offsets"]
         before = {table: connection.execute(text(f"SELECT row_to_json(t)::text FROM {table} t")).scalars().all() for table in tables}
     try:
-        command.upgrade(config, "head")
+        command.upgrade(config, "0002_credentials")
         with engine.connect() as connection:
             after = {table: connection.execute(text(f"SELECT row_to_json(t)::text FROM {table} t")).scalars().all() for table in tables}
         assert before == after

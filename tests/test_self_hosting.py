@@ -56,6 +56,7 @@ def test_onboarding_operator_commands_and_two_client_continuity(migrated_databas
     assert len(run("project", "list")["projects"]) == 2
     assert run("project", "update", "second", "--status", "paused")["status"] == "paused"
     member = run("principal", "create", "Reader")["id"]
+    run("workspace", "member", "grant", "legacy", member, "--operator")
     run("access", "grant", "second", member, "--role", "reader")
     assert len(run("project", "show", "second")["access"]) == 2
 
@@ -112,7 +113,7 @@ def test_writes_and_handoffs_require_matching_binding(migrated_database_url):
     repository = Repository(create_session_factory(engine))
     try:
         with engine.begin() as connection:
-            connection.execute(text("INSERT INTO project_acl VALUES ('beta', :id, 'writer')"), {"id": writer.principal_id})
+            connection.execute(text("INSERT INTO project_acl VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :id, 'writer')"), {"id": writer.principal_id})
         with pytest.raises(BindingConflictError):
             repository.record_context(writer, make_event_request(project_id="beta"))
         with pytest.raises(BindingConflictError):
@@ -176,7 +177,7 @@ def test_concurrent_rebind_is_observed_before_write(migrated_database_url):
     event.listen(engine, "before_cursor_execute", before_execute)
     try:
         with engine.begin() as connection:
-            connection.execute(text("INSERT INTO project_acl VALUES ('beta', :id, 'writer')"), {"id": writer.principal_id})
+            connection.execute(text("INSERT INTO project_acl VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :id, 'writer')"), {"id": writer.principal_id})
         with ThreadPoolExecutor(max_workers=1) as pool:
             with engine.begin() as rebinding:
                 rebinding.execute(text("SELECT * FROM scope_bindings WHERE principal_id=:id AND scope_id='scope:exact' FOR UPDATE"), {"id": writer.principal_id})
@@ -184,7 +185,7 @@ def test_concurrent_rebind_is_observed_before_write(migrated_database_url):
                 assert started.wait(5)
                 with pytest.raises(FutureTimeout):
                     pending.result(timeout=0.05)
-                rebinding.execute(text("UPDATE scope_bindings SET project_id='beta' WHERE principal_id=:id AND scope_id='scope:exact'"), {"id": writer.principal_id})
+                rebinding.execute(text("UPDATE scope_bindings SET project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta') WHERE principal_id=:id AND scope_id='scope:exact'"), {"id": writer.principal_id})
             with pytest.raises(BindingConflictError):
                 pending.result(timeout=5)
         with engine.connect() as connection:

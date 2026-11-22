@@ -118,7 +118,7 @@ class ProjectOverview(BaseModel):
 class CreateProjectRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", revalidate_instances="always")
 
-    project_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    project_id: str = Field(min_length=1, max_length=257, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$")
     display_name: str = Field(min_length=1, max_length=256)
 
     @field_validator("display_name")

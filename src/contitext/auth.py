@@ -10,10 +10,8 @@ from types import MappingProxyType
 from typing import Any, Mapping
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from contitext.models import Project, ProjectACL
 
 
 class AuthenticationError(RuntimeError):
@@ -95,16 +93,5 @@ def require_project_access(
     minimum_role: str = "reader",
 ) -> str:
     """Return the granted role or raise the non-enumerating not-found error."""
-    if minimum_role not in ROLE_LEVEL:
-        raise ValueError(f"unknown required role: {minimum_role}")
-    role = session.execute(
-        select(ProjectACL.role)
-        .join(Project, Project.id == ProjectACL.project_id)
-        .where(
-            ProjectACL.project_id == project_id,
-            ProjectACL.principal_id == principal_id,
-        )
-    ).scalar_one_or_none()
-    if role is None or ROLE_LEVEL[role] < ROLE_LEVEL[minimum_role]:
-        raise ProjectNotFoundError("project not found")
-    return role
+    from contitext.namespaces import ProjectResolver
+    return ProjectResolver().resolve(session, principal_id, project_id, minimum_role).role

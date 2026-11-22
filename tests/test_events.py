@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from datetime import timezone
 from uuid import uuid4
 
@@ -30,15 +33,13 @@ def seed_event_access(database_url: str) -> tuple[PrincipalIdentity, PrincipalId
     engine = create_engine(database_url)
     try:
         with engine.begin() as connection:
-            connection.execute(text("""INSERT INTO projects (id, display_name, status)
-                VALUES ('alpha', 'Alpha', 'active'), ('beta', 'Beta', 'active')"""))
+            connection.execute(text("INSERT INTO projects (slug, workspace_id, display_name, status)\n                VALUES ('alpha', '00000000-0000-4000-8000-000000000001', 'Alpha', 'active'), ('beta', '00000000-0000-4000-8000-000000000001', 'Beta', 'active')"))
             connection.execute(
                 text("INSERT INTO principals (id, name) VALUES (:writer, 'Writer'), (:reader, 'Reader')"),
                 {"writer": writer.principal_id, "reader": reader.principal_id},
             )
-            connection.execute(text("""INSERT INTO project_acl (project_id, principal_id, role)
-                VALUES ('alpha', :writer, 'writer'), ('alpha', :reader, 'reader'),
-                       ('beta', :reader, 'owner')"""),
+            seed_members(connection)
+            connection.execute(text("INSERT INTO project_acl (project_id, principal_id, role)\n                VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :writer, 'writer'), ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :reader, 'reader'),\n                       ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='beta'), :reader, 'owner')"),
                 {"writer": writer.principal_id, "reader": reader.principal_id},
             )
     finally:
@@ -156,7 +157,7 @@ def test_idempotent_retry_returns_original_event_without_duplicate(
         assert second.payload == first.payload
         with engine.connect() as connection:
             count = connection.execute(
-                text("SELECT count(*) FROM context_events WHERE project_id='alpha' AND idempotency_key='event-key-1'")
+                text("SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha') AND idempotency_key='event-key-1'")
             ).scalar_one()
         assert count == 1
     finally:
@@ -201,7 +202,7 @@ def test_idempotency_key_cannot_be_reused_by_another_principal(migrated_database
     try:
         service.record_context(writer, make_event_request())
         with engine.begin() as connection:
-            connection.execute(text("UPDATE project_acl SET role='writer' WHERE project_id='alpha' AND principal_id=:id"), {"id": reader.principal_id})
+            connection.execute(text("UPDATE project_acl SET role='writer' WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha') AND principal_id=:id"), {"id": reader.principal_id})
         with pytest.raises(IdempotencyConflictError):
             service.record_context(reader, make_event_request())
     finally:

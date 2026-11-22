@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from contitext.auth import AuthenticationError
 from contitext.config import ConfigurationError, Settings
 from contitext.db import create_database_engine, create_session_factory
-from contitext.models import Principal, ProjectACL
+from contitext.models import Principal
 from contitext.migrations import HEAD_REVISION
 
 
@@ -37,8 +37,9 @@ def doctor() -> dict:
                 identity = settings.credential_resolver(create_session_factory(engine)).resolve(os.environ.get("CONTITEXT_MCP_TOKEN", ""))
                 exists = session.get(Principal, identity.principal_id) is not None
                 check("mcp_identity", exists, "Configured MCP credential must refer to a provisioned principal")
-                grants = list(session.execute(select(ProjectACL.project_id, ProjectACL.role).where(ProjectACL.principal_id == identity.principal_id).order_by(ProjectACL.project_id)))
-                check("project_access", bool(grants), [{"project_id": p, "role": r} for p, r in grants])
+                from contitext.repository import Repository
+                grants = Repository(create_session_factory(engine)).list_projects(identity).projects
+                check("project_access", bool(grants), [{"project_id": p.project_id, "role": p.role.value} for p in grants])
             except AuthenticationError:
                 check("mcp_identity", False, "Set CONTITEXT_MCP_TOKEN to a credential in the configured token store")
     except SQLAlchemyError:

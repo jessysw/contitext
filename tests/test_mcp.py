@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 import asyncio
 import json
 import os
@@ -31,9 +34,10 @@ def setup(database_url: str):
     principal = PrincipalIdentity(uuid4(), "MCP Owner")
     denied = PrincipalIdentity(uuid4(), "MCP Denied")
     with engine.begin() as connection:
-        connection.execute(text("INSERT INTO projects (id,display_name,status) VALUES ('alpha','Alpha','active'),('beta','Beta','active')"))
+        connection.execute(text("INSERT INTO projects (slug, workspace_id,display_name,status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001','Alpha','active'),('beta', '00000000-0000-4000-8000-000000000001','Beta','active')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'MCP Owner'),(:denied,'MCP Denied')"), {"id": principal.principal_id, "denied": denied.principal_id})
-        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:id,'owner')"), {"id": principal.principal_id})
+        seed_members(connection)
+        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:id,'owner')"), {"id": principal.principal_id})
     service = ContextService(Repository(create_session_factory(engine)))
     return engine, principal, denied, service
 

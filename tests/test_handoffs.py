@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
@@ -30,9 +33,10 @@ def setup(database_url: str):
     engine = create_engine(database_url)
     principal = PrincipalIdentity(uuid4(), "Writer")
     with engine.begin() as connection:
-        connection.execute(text("INSERT INTO projects (id,display_name,status) VALUES ('alpha','Alpha','active')"))
+        connection.execute(text("INSERT INTO projects (slug, workspace_id,display_name,status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001','Alpha','active')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'Writer')"), {"id": principal.principal_id})
-        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:id,'writer')"), {"id": principal.principal_id})
+        seed_members(connection)
+        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:id,'writer')"), {"id": principal.principal_id})
     service = ContextService(Repository(create_session_factory(engine)))
     service.bind_project(principal, BindProjectRequest(project_id="alpha", scope_id="scope:exact", session_id="session:exact"))
     return engine, principal, service
@@ -76,7 +80,7 @@ def test_concurrent_handoffs_preserve_every_unique_request(migrated_database_url
             )), range(count)))
         assert len({event.event_id for event in events}) == count
         with engine.connect() as connection:
-            assert connection.execute(text("SELECT count(*) FROM context_events WHERE project_id='alpha' AND event_kind='handoff'" )).scalar_one() == count
+            assert connection.execute(text("SELECT count(*) FROM context_events WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha') AND event_kind='handoff'" )).scalar_one() == count
         latest = service.get_context(principal, "alpha").latest_handoff
         expected = max(events, key=lambda item: (item.created_at, item.event_id))
         assert latest.event_id == expected.event_id

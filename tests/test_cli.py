@@ -76,8 +76,8 @@ def test_migrate_and_admin_seed_use_the_configured_database(
     engine = create_engine(migrated_database_url)
     try:
         with engine.connect() as connection:
-            assert connection.execute(text("SELECT count(*) FROM projects WHERE id='cli-demo'")).scalar_one() == 1
-            assert connection.execute(text("SELECT role FROM project_acl WHERE project_id='cli-demo'")).scalar_one() == "owner"
+            assert connection.execute(text("SELECT count(*) FROM projects WHERE id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='cli-demo')")).scalar_one() == 1
+            assert connection.execute(text("SELECT role FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='cli-demo')")).scalar_one() == "owner"
             assert connection.execute(text("SELECT count(*) FROM scope_bindings")).scalar_one() == 0
     finally:
         engine.dispose()

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 import json
 import logging
 from uuid import uuid4
@@ -19,9 +22,10 @@ def setup(database_url: str):
     principal = PrincipalIdentity(uuid4(), "HTTP Writer")
     denied = PrincipalIdentity(uuid4(), "Denied")
     with engine.begin() as connection:
-        connection.execute(text("INSERT INTO projects (id,display_name,status) VALUES ('alpha','Alpha','active'),('beta','Beta','active')"))
+        connection.execute(text("INSERT INTO projects (slug, workspace_id,display_name,status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001','Alpha','active'),('beta', '00000000-0000-4000-8000-000000000001','Beta','active')"))
         connection.execute(text("INSERT INTO principals (id,name) VALUES (:id,'HTTP Writer'),(:denied,'Denied')"), {"id": principal.principal_id, "denied": denied.principal_id})
-        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ('alpha',:id,'owner')"), {"id": principal.principal_id})
+        seed_members(connection)
+        connection.execute(text("INSERT INTO project_acl (project_id,principal_id,role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'),:id,'owner')"), {"id": principal.principal_id})
     token_store = TokenStore.from_json(json.dumps({
         "valid-token": {"principal_id": str(principal.principal_id), "name": principal.name},
         "denied-token": {"principal_id": str(denied.principal_id), "name": denied.name},

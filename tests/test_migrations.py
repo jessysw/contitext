@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from workspace_fixtures import seed_members
+
+
 from pathlib import Path
 from uuid import uuid4
 
@@ -21,6 +24,8 @@ EXPECTED_TABLES = {
     "projection_offsets",
     "credentials",
     "credential_audit",
+    "workspaces",
+    "workspace_members",
 }
 
 
@@ -110,22 +115,24 @@ def test_database_constraints_reject_invalid_values_and_duplicates(
     try:
         with engine.begin() as connection:
             connection.execute(
-                text("INSERT INTO projects (id, display_name, status) VALUES ('alpha', 'Alpha', 'active')")
+                text("INSERT INTO projects (slug, workspace_id, display_name, status) VALUES ('alpha', '00000000-0000-4000-8000-000000000001', 'Alpha', 'active')")
             )
+            project_uuid = connection.execute(text("SELECT id FROM projects WHERE slug='alpha'")).scalar_one()
             connection.execute(
                 text("INSERT INTO principals (id, name) VALUES (:id, 'Alice')"), {"id": principal_id}
             )
+            seed_members(connection)
 
         with pytest.raises(IntegrityError):
             with engine.begin() as connection:
                 connection.execute(
-                    text("INSERT INTO project_acl (project_id, principal_id, role) VALUES ('alpha', :id, 'admin')"),
+                    text("INSERT INTO project_acl (project_id, principal_id, role) VALUES ((SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha'), :id, 'admin')"),
                     {"id": principal_id},
                 )
 
         event_parameters = {
             "event_id": event_id,
-            "project_id": "alpha",
+            "project_id": project_uuid,
             "principal_id": principal_id,
             "scope_id": "scope:1",
             "session_id": "session:1",

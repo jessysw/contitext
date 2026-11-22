@@ -1,4 +1,6 @@
 """Project discovery and self-owned creation through the real service boundaries."""
+
+from workspace_fixtures import seed_members
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
@@ -28,6 +30,7 @@ def setup(url, **options):
     with engine.begin() as c:
         c.execute(text('INSERT INTO principals (id,name) VALUES (:a,:an),(:b,:bn)'),
                   dict(a=caller.principal_id, an=caller.name, b=other.principal_id, bn=other.name))
+        seed_members(c)
     return engine, caller, other, ContextService(Repository(create_session_factory(engine)), **options)
 
 
@@ -39,8 +42,8 @@ def test_discovery_is_authorized_paginated_and_does_not_bind(migrated_database_u
             service.create_project(caller, CreateProjectRequest(project_id=p, display_name=p.title()))
         service.create_project(other, CreateProjectRequest(project_id='hidden', display_name='Private'))
         with engine.begin() as c:
-            c.execute(text("UPDATE projects SET status='inactive' WHERE id='middle'"))
-            c.execute(text("UPDATE project_acl SET role='reader' WHERE project_id='middle'"))
+            c.execute(text("UPDATE projects SET status='inactive' WHERE id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='middle')"))
+            c.execute(text("UPDATE project_acl SET role='reader' WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='middle')"))
         first = service.list_projects(caller, limit=2)
         assert [p.project_id for p in first.projects] == ['alpha', 'middle']
         assert first.projects[1].status == 'inactive' and first.projects[1].role == 'reader'
@@ -55,7 +58,7 @@ def test_discovery_is_authorized_paginated_and_does_not_bind(migrated_database_u
         with pytest.raises(BindingNotFoundError):
             service.current_project(caller, 'new-conversation')
         with engine.begin() as c:
-            c.execute(text("DELETE FROM project_acl WHERE project_id='alpha'"))
+            c.execute(text("DELETE FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='alpha')"))
         assert [p.project_id for p in service.list_projects(caller).projects] == ['middle', 'zulu']
     finally:
         engine.dispose()
@@ -77,8 +80,8 @@ def test_creation_cannot_overwrite_or_rebind_and_duplicate_errors_do_not_enumera
             errors.append(str(error.value))
         assert errors[0] == errors[1] == 'project ID is unavailable'
         with engine.connect() as c:
-            assert c.execute(text("SELECT display_name FROM projects WHERE id='second'")).scalar_one() == 'Second'
-            assert c.execute(text("SELECT principal_id FROM project_acl WHERE project_id='second'")).scalar_one() == caller.principal_id
+            assert c.execute(text("SELECT display_name FROM projects WHERE id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='second')")).scalar_one() == 'Second'
+            assert c.execute(text("SELECT principal_id FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='second')")).scalar_one() == caller.principal_id
             assert c.execute(text('SELECT count(*) FROM context_events')).scalar_one() == 0
     finally:
         engine.dispose()
@@ -94,7 +97,7 @@ def test_create_is_atomic_when_owner_grant_fails(migrated_database_url):
         with pytest.raises(RuntimeError, match='grant failure'):
             service.create_project(caller, CreateProjectRequest(project_id='atomic', display_name='Atomic'))
         with engine.connect() as c:
-            assert c.execute(text("SELECT count(*) FROM projects WHERE id='atomic'")).scalar_one() == 0
+            assert c.execute(text("SELECT count(*) FROM projects WHERE id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='atomic')")).scalar_one() == 0
     finally:
         event.remove(engine, 'before_cursor_execute', fail_grant)
         engine.dispose()
@@ -113,7 +116,7 @@ def test_concurrent_creation_has_exactly_one_owner(migrated_database_url):
             winners = [v for v in pool.map(create, [caller, other]) if v]
         assert len(winners) == 1
         with engine.connect() as c:
-            assert c.execute(text("SELECT principal_id FROM project_acl WHERE project_id='race'")).scalars().all() == winners
+            assert c.execute(text("SELECT principal_id FROM project_acl WHERE project_id=(SELECT id FROM projects WHERE workspace_id='00000000-0000-4000-8000-000000000001' AND slug='race')")).scalars().all() == winners
     finally:
         engine.dispose()
 

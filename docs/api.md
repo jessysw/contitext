@@ -83,3 +83,14 @@ The [demo](../src/contitext/demo.py) is an executable REST example. The MCP smok
 command checks all eight tools against a real stdio server and writes synthetic
 records to the explicitly configured smoke project and creates one synthetic
 project. Run it only in a test deployment.
+
+## Unreleased Workspace references
+
+The eight MCP input schemas remain unchanged. With Workspace support, `project_id`
+is a reference such as `team/research`; REST project routes accept the same
+qualified reference. Bare IDs require an explicit compatibility workspace.
+Project membership and ACL checks apply to every project operation, including
+existing bindings and exports. Lists are ordered by workspace slug, then project
+slug; pagination cursors belong to the caller. Search cursors also belong to the
+actual project UUID and query. See [workspaces](workspaces.md) for the migration
+boundary and trusted operator model. This section describes unreleased 0.8 work.
