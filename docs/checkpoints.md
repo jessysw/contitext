@@ -2,7 +2,10 @@
 
 This opt-in 0.8.1 feature extends [session start hooks](session-hooks.md).
 It captures **unverified progress candidates**, not approved decisions or a complete
-transcript. Native hooks currently cover Codex and Claude Code on macOS and Linux.
+transcript. The examples below use Codex and Claude Code on macOS and Linux.
+See [native command clients](command-hook-clients.md) and [plugin clients](plugin-clients.md)
+for additional runtimes and their capture limitations. Copilot uses explicit
+checkpoints because its stop event does not provide final response text.
 Other MCP clients retain the explicit checkpoint and handoff workflow.
 
 ## Enable capture

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.2 — 2026-11-22
 
 - Add read-only hook diagnostics, content-free local outcomes, safe generated-hook
   removal and explicit timeout budgets. Exercise all eight automation bridges

@@ -1,4 +1,4 @@
-# Native command hooks (0.8.2 development)
+# Native command hooks
 
 Install MCP first using [agent installation](agent-installation.md), then create
 an explicit private connection and mapping as described in [session hooks](session-hooks.md).

@@ -12,20 +12,22 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**Current release: 0.8.1.**
-Install with `python -m pip install contitext` or pin `contitext==0.8.1` for a
-reproducible setup. This release adds opt-in project resolution, session-start loading, task-aware
-context assembly and durable candidate checkpoints. Existing deployments should
-follow [the 0.8.1 upgrade guide](docs/upgrading-to-0.8.1.md) before changing a live service.
+**Current release: 0.8.2.**
+Install with `python -m pip install contitext` or pin `contitext==0.8.2` for a
+reproducible setup. This release adds Copilot, Cursor, OpenCode and Gemini CLI
+integration, optional native lifecycle adapters, and hook diagnostics. Project
+resolution, context assembly and candidate capture remain opt-in. Existing
+deployments should follow [the 0.8.2 upgrade guide](docs/upgrading-to-0.8.2.md).
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
 installation paths, two independently authenticated agents and a visible handoff.
 For an existing 0.7.1 installation, use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
 
-See [release validation](docs/acceptance-0.8.1.md), [workspaces](docs/workspaces.md),
+See [release validation](docs/acceptance-0.8.2.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
 The [0.8.x automation plan](docs/automation-0.8.md) records the feature deliveries.
-Expanded agent coverage is tracked in the [0.8.2 development plan](docs/clients-0.8.2.md).
+See [agent coverage](docs/agent-coverage.md), [hook diagnostics](docs/hook-diagnostics.md)
+and the [completed client plan](docs/clients-0.8.2.md) for capabilities and boundaries.
 Releases use maintainer review, automated checks and documented operational
 rehearsals. User feedback is welcome through [GitHub issues](https://github.com/jessysw/contitext/issues).
 Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).
@@ -37,7 +39,7 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.1` from PyPI; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.2` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -50,7 +52,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.8.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -162,14 +164,16 @@ CLI options, compatibility entry points, and conversation scope behavior.
 ## Optional automation
 
 Start with the explicit workflow above. Then configure [trusted project mappings](docs/project-resolution.md)
-and [session-start hooks](docs/session-hooks.md) to load the right project in Codex
-or Claude Code. Manual selections always win. [Context assembly](docs/context-assembly.md)
+and [session-start hooks](docs/session-hooks.md) to load the selected project in
+supported agents. Manual selections always win. [Context assembly](docs/context-assembly.md)
 selects effective decisions, open questions and the relevant task handoff within
 a documented budget. [Candidate checkpoints](docs/checkpoints.md) add opt-in
 progress capture and durable retry; they do not create approved decisions.
 
-Native hooks currently cover Codex and Claude Code on macOS/Linux. Hermes,
-OpenClaw, Zed and other MCP clients retain the explicit MCP workflow. A Docker
+Native command hooks cover Codex, Claude Code, Copilot CLI, Cursor desktop and
+Gemini CLI on macOS/Linux. Hermes, OpenClaw and OpenCode 2 have optional native
+plugin adapters; Zed retains explicit MCP. See [coverage](docs/agent-coverage.md)
+for runtime-specific capture, activation and validation boundaries. A Docker
 server can use the local Python client for hooks without exposing PostgreSQL.
 
 ## What it includes

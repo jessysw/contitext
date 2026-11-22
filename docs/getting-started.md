@@ -2,7 +2,7 @@
 
 This guide takes you from a fresh installation to a project handoff that another
 agent session can read, then shows the same data in Obsidian. It uses
-Contitext 0.8.1, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
+Contitext 0.8.2, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
 by Contitext; your agent has its own requirements.
 
 You need Git, Docker with Compose, Python 3.11–3.14, and an installed supported
@@ -14,7 +14,7 @@ and then continue at step 2 using the native connection example below.
 ## 1. Start your service
 
 ```sh
-git clone --branch v0.8.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project welcome --name "Welcome"
 docker compose up --build -d --wait
@@ -169,8 +169,8 @@ private project content.
 
 Once the explicit workflow works, configure [private project mappings](project-resolution.md),
 then [session start](session-hooks.md). Enable [candidate checkpoints](checkpoints.md)
-only if you want bounded assistant-progress excerpts stored and retried. Codex
-and Claude Code have native hook adapters; other MCP clients retain the explicit
-workflow. For a Docker server, install the Python package on the agent's machine
+only if you want bounded assistant-progress excerpts stored and retried. See
+[agent coverage](agent-coverage.md) for native command hooks, optional plugin
+adapters and runtime-specific limitations. Explicit MCP remains available. For a Docker server, install the Python package on the agent's machine
 for these local helpers and use its Docker/SSH MCP connection; no local database
 or additional server is required.

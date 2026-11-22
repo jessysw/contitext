@@ -4,22 +4,21 @@ Contitext runs once on your server or workstation. Each agent needs a stdio
 connection and the same project-context protocol; it does not need a separate
 PostgreSQL database or a copy of your project data.
 
-The source-tree installer supports Codex, Claude Code, Zed, Hermes, and OpenClaw
-on POSIX systems. It requires Python 3.11 or newer. Hermes configuration is read
+The source-tree installer supports Codex, Claude Code, Zed, Hermes, OpenClaw,
+Copilot, Cursor, OpenCode and Gemini CLI on POSIX systems. It requires Python 3.11 or newer. Hermes configuration is read
 using PyYAML from its existing Python environment; use `--yaml-python` if that
 interpreter is elsewhere. No packages are installed by this script.
 
-Development source additionally supports Copilot, Cursor, OpenCode and Gemini
-CLI; see the [unreleased client coverage](agent-coverage.md) for configuration
+See [client coverage](agent-coverage.md) for configuration
 paths, version differences and the distinction between MCP and native hooks.
 
 ## Connect an agent
 
 Obtain the installer from the public repository. Use the installer from the same release as your server.
-The examples below cover 0.8.1. The protocol includes project listing and creation:
+The examples below cover 0.8.2. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.8.1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -47,7 +46,8 @@ sh scripts/install-agent-adapters.sh --config client.json \
   --target codex --target claude
 ```
 
-Repeat `--target` for `zed`, `hermes`, or `openclaw` as appropriate. The JSON may
+Repeat `--target` for `zed`, `hermes`, `openclaw`, `copilot`, `cursor`, `opencode`
+or `gemini` as appropriate. The JSON may
 also contain just `{"command": "/absolute/launcher", "args": []}`. Embedded
 environment variables and credentials are rejected. If the default `python3`
 is older than 3.11, set `CONTITEXT_INSTALL_PYTHON` to an existing supported Python.

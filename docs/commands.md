@@ -52,6 +52,8 @@ command-specific options. Help and version output do not require a database.
 | `contitext upgrade-check --snapshot /private/before.json` | Save a read-only integrity baseline before migration |
 | `contitext mapping add` / `list` / `remove` | Manage explicit private mappings for one MCP connection; see [resolution](project-resolution.md) |
 | `contitext resolve` | Preview an authorized mapping; `--bind` only fills an unbound scope |
+| `contitext hooks doctor` / `disable` | Check MCP/configuration without writes, or remove only generated client hooks; see [diagnostics](hook-diagnostics.md) |
+| `contitext plugins export` | Export optional Hermes, OpenClaw or OpenCode 2 adapters for runtime-owned activation; see [plugin clients](plugin-clients.md) |
 | `contitext hooks install` | Opt in to supported session hooks; `--dry-run` previews changes |
 | `contitext hooks status` / `flush` / `checkpoint` | Inspect or retry private candidates; provide intermediate progress on stdin; see [checkpoints](checkpoints.md) |
 | `contitext --version` | Print the installed package version |
@@ -88,7 +90,7 @@ in [installation](installation.md). The smoke command requires
 events** to the selected project and **creates a synthetic project**. Run it only
 in a designated test deployment.
 
-The CLI currently covers service operation and administration. Chat actions such
+The CLI covers service operation, administration and explicit client automation setup. Chat actions such
 as `use`, `status`, `search`, and `handoff` are not terminal subcommands in this
 release. Use MCP or the REST API for programmatic context operations.
 
@@ -102,9 +104,7 @@ Use the canonical `contitext` commands in new documentation and configuration.
 | `contitext-api` | `contitext serve` |
 | `contitext-admin seed` | `contitext admin seed` |
 | `contitext-mcp` | `contitext mcp` |
-| `contitext-mcp-smoke` | `contitext export --output /absolute/reader-vault` | Export all projects accessible to the configured identity as readable Markdown |
-| `contitext export --output /absolute/reader-vault --project research --watch 60` | Refresh a selected project every 60 seconds |
-| `contitext mcp-smoke` |
+| `contitext-mcp-smoke` | `contitext mcp-smoke` |
 
 Without `--owner`, CLI creation resolves `CONTITEXT_MCP_TOKEN` against
 `CONTITEXT_AUTH_TOKENS` and requires that identity to exist in the database. It
