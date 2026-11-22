@@ -112,3 +112,7 @@ Primary interfaces checked 2026-11-22:
 [Hermes memory providers](https://hermes-agent.nousresearch.com/docs/developer-guide/memory-provider-plugin),
 [OpenClaw plugin hooks](https://docs.openclaw.ai/plugins/hooks),
 [OpenCode server plugins](https://opencode.ai/docs/build/plugins/server).
+
+See [diagnostics and validation coverage](hook-diagnostics.md) for read-only
+connection checks, safe disabling and the distinction between bridge tests and
+authenticated host execution.

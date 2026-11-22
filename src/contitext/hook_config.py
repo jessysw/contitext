@@ -31,7 +31,10 @@ def install(args):
         command += ' --state-dir ' + shlex.quote(str(state_dir)) + ' --timeout 2'
     elif state_dir is not None:
         raise ResolutionError('--state-dir requires --checkpoints')
-    additions = native_additions(args.client, command, getattr(args,'checkpoints',False))
+    timeout = getattr(args,'worker_timeout',None)
+    if timeout is not None and not 0.1 <= timeout <= 10:
+        raise ResolutionError('timeout must be between 0.1 and 10 seconds')
+    additions = native_additions(args.client, command, getattr(args,'checkpoints',False), timeout)
     flat = args.client in ('copilot', 'cursor')
     # Parent creation is an explicit installer action; never done by a running hook.
     if not args.config.parent.exists():
@@ -66,19 +69,55 @@ def install(args):
             return {'changed':False}
         if args.dry_run:
             return {'changed': True, 'configuration': data}
-        backup = None
-        if args.config.exists():
-            fd, backup = tempfile.mkstemp(prefix=args.config.name + '.backup-', dir=args.config.parent)
-            with os.fdopen(fd, 'wb') as stream:
-                stream.write(args.config.read_bytes())
-                stream.flush(); os.fsync(stream.fileno())
-        fd, temporary = tempfile.mkstemp(prefix='.contitext-hooks-', dir=args.config.parent)
-        try:
-            with os.fdopen(fd, 'w') as stream:
-                json.dump(data, stream, indent=2); stream.write('\n')
-                stream.flush(); os.fsync(stream.fileno())
-            os.replace(temporary, args.config)
-        finally:
-            Path(temporary).unlink(missing_ok=True)
+        backup = save(args.config, data)
         return {'changed': True, 'config': str(args.config), 'backup': backup,
                 'next_action': 'Review and trust the hook in your client, then start a new session.'}
+
+
+def save(config, data):
+    backup = None
+    if config.exists():
+        fd, backup = tempfile.mkstemp(prefix=config.name + '.backup-', dir=config.parent)
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(config.read_bytes())
+            stream.flush(); os.fsync(stream.fileno())
+    fd, temporary = tempfile.mkstemp(prefix='.contitext-hooks-', dir=config.parent)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            json.dump(data, stream, indent=2); stream.write('\n')
+            stream.flush(); os.fsync(stream.fileno())
+        os.replace(temporary, config)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+    return backup
+
+
+def disable(args):
+    from contitext.hook_diagnostics import configured_events, owned
+    if not args.config.is_absolute():
+        raise ResolutionError('configuration path must be absolute')
+    if not args.config.exists() and not args.config.is_symlink():
+        return {'changed': False, 'removed': 0}
+    with nullcontext() if args.dry_run else mapping_lock(args.config):
+        data = read_local_json(args.config)
+        events = configured_events(data, args.client)
+        if not events:
+            return {'changed': False, 'removed': 0}
+        flat = args.client in ('copilot','cursor')
+        for event in events:
+            entries = []
+            for entry in data['hooks'][event]:
+                if flat:
+                    if not owned(entry, args.client): entries.append(entry)
+                elif isinstance(entry,dict) and isinstance(entry.get('hooks'),list):
+                    retained = [h for h in entry['hooks'] if not owned(h,args.client)]
+                    if retained or not entry['hooks']: entries.append({**entry,'hooks':retained})
+                else:
+                    entries.append(entry)
+            if entries: data['hooks'][event] = entries
+            else: del data['hooks'][event]
+        result = {'changed': True, 'removed': sum(events.values()),
+                  'note': 'Reload the runtime. MCP configuration and pending progress are retained.'}
+        if args.dry_run:
+            return {**result, 'configuration': data}
+        return {**result, 'backup': save(args.config,data)}

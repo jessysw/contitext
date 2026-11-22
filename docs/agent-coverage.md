@@ -85,3 +85,7 @@ Primary references, checked 2026-11-22:
 [OpenCode instructions](https://opencode.ai/docs/instructions),
 [Gemini MCP](https://geminicli.com/docs/tools/mcp-server/),
 [Gemini context](https://geminicli.com/docs/cli/gemini-md/).
+
+See [diagnostics and validation coverage](hook-diagnostics.md) for read-only
+connection checks, safe disabling and the distinction between bridge tests and
+authenticated host execution.

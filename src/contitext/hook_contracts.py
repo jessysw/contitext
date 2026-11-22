@@ -1,5 +1,7 @@
 """Native command-hook contracts. No transcript reads or permission decisions."""
 from pathlib import Path
+import math
+import shlex
 
 CLIENTS = ('codex', 'claude', 'copilot', 'cursor', 'gemini')
 PLUGIN_CLIENTS = ('hermes', 'openclaw', 'opencode')
@@ -66,8 +68,24 @@ def output(client, value):
     return value
 
 
-def additions(client, command, checkpoints):
+def additions(client, command, checkpoints, timeout=None):
     """Return runtime configuration; timeout units are deliberately per client."""
+    if timeout is not None:
+        # End/interrupt hooks in Codex have a hard runtime deadline of 3 seconds.
+        base = additions(client, command, checkpoints)
+        for event, groups in base.items():
+            budget = min(timeout, 2) if client == 'codex' and event in ('SessionEnd','Interrupt') else timeout
+            for group in groups:
+                for handler in (group.get('hooks') or [group]):
+                    argv = shlex.split(handler['command'])
+                    if '--timeout' in argv:
+                        argv[argv.index('--timeout') + 1] = str(budget)
+                    else:
+                        argv.extend(['--timeout', str(budget)])
+                    handler['command'] = shlex.join(argv)
+                    key = 'timeoutSec' if client == 'copilot' else 'timeout'
+                    handler[key] = (math.ceil(budget) + 1) * (1000 if client == 'gemini' else 1)
+        return base
     if client in ('codex', 'claude'):
         handler = {'type': 'command', 'command': command, 'timeout': 3 if checkpoints else 5}
         if client == 'codex':

@@ -21,30 +21,59 @@ parser.add_argument('--project',required=True)
 parser.add_argument('--directory',type=Path,required=True)
 args=parser.parse_args()
 args.directory.mkdir(mode=0o700)
-state=args.directory/'state';state.mkdir(mode=0o700)
 cli=Path(sys.executable).parent/'contitext'
 mappings=args.directory/'projects.json'
 subprocess.run([cli,'mapping','add','--connection',args.connection,'--mappings',mappings,
                 '--directory',args.directory,'--project',args.project],check=True,capture_output=True)
-session='acceptance-'+uuid4().hex
-event={'session_id':session,'cwd':str(args.directory),'hook_event_name':'SessionStart','source':'startup'}
-command=[sys.executable,'-I','-m','contitext.hooks','--client','codex','--connection',str(args.connection),
-         '--mappings',str(mappings),'--state-dir',str(state),'--timeout','3']
-def hook(value):
-    result=subprocess.run(command,input=json.dumps(value),capture_output=True,text=True,timeout=6)
-    assert result.returncode==0 and not result.stderr
+
+
+def invoke(command, value=None):
+    result=subprocess.run(command,input=json.dumps(value) if value is not None else None,
+                          capture_output=True,text=True,timeout=10)
+    assert result.returncode==0 and not result.stderr, 'Installed client command failed'
     return json.loads(result.stdout or '{}')
-loaded=hook(event)
-assert 'codex:'+session in loaded['hookSpecificOutput']['additionalContext']
-stop={**event,'hook_event_name':'Stop','turn_id':'acceptance-turn','last_assistant_message':'Installed artifact hook acceptance '+session}
-assert hook(stop)=={}
-assert hook(stop)=={}
-assert not list(state.glob('*.pending.json'))
-async def verify():
+
+
+async def verify(session):
     async with hook_connection(load_connection(args.connection)) as client:
         context=await call(client,'context_get',{'project_id':args.project,'token_budget':8000})
         matching=[e for e in context['context']['progress_candidates'] if session in e['payload']['summary']]
         assert len(matching)==1 and matching[0]['candidate'] is True
         assert context['used_budget']<=8000
-asyncio.run(verify())
-print('Installed-artifact session start, candidate checkpoint, idempotent retry and MCP read: passed')
+
+
+for client in ('codex','claude','copilot','cursor','gemini','hermes','openclaw','opencode'):
+    directory=args.directory/client;directory.mkdir(mode=0o700)
+    state=directory/'state'
+    session='acceptance-'+uuid4().hex
+    common=['--client',client,'--connection',str(args.connection),'--mappings',str(mappings)]
+    if client in ('hermes','openclaw','opencode'):
+        exported=directory/'plugin'
+        invoke([cli,'plugins','export',*common,'--output',str(exported),'--checkpoints','--state-dir',str(state)])
+        command=json.loads((exported/'bridge.json').read_text())['command']
+    else:
+        config=directory/'hooks.json'
+        invoke([cli,'hooks','install',*common,'--config',str(config),'--checkpoints','--state-dir',str(state)])
+        hooks=json.loads(config.read_text())['hooks']
+        entry=hooks['sessionStart' if client in ('copilot','cursor') else 'SessionStart'][0]
+        import shlex
+        command=shlex.split(entry['command'] if client in ('copilot','cursor') else entry['hooks'][0]['command'])
+        report=invoke([cli,'hooks','doctor',*common,'--config',str(config),'--state-dir',str(state),'--timeout','7'])
+        assert report['connection']=='ready' and report['runtime_activation']=='not_verified'
+    event={'session_id':session,'cwd':str(args.directory),'hook_event_name':'SessionStart','source':'startup'}
+    if client=='copilot':event={'sessionId':session,'cwd':str(args.directory),'source':'new'}
+    if client=='cursor':event.update(hook_event_name='sessionStart',conversation_id=session)
+    if client=='hermes':event['conversation_id']=session
+    assert client+':'+session in json.dumps(invoke(command,event))
+    checkpoint=[cli,'hooks','checkpoint',*common,'--state-dir',str(state),'--session-id',session,'--source-id','acceptance-turn']
+    if client in ('cursor','hermes'):checkpoint+=['--conversation-id',session]
+    for _ in range(2):
+        result=subprocess.run(checkpoint,input='Installed artifact hook acceptance '+session,
+                              capture_output=True,text=True,timeout=10)
+        assert result.returncode==0 and not result.stderr
+    assert not list(state.glob('*.pending.json'))
+    asyncio.run(verify(session))
+    if client not in ('hermes','openclaw','opencode'):
+        assert invoke([cli,'hooks','disable','--client',client,'--config',str(config)])['changed']
+        assert state.exists()
+    print(client+': installed artifact startup, candidate write/read and idempotent retry passed')
