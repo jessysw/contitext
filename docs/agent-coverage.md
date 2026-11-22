@@ -63,9 +63,10 @@ explicit alternate OS-home installation root, not a runtime profile selector.
 
 ## Automation and validation
 
-At this development stage, [native hooks](session-hooks.md) cover Codex and Claude
-Code. Expanded command-hook and plugin adapters are tracked in
-[issue #20](https://github.com/jessysw/contitext/issues/20); do not install one
+Native hooks cover Codex and Claude Code through [session hooks](session-hooks.md),
+and Copilot CLI, Cursor desktop and Gemini CLI through their
+[native command contracts](command-hook-clients.md). Plugin adapters remain tracked
+in [issue #20](https://github.com/jessysw/contitext/issues/20). Do not install one
 runtime's hook configuration into another runtime.
 
 Installer regression tests exercise real generated launchers, literal argument

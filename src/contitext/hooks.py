@@ -14,6 +14,7 @@ import sys
 from contitext.hook_transport import hook_connection
 from contitext.resolution import load_connection, load_mappings
 from contitext.session_client import call, resolve_with_client
+from contitext.hook_contracts import CLIENTS, normalize, output
 
 MAX_INPUT = 65536
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,199}\Z')
@@ -23,7 +24,10 @@ def identity(client, event):
     session = event.get('session_id')
     if not isinstance(session, str) or not ID.fullmatch(session):
         raise ValueError('unsupported session identity')
-    return f'{client}:{session}', session
+    conversation = event.get('conversation_id') if client == 'cursor' else session
+    if not isinstance(conversation, str) or not ID.fullmatch(conversation):
+        raise ValueError('unsupported conversation identity')
+    return f'{client}:{conversation}', session
 
 
 def encode(value):
@@ -135,7 +139,8 @@ def main(argv=None):
     parser.add_argument('--state-dir', type=Path, help='Opt in to private progress capture and replay.')
     parser.add_argument('--task-id', help='Explicit task identity; never inferred from a title or directory.')
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
-    parser.add_argument('--client', choices=['codex','claude'], required=True)
+    parser.add_argument('--client', choices=CLIENTS, required=True)
+    parser.add_argument('--event', help='Native event name for event-name-free runtimes.')
     parser.add_argument('--connection', type=Path, required=True)
     parser.add_argument('--mappings', type=Path, required=True)
     parser.add_argument('--timeout', type=float, default=3)
@@ -153,13 +158,15 @@ def main(argv=None):
         if args.worker:
             result = asyncio.run(session_start(args, event) if event.get('hook_event_name') == 'SessionStart' else progress_event(args,event))
         else:
+            event = normalize(args.client, event, args.event)
+            data = json.dumps(event).encode()
             if args.state_dir:
                 from contitext.outbox import stage
                 try: stage(args,event)
                 except Exception: pass  # Still attempt delivery of earlier durable work.
             result = run_supervised(args, data)
-        if event.get('hook_event_name') != 'PreCompact':
-            print(json.dumps(result))
+        if event.get('hook_event_name') != 'PreCompact' or args.client not in ('codex','claude'):
+            print(json.dumps(result if args.worker else output(args.client, result)))
     except (Exception, SystemExit):
         # Never echo paths, prompt text, server stderr, credentials or tracebacks.
         # An advisory hook cannot veto agent startup, even on malformed input.
