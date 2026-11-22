@@ -11,11 +11,11 @@ interpreter is elsewhere. No packages are installed by this script.
 
 ## Connect an agent
 
-Obtain the installer from the public repository. Use the installer from the same release or candidate commit as your server.
-The examples below cover the 0.8.0rc1 candidate. The protocol includes project listing and creation:
+Obtain the installer from the public repository. Use the installer from the same release as your server.
+The examples below cover 0.8.0. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.8.0rc1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 

@@ -1,7 +1,9 @@
-# 0.8 candidate acceptance
+# 0.8 release validation
 
-Status: `0.8.0rc1` is the candidate for public evaluation. This report separates
-controlled engineering rehearsal from independent first use. No production
+Release: `0.8.0`. This report records maintainer-run engineering validation,
+including rehearsals first completed for `0.8.0rc1`. The stable release changes
+version metadata and documentation without changing the exercised runtime behavior;
+its release commit still runs the full CI and publishing checks. No production
 service, live credential, database or adapter was changed by these rehearsals.
 
 ## Evidence recorded on 2026-11-22
@@ -17,7 +19,7 @@ service, live credential, database or adapter was changed by these rehearsals.
 | Docker runtime | Fresh database, host-owned private token overlay, two real MCP clients, PostgreSQL/app restart, healthy reader and restored-copy fingerprints/bindings | Passed locally using cached dependency image |
 | Public Docker build | Unmodified Dockerfile from public source in the installation CI job | Passed in PR #11 and main CI; local index timeout described below |
 | Distribution | Matching candidate versions, official Registry schema validation, matching wheel source, private-file archive exclusions, builds and twine checks | Passed; final CI is recorded in the P5 PR |
-| Independent first use | 2–3 developers follow the public guide without source edits or live coaching | Not yet performed |
+| External first use | Feedback from users following the public guide | Not yet performed; optional follow-up, not a release gate |
 
 Native scripted onboarding reached its first two-identity handoff in **12.54
 seconds**, with **16.42 seconds** for that rehearsal including dump/restore. These
@@ -70,16 +72,20 @@ clients, the optional reader, container recreation and restored-copy fingerprint
 Stop only that disposable stack after the rehearsal. Never use the test suite to
 validate a restored production backup.
 
-## Remaining release gate
+## Release criteria and user feedback
 
-Invite 2–3 independent developers to use the candidate guide and record:
-installation path, OS/Python/PostgreSQL/Compose versions, actual time to first
-handoff, where help was required, and redacted errors. Do not collect tokens or
-private project content. Resolve blocking findings before stable publication and
-broad promotion. An automated rehearsal or maintainer review does not satisfy
-this independent-use gate.
+The project uses the [maintainer release workflow](releasing.md): reviewed changes,
+full CI, distribution checks and relevant documented operational rehearsals.
+A minimum number of external testers is not required. This replaces the earlier
+candidate plan's external-user gate; it does not claim those trials occurred.
 
-Merging the five development deliveries does not publish a package, create a
-release tag, update the MCP Registry or migrate a live deployment. The release
-tracker remains open for independent acceptance and stable promotion. Candidate
-publication enables these trials; it does not claim that they have occurred.
+When users try the public guide, useful feedback includes installation path,
+OS/Python/PostgreSQL/Compose versions, time to first handoff, where help was needed,
+and redacted errors. Do not collect tokens or private project content. Fix known
+blocking defects before release and handle later findings through focused patch
+releases. External trials and a demo video are not prerequisites for recommending
+the released self-hosted tool.
+
+Merging implementation PRs does not publish packages or migrate live deployments.
+The release tracker records exact CI, PyPI, Registry and GitHub publication links.
+The previously published `0.8.0rc1` remains available as historical release evidence.

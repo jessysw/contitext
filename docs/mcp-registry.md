@@ -1,11 +1,11 @@
 # MCP Registry setup
 
 Contitext's official MCP Registry name is `io.github.jessysw/contitext`. Its
-`server.json` describes the 0.8.0rc1 candidate. Its version-pinned PyPI stdio
+`server.json` describes release 0.8.0. Its version-pinned PyPI stdio
 launcher is:
 
 ```sh
-uvx --python 3.12 contitext==0.8.0rc1 mcp
+uvx --python 3.12 contitext==0.8.0 mcp
 ```
 
 The package supports standard CPython 3.11–3.14. The Registry launcher pins
@@ -17,9 +17,9 @@ provide a database, account, or credentials. Each deployment retains its own
 project data. This release exposes MCP over stdio; the REST API is not a remote
 MCP endpoint.
 
-Stable 0.7.1 uses config-mode credentials. The workspace and database-mode
-settings below require the 0.8.0rc1 candidate or later. Select the exact package
-version when evaluating a prerelease.
+Version 0.7.1 uses config-mode credentials. The workspace and database-mode
+settings below require 0.8.0 or later. Pin the launcher to the version deployed
+by your operator.
 
 ## Prepare your deployment
 
@@ -65,7 +65,7 @@ command is:
   "mcpServers": {
     "contitext": {
       "command": "uvx",
-      "args": ["--python", "3.12", "contitext==0.8.0rc1", "mcp"]
+      "args": ["--python", "3.12", "contitext==0.8.0", "mcp"]
     }
   }
 }
@@ -77,7 +77,7 @@ environment will not work, and registration does not automatically install or
 configure the server in every client.
 
 If a manual client can access a native installation's protected configuration file,
-its command may instead be `uvx --python 3.12 contitext==0.8.0rc1 --env-file
+its command may instead be `uvx --python 3.12 contitext==0.8.0 --env-file
 /absolute/private.env mcp`. This explicitly loads the private configuration; it does not change the Registry
 manifest's inputs.
 

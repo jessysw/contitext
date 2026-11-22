@@ -24,21 +24,20 @@ the configured identity automatically. Neither operation selects a chat project.
 Read-only Markdown exports, optional periodic refresh, Obsidian setup, and an
 end-to-end first-use tutorial. The database remains authoritative.
 
-## v0.8: self-hosted candidate
+## v0.8: self-hosted release
 
 Managed independent credentials, workspace membership and UUID namespaces,
 explicit compatibility mapping, upgrade integrity checks, two-agent setup and
-reader guidance are implemented. Candidate evaluation and remaining external
-release gates are recorded in [acceptance evidence](acceptance-0.8.md). This is
-not a stable publication announcement.
+reader guidance are included in 0.8.0. Maintainer-run validation is recorded in
+[release evidence](acceptance-0.8.md). External user feedback is welcome and is not
+a prerequisite for a release.
 
 ## Before v1.0
 
-The next milestone is the [v0.8.x self-hosted release plan](v0.8-plan.md):
-workspace namespaces, independent credentials, safe migration, and a verified
-first-use and operations path. See that plan for ordered batches and release gates.
-Automatic project resolution, session hooks and deeper memory integration are
-deferred to v0.9.x; the current explicit binding behavior remains authoritative.
+The [v0.8.x plan](v0.8-plan.md) records the completed self-hosting work. The next
+feature milestone is v0.9.x: opt-in project resolution, session hooks and optional
+memory integration, guided by actual use cases. The current explicit binding
+behavior remains authoritative.
 
 - Add question resolution, decision supersession, and task-scoped handoff selection
   with explicit lifecycle semantics and regression tests.

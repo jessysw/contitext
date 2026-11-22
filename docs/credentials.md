@@ -1,9 +1,9 @@
 # Managed credentials
 
-Managed credentials are available in the 0.8.0rc1 candidate, together with
-workspace isolation and the upgrade/recovery workflow. They are not included in
-stable 0.7.1. See the [release plan](v0.8-plan.md) for remaining stable-release
-acceptance; rehearse upgrades against a copy before changing a working deployment.
+Managed credentials are available in 0.8.0, together with workspace isolation and
+the upgrade/recovery workflow. They are not included in 0.7.1. Follow the
+[upgrade guide](upgrading-to-0.8.md) and rehearse against a copy before changing a
+working deployment.
 
 ## Identity and trust
 

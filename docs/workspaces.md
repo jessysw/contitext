@@ -1,9 +1,9 @@
 # Workspaces and project namespaces
 
-This guide describes Workspace support in the 0.8.0rc1 candidate. It is not
-available in stable 0.7.1. The upgrade
-rehearsal and two-agent guides are implemented; final acceptance is tracked in the
-[0.8 plan](v0.8-plan.md). Rehearse candidate migrations against a copy before changing a live service.
+This guide describes Workspace support in 0.8.0. It is not available in 0.7.1.
+The [upgrade guide](upgrading-to-0.8.md) covers migration and recovery; completed
+validation is recorded in [release evidence](acceptance-0.8.md). Rehearse migrations
+against a copy before changing a live service.
 
 ## Names and identities
 
@@ -124,9 +124,10 @@ contitext workspace member grant legacy OWNER_UUID --role owner --operator
 Invalid historical slugs cause the migration to roll back rather than silently
 rename data. Populated workspace schemas cannot be downgraded automatically:
 flattening them could lose membership semantics or collide on project names.
-Restore a verified pre-upgrade backup instead. Operational preflight, writer
-fencing, backup/restore rehearsal and the complete old-client upgrade procedure
-are P3/P5 work; the migration's unit/integration tests are not live-upgrade approval.
+Restore a verified pre-upgrade backup instead. Follow the [upgrade guide](upgrading-to-0.8.md)
+for operational preflight, writer fencing, backup/restore and old-client recovery.
+Completed rehearsals are recorded in [release evidence](acceptance-0.8.md); each
+operator must still validate their own deployment before a live upgrade.
 
 ## Human-readable output
 
@@ -147,4 +148,5 @@ P2 tests exercise same-slug projects, UUID bindings and idempotency, scoped sear
 cursors, membership plus ACL checks, MCP/HTTP calls after revocation, CLI
 ownership, concurrent last-owner removal and write/revoke ordering, reader and
 projector separation, and transactional legacy-schema mapping. The complete
-P3–P5 migration, client onboarding and release acceptance work remains separate.
+migration, client onboarding and release rehearsals are recorded separately in
+[release evidence](acceptance-0.8.md).

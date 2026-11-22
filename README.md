@@ -12,21 +12,20 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**0.8.0rc1 is the 0.8 release candidate.**
-Install it explicitly with `python -m pip install contitext==0.8.0rc1`.
-The latest published stable package remains 0.7.1. This candidate contains Workspace
-namespaces, managed credentials, safe upgrade checks and independent agent setup.
-Use a disposable deployment for candidate evaluation; no existing service is
-upgraded by reading this repository or installing a package.
+**Current release: 0.8.0.**
+Install with `python -m pip install contitext` or pin `contitext==0.8.0` for a
+reproducible setup. This release adds workspace namespaces, managed credentials,
+safe upgrade checks and independent agent setup. Existing deployments should
+follow [the upgrade guide](docs/upgrading-to-0.8.md) before changing a live service.
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
 installation paths, two independently authenticated agents and a visible handoff.
-For stable 0.7.1, use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
+For an existing 0.7.1 installation, use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
 
-See [candidate acceptance evidence](docs/acceptance-0.8.md),
-[workspaces](docs/workspaces.md), [upgrade and recovery](docs/upgrading-to-0.8.md),
-and [the release plan](docs/v0.8-plan.md). Independent first-use testing remains
-open; no independent acceptance or hosted availability is claimed.
+See [release validation](docs/acceptance-0.8.md), [workspaces](docs/workspaces.md),
+[upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
+Releases use maintainer review, automated checks and documented operational
+rehearsals. User feedback is welcome through [GitHub issues](https://github.com/jessysw/contitext/issues).
 Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).
 
 ## Installation options
@@ -36,8 +35,8 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.0rc1` from PyPI; run native stdio MCP and optionally REST |
-| Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the candidate source; Compose runs Contitext and PostgreSQL together |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.0` from PyPI; run native stdio MCP and optionally REST |
+| Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
 for either path. Python installation does not require Docker. The database is
@@ -49,7 +48,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.8.0rc1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait

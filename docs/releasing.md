@@ -29,7 +29,7 @@ definitions. Keep historical changelog entries unchanged. Rehearse the
 getting-started path and optional reader in a disposable deployment before
 publishing changes to onboarding; never use a production database for tests.
 
-After CI passes, create a matching version tag (for example, `v0.8.0rc1`). Manually
+After CI passes, create a matching version tag (for example, `v0.8.0`). Manually
 dispatch the **Publish release** workflow (`publish.yml`) from that tag. It tests
 and builds on Python 3.11–3.14 without publishing credentials. All four jobs must
 pass before the Python 3.12 distributions are handed to a separate PyPI publishing
@@ -41,18 +41,33 @@ Verify the resulting version on PyPI and install it in an empty environment befo
 advertising the package as available. Add appropriate environment approvals for
 the repository's maintainers as the project grows.
 
-## Candidate acceptance before publication
+## Maintainer release acceptance
 
-The current candidate version is `0.8.0rc1`. Candidate publication and stable
-promotion are distinct operations. See [recorded acceptance](acceptance-0.8.md). Keep the tracker open until
-2–3 independent developers complete the first-use path and blockers are resolved.
-Record their actual timings and friction; automated tests cannot fulfill this gate.
-After automated and controlled installation gates pass, a matching candidate
-tag and prerelease may be published for external evaluation. Independent first-use
-trials are required for stable promotion, not for distributing that candidate.
-Promoting to stable 0.8.0 requires a new aligned version, tests and release PR; never
-replace an uploaded artifact. No tag, PyPI upload or Registry publication occurs
-as a side effect of merging release preparation.
+Normal releases use `MAJOR.MINOR.PATCH` versions such as `0.8.0` and `0.8.1`.
+A prerelease is optional when there is a specific reason to distribute unfinished
+work; it is not a required stage. A solo maintainer may review and merge a focused
+release PR once its checks pass. A separate review team or minimum number of
+external testers is not required.
+
+Before publishing:
+
+1. Review the complete change and resolve known release-blocking defects.
+2. Pass the full compatibility CI, installed-wheel/Compose checks, documentation
+   consistency tests, package builds and distribution validation.
+3. Record relevant first-use, upgrade and recovery rehearsals. Existing evidence
+   may be reused when the release does not change the exercised runtime behavior;
+   the release commit must still pass CI and package checks.
+4. Align version metadata, installation examples, changelog and upgrade guidance.
+5. Merge the PR, tag that exact commit and run the publishing workflow above.
+6. Verify PyPI and the MCP Registry, install the published package, then create a
+   non-prerelease GitHub Release and mark it Latest. Confirm the default public
+   versions and close the release tracker.
+
+See [recorded validation](acceptance-0.8.md). Maintainer and automated tests are
+not independent user testing; describe the evidence accurately. External feedback
+is welcome after release and informs fixes, but does not block publication or
+promotion. Never overwrite an uploaded artifact, rewrite a published tag, or
+claim a live deployment was upgraded merely because a release was published.
 
 ## MCP Registry
 

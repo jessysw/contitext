@@ -2,7 +2,7 @@
 
 This guide takes you from a fresh installation to a project handoff that another
 agent session can read, then shows the same data in Obsidian. It uses
-Contitext 0.8.0rc1, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
+Contitext 0.8.0, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
 by Contitext; your agent has its own requirements.
 
 You need Git, Docker with Compose, Python 3.11–3.14, and an installed supported
@@ -14,7 +14,7 @@ and then continue at step 2 using the native connection example below.
 ## 1. Start your service
 
 ```sh
-git clone --branch v0.8.0rc1 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.0 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project welcome --name "Welcome"
 docker compose up --build -d --wait
