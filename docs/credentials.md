@@ -1,9 +1,9 @@
-# Managed credentials (development branch)
+# Managed credentials (unreleased)
 
 This is the first implementation batch of the [0.8.x plan](v0.8-plan.md).
 It is not available in the currently published 0.7.1 package. Workspace support
-and the complete 0.8 upgrade workflow are not yet implemented. Do not switch an
-existing production deployment to this development branch.
+and the complete 0.8 upgrade workflow are not yet implemented. The examples are
+for testing unreleased source; use a tagged release for production deployments.
 
 ## Identity and trust
 
