@@ -87,10 +87,17 @@ jobs:
           native/bin/contitext --env-file native.env mcp-smoke
           native/bin/contitext --env-file native.env export --output native-reader
           test -f native-reader/README.md
-      - name: Fresh Compose installation and restart
+      - name: Fresh Compose installation from the release source artifact
         run: |
+          release_dir="$RUNNER_TEMP/release-source"
+          mkdir "$release_dir"
+          tar -xzf dist/contitext-*.tar.gz --strip-components=1 -C "$release_dir"
+          cd "$release_dir"
           python scripts/bootstrap.py --project demo
           docker compose -p contitext-ci-install up --build -d --wait
+          docker compose -p contitext-ci-install config --format json | python -c 'import json,sys; s=json.load(sys.stdin)["services"]; assert not s["postgres"].get("ports"); assert all(p["host_ip"] == "127.0.0.1" for p in s["app"]["ports"])'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18791/v1/projects)" = 401
+          python -c 'import json,urllib.request; s=json.load(urllib.request.urlopen("http://127.0.0.1:18791/openapi.json")); assert not any(x in p for p in s["paths"] for x in ["/admin", "/credentials", "/workspaces", "/principals"])'
           docker compose -p contitext-ci-install exec -T app contitext doctor
           docker compose -p contitext-ci-install exec -T app contitext mcp-smoke
           docker compose -p contitext-ci-install restart app
@@ -101,4 +108,7 @@ jobs:
           test -f reader-vault/README.md
       - name: Remove only this disposable CI stack
         if: always()
-        run: docker compose -p contitext-ci-install --profile reader down -v
+        run: |
+          if [ -f "$RUNNER_TEMP/release-source/.env" ]; then
+            docker compose --project-directory "$RUNNER_TEMP/release-source" -p contitext-ci-install --profile reader down -v
+          fi
