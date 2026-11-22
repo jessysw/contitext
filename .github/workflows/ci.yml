@@ -50,3 +50,55 @@ jobs:
       - run: pytest
       - run: python -m build
       - run: python -m twine check dist/*
+      - run: python scripts/check_distribution.py dist
+  installation:
+    name: Installed wheel and Docker Compose
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: contitext
+          POSTGRES_PASSWORD: ci-install-only
+          POSTGRES_DB: contitext_install_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U contitext -d contitext_install_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install build
+      - run: python -m build
+      - run: python scripts/check_distribution.py dist
+      - name: Install the wheel and run outside the source checkout
+        env:
+          DATABASE_URL: postgresql+psycopg://contitext:ci-install-only@127.0.0.1:5432/contitext_install_test
+        run: |
+          python -m venv "$RUNNER_TEMP/native"
+          "$RUNNER_TEMP/native/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          native/bin/contitext init --project demo --output native.env
+          native/bin/contitext --env-file native.env migrate
+          native/bin/contitext --env-file native.env admin seed --if-empty
+          native/bin/contitext --env-file native.env doctor
+          native/bin/contitext --env-file native.env mcp-smoke
+          native/bin/contitext --env-file native.env export --output native-reader
+          test -f native-reader/README.md
+      - name: Fresh Compose installation and restart
+        run: |
+          python scripts/bootstrap.py --project demo
+          docker compose -p contitext-ci-install up --build -d --wait
+          docker compose -p contitext-ci-install exec -T app contitext doctor
+          docker compose -p contitext-ci-install exec -T app contitext mcp-smoke
+          docker compose -p contitext-ci-install restart app
+          docker compose -p contitext-ci-install up -d --wait
+          docker compose -p contitext-ci-install exec -T app contitext doctor
+          mkdir reader-vault
+          docker compose -p contitext-ci-install --profile reader up --build -d --wait
+          test -f reader-vault/README.md
+      - name: Remove only this disposable CI stack
+        if: always()
+        run: docker compose -p contitext-ci-install --profile reader down -v

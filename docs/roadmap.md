@@ -24,6 +24,14 @@ the configured identity automatically. Neither operation selects a chat project.
 Read-only Markdown exports, optional periodic refresh, Obsidian setup, and an
 end-to-end first-use tutorial. The database remains authoritative.
 
+## v0.8: self-hosted candidate
+
+Managed independent credentials, workspace membership and UUID namespaces,
+explicit compatibility mapping, upgrade integrity checks, two-agent setup and
+reader guidance are implemented. Candidate evaluation and remaining external
+release gates are recorded in [acceptance evidence](acceptance-0.8.md). This is
+not a stable publication announcement.
+
 ## Before v1.0
 
 The next milestone is the [v0.8.x self-hosted release plan](v0.8-plan.md):

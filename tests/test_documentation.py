@@ -18,7 +18,7 @@ def test_current_release_references_and_readme_tools_match():
     for path in paths:
         if path.name == 'roadmap.md':
             continue  # Roadmap headings intentionally describe historical releases.
-        versions = re.findall(r'(?:contitext==|--branch v|Contitext |the v)(\d+\.\d+\.\d+)', path.read_text())
+        versions = re.findall(r'(?:contitext==|--branch v|Contitext |the v)(\d+\.\d+\.\d+(?:rc\d+)?)', path.read_text())
         assert all(v == __version__ for v in versions), path
     tree = ast.parse((ROOT / 'src/contitext/mcp_server.py').read_text())
     tools = set()

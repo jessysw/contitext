@@ -1,8 +1,8 @@
 # Getting started
 
 This guide takes you from a fresh installation to a project handoff that another
-agent session can read, then shows the same data in Obsidian. It uses Contitext
-the unreleased 0.8 source, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
+agent session can read, then shows the same data in Obsidian. It uses
+the unreleased Contitext 0.8 source, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
 by Contitext; your agent has its own requirements.
 
 You need Git, Docker with Compose, Python 3.11–3.14, and an installed supported

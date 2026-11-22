@@ -29,7 +29,7 @@ definitions. Keep historical changelog entries unchanged. Rehearse the
 getting-started path and optional reader in a disposable deployment before
 publishing changes to onboarding; never use a production database for tests.
 
-After CI passes, create a matching version tag (for example, `v0.7.1`). Manually
+After CI passes, create a matching version tag (for example, `v0.8.0rc1`). Manually
 dispatch the **Publish release** workflow (`publish.yml`) from that tag. It tests
 and builds on Python 3.11–3.14 without publishing credentials. All four jobs must
 pass before the Python 3.12 distributions are handed to a separate PyPI publishing
@@ -40,6 +40,17 @@ Use English for the commit, release title, and release notes.
 Verify the resulting version on PyPI and install it in an empty environment before
 advertising the package as available. Add appropriate environment approvals for
 the repository's maintainers as the project grows.
+
+## Candidate acceptance before publication
+
+The current prepared version is `0.8.0rc1`. A candidate build is not a stable
+release. See [recorded acceptance](acceptance-0.8.md). Keep the tracker open until
+2–3 independent developers complete the first-use path and blockers are resolved.
+Record their actual timings and friction; automated tests cannot fulfill this gate.
+Only after release approval should a matching candidate tag/workflow be published.
+Promoting to stable 0.8.0 requires a new aligned version, tests and release PR; never
+replace an uploaded artifact. No tag, PyPI upload or Registry publication occurs
+as a side effect of merging release preparation.
 
 ## MCP Registry
 

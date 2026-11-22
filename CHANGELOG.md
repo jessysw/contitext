@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 0.8 development
+## 0.8.0rc1 — prepared, not yet published
 
 - Define the self-hosted release plan, workspace/identity boundaries and acceptance gates.
 - Add opt-in database-backed credentials with hash-only storage, private one-time
@@ -17,6 +17,9 @@
   second agent cannot silently change the first agent's connection.
 - Add workspace-aware diagnostics, a two-identity first-use tutorial, and
   namespace-aware reader, installer and Registry configuration guidance.
+
+- Rehearse installed-wheel and Docker onboarding, restart and verified restoration;
+  record candidate evidence separately from pending independent first-use tests.
 
 ## 0.7.1 — 2026-11-18
 
