@@ -109,3 +109,10 @@ manual bind on older servers. No schema migration or new MCP tool is required.
 Optional `task_id` / `token_budget` on `context_get` and `event_metadata` on record/
 handoff are documented in [context assembly](context-assembly.md). They require
 the unreleased metadata migration; default MCP result objects are not wrapped.
+
+Automatic `context_record` clients may supply `expected_binding_updated_at` from
+`project_current`. The server compares it while locking the binding row and
+returns a binding conflict if it changed, even when the project is the same.
+It is a write precondition, not event metadata and not part of stored idempotency
+content. Omitted values preserve manual-client behavior. See
+[automatic checkpoints](checkpoints.md) for durable replay.

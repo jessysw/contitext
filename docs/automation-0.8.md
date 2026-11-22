@@ -51,9 +51,10 @@ support rather than claiming every MCP client provides the same lifecycle.
 - B: merged in [PR #16](https://github.com/jessysw/contitext/pull/16); all seven CI
   jobs passed. See [session start hooks](session-hooks.md). Native hooks cover
   Codex and Claude; other MCP clients retain the explicit workflow.
-- C: implemented in development; see [context assembly](context-assembly.md).
+- C: merged in [PR #17](https://github.com/jessysw/contitext/pull/17); all seven CI
+  jobs passed. See [context assembly](context-assembly.md).
+- D: implemented in development; see [automatic checkpoints](checkpoints.md).
   The associated PR tracks full CI and merge.
-- D: planned; acceptance criteria above are not completion claims.
 - Published baseline: [0.8.0 release](https://github.com/jessysw/contitext/releases/tag/v0.8.0).
 - Existing self-hosting and migration work: [0.8.0 plan](v0.8-plan.md).
 

@@ -190,6 +190,8 @@ class Repository:
             ).with_for_update()).scalar_one_or_none()
             if binding is None or binding.project_id != project.id:
                 raise BindingConflictError("bind this scope to the requested project before writing")
+            if request.expected_binding_updated_at is not None and binding.updated_at != request.expected_binding_updated_at:
+                raise BindingConflictError("conversation binding changed; checkpoint replay remains pending")
             acquire_project_transaction_lock(session, project.id)
             existing_key = session.scalar(select(ContextEvent.event_id).where(
                 ContextEvent.project_id == project.id, ContextEvent.idempotency_key == request.idempotency_key,
@@ -227,7 +229,7 @@ class Repository:
                         ContextEvent.idempotency_key == request.idempotency_key,
                     )
                 ).scalar_one()
-                expected = request.model_dump(mode="json", exclude={"idempotency_key"})
+                expected = request.model_dump(mode="json", exclude={"idempotency_key", "expected_binding_updated_at"})
                 expected["project_id"] = str(project.id)
                 actual = {
                     "project_id": str(event.project_id),

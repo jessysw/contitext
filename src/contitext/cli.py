@@ -45,6 +45,20 @@ def main(argv: list[str] | None = None) -> None:
     hook_install.add_argument("--connection", type=Path, required=True)
     hook_install.add_argument("--mappings", type=Path, required=True)
     hook_install.add_argument("--dry-run", action="store_true")
+    hook_install.add_argument("--checkpoints", action="store_true", help="Opt in to candidate progress capture and durable retry.")
+    hook_install.add_argument("--state-dir", type=Path)
+    hook_status = hook_commands.add_parser("status")
+    hook_status.add_argument("--state-dir", type=Path, required=True)
+    for action in ("flush", "checkpoint"):
+        operation = hook_commands.add_parser(action)
+        operation.add_argument("--client", choices=["codex", "claude"], required=True)
+        operation.add_argument("--connection", type=Path, required=True)
+        operation.add_argument("--mappings", type=Path, required=True)
+        operation.add_argument("--state-dir", type=Path, required=True)
+        operation.add_argument("--session-id", required=True)
+        operation.add_argument("--source-id", help="Stable milestone identifier for an explicit intermediate candidate.")
+        operation.add_argument("--task-id")
+
     mappings = commands.add_parser("mapping", help="Manage explicit local workspace/project mappings (unreleased).")
     mapping_commands = mappings.add_subparsers(dest="mapping_action", required=True)
     for action in ("add", "list", "remove"):
@@ -113,8 +127,31 @@ def main(argv: list[str] | None = None) -> None:
         from contitext.hook_config import install
         from contitext.resolution import ResolutionError
         try:
-            print(json.dumps(install(args), indent=2))
-        except (ResolutionError, OSError):
+            if args.hook_action == "install":
+                result = install(args)
+            elif args.hook_action == "status":
+                from contitext.outbox import status
+                result = status(args.state_dir)
+            else:
+                from contitext.hooks import run_supervised
+                from contitext.outbox import stage, status
+                args.timeout, args.max_bytes = 3, 12000
+                event = {"hook_event_name":"Checkpoint", "session_id":args.session_id}
+                if args.hook_action == "checkpoint":
+                    if not args.source_id:
+                        raise ResolutionError("checkpoint requires --source-id")
+                    summary = sys.stdin.read(65537)
+                    if len(summary.encode()) > 65536 or not summary.strip():
+                        raise ResolutionError("provide a nonempty bounded summary on stdin")
+                    event.update(last_assistant_message=summary, source_id=args.source_id)
+                    if stage(args,event) is None:
+                        raise ResolutionError("no captured binding; start the session with the configured hook first")
+                run_supervised(args, json.dumps(event).encode())
+                result = status(args.state_dir)
+            print(json.dumps(result, indent=2))
+        except ResolutionError as exc:
+            parser.error(str(exc))
+        except OSError:
             parser.error("hook configuration failed; check trusted paths, permissions and existing hooks")
         return
     if args.command in {"mapping", "resolve"}:

@@ -71,12 +71,34 @@ async def session_start(args, event, connector=hook_connection):
             query['token_budget'] = 4000
             if getattr(args, 'task_id', None):
                 query['task_id'] = args.task_id
+        if getattr(args, 'state_dir', None):
+            from contitext.outbox import flush
+            await flush(client, args, connection, binding)
         context = await call(client, 'context_get', query)
         current = await call(client, 'project_current', {'scope_id': scope})
         if current != binding:
             return {}  # Never inject a project fetched across a manual switch.
+        if getattr(args, 'state_dir', None):
+            from contitext.outbox import remember
+            remember(args, connection, binding)
         text = startup_text({**binding, 'session_id': session}, context, args.max_bytes)
         return {'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': text}} if text else {}
+
+
+async def progress_event(args, event):
+    if not args.state_dir or event.get('hook_event_name') not in {'Stop','Checkpoint','PreCompact','SessionEnd','Interrupt'}:
+        return {}
+    scope, _ = identity(args.client, event)
+    connection = load_connection(args.connection)
+    async with hook_connection(connection) as client:
+        binding = await call(client, 'project_current', {'scope_id':scope})
+        from contitext.outbox import flush, remember
+        await flush(client, args, connection, binding)
+        if await call(client, 'project_current', {'scope_id':scope}) == binding:
+            # A manual switch does not retag old pending work. Only subsequent
+            # captures use this refreshed, explicitly selected binding.
+            remember(args, connection, binding)
+    return {}
 
 
 def run_supervised(args, data):
@@ -87,6 +109,8 @@ def run_supervised(args, data):
                '--max-bytes', str(args.max_bytes)]
     if getattr(args, 'task_id', None):
         command.extend(['--task-id', args.task_id])
+    if getattr(args, 'state_dir', None):
+        command.extend(['--state-dir', str(args.state_dir)])
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.DEVNULL, start_new_session=True)
     try:
@@ -108,6 +132,7 @@ def run_supervised(args, data):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Fail-open Contitext session hook.')
+    parser.add_argument('--state-dir', type=Path, help='Opt in to private progress capture and replay.')
     parser.add_argument('--task-id', help='Explicit task identity; never inferred from a title or directory.')
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--client', choices=['codex','claude'], required=True)
@@ -122,14 +147,19 @@ def main(argv=None):
         data = sys.stdin.buffer.read(MAX_INPUT + 1)
         if len(data) > MAX_INPUT:
             raise ValueError('input too large')
+        event = json.loads(data)
+        if not isinstance(event, dict):
+            raise ValueError('invalid event')
         if args.worker:
-            event = json.loads(data)
-            if not isinstance(event, dict):
-                raise ValueError('invalid event')
-            result = asyncio.run(session_start(args, event))
+            result = asyncio.run(session_start(args, event) if event.get('hook_event_name') == 'SessionStart' else progress_event(args,event))
         else:
+            if args.state_dir:
+                from contitext.outbox import stage
+                try: stage(args,event)
+                except Exception: pass  # Still attempt delivery of earlier durable work.
             result = run_supervised(args, data)
-        print(json.dumps(result))
+        if event.get('hook_event_name') != 'PreCompact':
+            print(json.dumps(result))
     except (Exception, SystemExit):
         # Never echo paths, prompt text, server stderr, credentials or tracebacks.
         # An advisory hook cannot veto agent startup, even on malformed input.

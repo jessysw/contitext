@@ -18,31 +18,52 @@ def install(args):
     load_mappings(args.mappings, connection)
     command = shlex.join([sys.executable, '-m', 'contitext.hooks', '--client', args.client,
                           '--connection', str(args.connection), '--mappings', str(args.mappings)])
-    handler = {'type': 'command', 'command': command, 'timeout': 5}
+    state_dir = getattr(args,'state_dir',None)
+    if getattr(args,'checkpoints',False):
+        if state_dir is None or not state_dir.is_absolute():
+            raise ResolutionError('--checkpoints requires an explicit private --state-dir')
+        if not state_dir.exists() and not args.dry_run:
+            state_dir.mkdir(parents=True,mode=0o700)
+        if state_dir.exists():
+            from contitext.outbox import private_directory
+            private_directory(state_dir)
+        command += ' --state-dir ' + shlex.quote(str(state_dir)) + ' --timeout 2'
+    elif state_dir is not None:
+        raise ResolutionError('--state-dir requires --checkpoints')
+    handler = {'type': 'command', 'command': command, 'timeout': 3 if getattr(args,'checkpoints',False) else 5}
     if args.client == 'codex':
         handler['additionalContextLimit'] = 4000
     entry = {'matcher': 'startup|resume|clear|compact|fork', 'hooks': [handler]}
+    additions = {'SessionStart':[entry]}
+    if getattr(args,'checkpoints',False):
+        for event in ['Stop','PreCompact','SessionEnd'] + (['Interrupt'] if args.client == 'codex' else []):
+            additions[event] = [{'hooks':[{'type':'command','command':command,'timeout':3}]}]
     # Parent creation is an explicit installer action; never done by a running hook.
     if not args.config.parent.exists():
         if args.dry_run:
-            return {'changed': True, 'fragment': {'hooks': {'SessionStart': [entry]}}}
+            return {'changed': True, 'fragment': {'hooks': additions}}
         args.config.parent.mkdir(parents=True, mode=0o700)
     with nullcontext() if args.dry_run else mapping_lock(args.config):
         data = read_local_json(args.config) if args.config.exists() or args.config.is_symlink() else {}
         hooks = data.setdefault('hooks', {})
         if not isinstance(hooks, dict):
             raise ResolutionError('existing hooks must be a JSON object')
-        entries = hooks.setdefault('SessionStart', [])
-        if not isinstance(entries, list):
-            raise ResolutionError('existing SessionStart hooks must be a list')
-        if entry in entries:
-            return {'changed': False}
-        for group in entries:
-            if not isinstance(group, dict) or not isinstance(group.get('hooks'), list):
-                raise ResolutionError('existing SessionStart hook group is malformed')
-            if any(isinstance(h, dict) and 'contitext.hooks' in str(h.get('command', '')) for h in group['hooks']):
-                raise ResolutionError('another Contitext hook is configured; review and remove it explicitly before replacing')
-        entries.append(entry)
+        changed = False
+        for event, groups in additions.items():
+            entries = hooks.setdefault(event, [])
+            if not isinstance(entries, list):
+                raise ResolutionError('existing hooks must be lists')
+            for group in entries:
+                if not isinstance(group, dict) or not isinstance(group.get('hooks'), list):
+                    raise ResolutionError('existing hook group is malformed')
+                if group not in groups and any(isinstance(h, dict) and 'contitext.hooks' in str(h.get('command', '')) for h in group['hooks']):
+                    raise ResolutionError('another Contitext hook is configured; review and remove it explicitly before replacing')
+            for group in groups:
+                if group not in entries:
+                    entries.append(group)
+                    changed = True
+        if not changed:
+            return {'changed':False}
         if args.dry_run:
             return {'changed': True, 'configuration': data}
         backup = None

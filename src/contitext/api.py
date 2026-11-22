@@ -6,6 +6,7 @@ import logging
 import time
 from typing import Any, Callable
 from uuid import uuid4
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -50,6 +51,7 @@ class RecordBody(BaseModel):
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
     event_metadata: EventMetadata | None = None
+    expected_binding_updated_at: datetime | None = None
 
 
 class HandoffBody(BaseModel):
