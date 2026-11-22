@@ -105,3 +105,5 @@ to bypass the check. This prevents accidental cross-deployment reuse, not a
 malicious operator changing an executable or server configuration behind a path.
 Mappings are local associations, not shared project metadata or access grants.
 Repository-local configuration is never automatically discovered or trusted.
+
+For automatic loading at startup, see [session start hooks](session-hooks.md).

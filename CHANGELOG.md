@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add opt-in Codex and Claude Code session-start hydration, with bounded worker
+  cleanup, explicit identity, binding recheck and failure-open behavior. Preserve
+  unrelated client settings and require normal hook trust review.
+
 - Add opt-in, connection-scoped local project mappings and authorization-checked
   MCP resolution. Preserve manual selections with atomic bind-if-unbound; reject
   ambiguous remotes and never infer a project from a basename.
