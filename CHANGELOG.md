@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Clarify the README's existing opt-in project resolution and lifecycle automation,
+  and link directly to the current stable release. No runtime behavior changes.
+
 ## 0.8.2 — 2026-11-22
 
 - Add read-only hook diagnostics, content-free local outcomes, safe generated-hook
