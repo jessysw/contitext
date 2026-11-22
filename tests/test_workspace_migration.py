@@ -37,7 +37,7 @@ def test_old_project_identifiers_map_without_rewriting_history(test_database_url
             assert isinstance(project_id, UUID)
             after = c.execute(text("SELECT row_to_json(e) FROM context_events e")).scalar_one()
             binding_after = c.execute(text("SELECT row_to_json(b) FROM scope_bindings b")).scalar_one()
-            assert after == {**before, "project_id": str(project_id)}
+            assert after == {**before, "project_id": str(project_id), "event_metadata": None}
             assert binding_after == {**binding_before, "project_id": str(project_id)}
             for table in ("project_acl", "projection_offsets"):
                 assert c.execute(text(f"SELECT project_id FROM {table}")).scalar_one() == project_id

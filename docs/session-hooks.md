@@ -58,8 +58,8 @@ context, then rechecks the binding. A change during hydration discards the resul
 It does not switch an existing binding, invent a project, read a transcript,
 record conversation content or run an LLM. Authorization is checked by the server.
 Retrieved text is labeled untrusted data, with a 12,000-byte startup cap; entries
-that do not fit are omitted. This initial loader uses the legacy context bundle;
-[context assembly](automation-0.8.md) is a separate subsequent delivery.
+that do not fit are omitted. The loader requests [context assembly](context-assembly.md) when the server
+advertises it, and otherwise uses the bounded legacy bundle.
 
 An isolated worker has a three-second deadline. The supervisor terminates its
 local process group on timeout and exits successfully with no context on malformed

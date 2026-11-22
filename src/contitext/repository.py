@@ -191,6 +191,12 @@ class Repository:
             if binding is None or binding.project_id != project.id:
                 raise BindingConflictError("bind this scope to the requested project before writing")
             acquire_project_transaction_lock(session, project.id)
+            existing_key = session.scalar(select(ContextEvent.event_id).where(
+                ContextEvent.project_id == project.id, ContextEvent.idempotency_key == request.idempotency_key,
+            ))
+            if existing_key is None:
+                from contitext.assembly import validate_lifecycle
+                validate_lifecycle(session, project.id, request)
             statement = (
                 insert(ContextEvent)
                 .values(
@@ -204,6 +210,7 @@ class Repository:
                     source_id=request.source_id,
                     event_kind=request.event_kind.value,
                     payload=request.payload,
+                    event_metadata=request.event_metadata.model_dump(mode="json") if request.event_metadata is not None else None,
                     idempotency_key=request.idempotency_key,
                     created_at=func.clock_timestamp(),
                 )
@@ -231,6 +238,7 @@ class Repository:
                     "source_id": event.source_id,
                     "event_kind": event.event_kind,
                     "payload": event.payload,
+                    "event_metadata": event.event_metadata,
                 }
                 if event.principal_id != principal.principal_id or actual != expected:
                     raise IdempotencyConflictError("idempotency key already used for a different request")
@@ -253,22 +261,8 @@ class Repository:
             project_id = project.id
 
             def events(kind: str, limit: int, *, unresolved: bool = False) -> list[ContextEvent]:
-                statement = select(ContextEvent).join(
-                    ProjectACL,
-                    (ProjectACL.project_id == ContextEvent.project_id)
-                    & (ProjectACL.principal_id == principal.principal_id),
-                ).where(
-                    ContextEvent.project_id == project_id,
-                    ContextEvent.event_kind == kind,
-                )
-                if unresolved:
-                    statement = statement.where(
-                        ContextEvent.payload["resolved"].as_boolean().is_not(True)
-                    )
-                statement = statement.order_by(
-                    ContextEvent.created_at.desc(), ContextEvent.event_id.desc()
-                ).limit(limit)
-                return list(session.execute(statement).scalars())
+                from contitext.assembly import event_selection
+                return list(session.scalars(event_selection(project_id, kind, limit=limit)))
 
             status_events = events("checkpoint", 1)
             questions = events("question", question_limit, unresolved=True)
@@ -285,6 +279,12 @@ class Repository:
                 recent_decisions=[self._event_result(item, project.reference) for item in decisions],
                 latest_handoff=self._event_result(handoffs[0], project.reference) if handoffs else None,
             )
+
+    def assemble_context(self, principal, project_id, options):
+        from contitext.assembly import assemble
+        with self._session_factory.begin() as session:
+            project = self.resolver.resolve(session, principal.principal_id, project_id)
+            return assemble(session, project, options)
 
     @staticmethod
     def _encode_search_cursor(rank: float, created_at: datetime, event_id: UUID, identity: list[str]) -> str:

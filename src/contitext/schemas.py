@@ -48,6 +48,31 @@ class ProjectBinding(BaseModel):
     updated_at: datetime
 
 
+class EventMetadata(BaseModel):
+    """Explicit provenance/lifecycle fields; arbitrary payload keys have no authority."""
+    model_config = ConfigDict(extra="forbid", revalidate_instances="always")
+    task_id: str | None = Field(default=None, min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
+    candidate: bool = Field(default=False, strict=True)
+    supersedes: UUID | None = None
+    resolves: UUID | None = None
+
+
+class AssemblyOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    task_id: str | None = Field(default=None, min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
+    token_budget: int = Field(default=4000, ge=1024, le=32000, strict=True)
+
+
+class AssembledContext(BaseModel):
+    project_id: str
+    task_id: str | None
+    token_budget: int
+    budget_unit: str = "compact_json_utf8_bytes"
+    used_budget: int = 0
+    omitted_events: int = 0
+    context: dict[str, Any]
+
+
 class RecordContextRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", revalidate_instances="always")
 
@@ -60,6 +85,7 @@ class RecordContextRequest(BaseModel):
     event_kind: RecordEventKind
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
+    event_metadata: EventMetadata | None = None
 
 
 class StoreContextEventRequest(BaseModel):
@@ -76,6 +102,7 @@ class StoreContextEventRequest(BaseModel):
     event_kind: EventKind
     payload: dict[str, Any]
     idempotency_key: str = Field(min_length=1)
+    event_metadata: EventMetadata | None = None
 
 
 class HandoffRequest(BaseModel):
@@ -93,6 +120,7 @@ class HandoffRequest(BaseModel):
     current: list[str] = Field(default_factory=list)
     blockers: list[str] = Field(default_factory=list)
     idempotency_key: str = Field(min_length=1)
+    event_metadata: EventMetadata | None = None
 
 
 class ContextEventResult(BaseModel):
@@ -107,6 +135,7 @@ class ContextEventResult(BaseModel):
     event_kind: EventKind
     payload: dict[str, Any]
     idempotency_key: str
+    event_metadata: EventMetadata | None = None
     created_at: datetime
 
 

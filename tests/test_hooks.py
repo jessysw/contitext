@@ -93,6 +93,7 @@ def test_binding_change_discards_loaded_context(tmp_path):
     binding = {'project_id':'demo','scope_id':'codex:chat','session_id':'chat','principal_id':'one','updated_at':'now'}
     class Client:
         calls=0
+        async def list_tools(self): return NS(tools=[])
         async def call_tool(self, name, arguments):
             self.calls+=1
             value = binding if self.calls==1 else ({'overview':{}} if name=='context_get' else {**binding,'project_id':'other'})

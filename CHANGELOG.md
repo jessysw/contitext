@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add explicit task/candidate/lifecycle metadata and bounded context assembly.
+  Select relevant handoffs, effective decisions and unresolved questions while
+  preserving immutable history and the existing eight MCP tool names.
+- Add an additive metadata migration, 0.8.0 integrity rehearsal, safe downgrade
+  refusal and metadata visibility in Markdown readers.
+
 - Add opt-in Codex and Claude Code session-start hydration, with bounded worker
   cleanup, explicit identity, binding recheck and failure-open behavior. Preserve
   unrelated client settings and require normal hook trust review.

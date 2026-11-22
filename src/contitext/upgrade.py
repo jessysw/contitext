@@ -17,7 +17,7 @@ FORMAT = "contitext-upgrade-snapshot-v1"
 TABLES = ("projects", "principals", "project_acl", "scope_bindings", "context_events",
           "projection_offsets", "credentials", "credential_audit")
 CHECKS = (*TABLES, "effective_project_access", "project_creation_access")
-SUPPORTED = {"0001_foundation", "0002_credentials", HEAD_REVISION}
+SUPPORTED = {"0001_foundation", "0002_credentials", "0003_workspaces", HEAD_REVISION}
 
 
 def _fingerprint(rows):
@@ -41,7 +41,7 @@ def inspect_upgrade(database_url: str) -> dict:
             if revision not in SUPPORTED:
                 report["errors"].append("unsupported or uninitialized schema; use a fresh database for initialization or the matching release's upgrade procedure")
                 return report
-            namespaced = revision == HEAD_REVISION
+            namespaced = revision in {"0003_workspaces", HEAD_REVISION}
             workspaces = dict(session.execute(text("SELECT id::text, slug FROM workspaces")).all()) if namespaced else {}
             project_rows = list(session.scalars(text("SELECT row_to_json(p) FROM projects p")))
             references = {str(p["id"]): f"{workspaces[str(p['workspace_id'])]}/{p['slug']}" if namespaced else f"legacy/{p['id']}" for p in project_rows}
@@ -71,6 +71,8 @@ def inspect_upgrade(database_url: str) -> dict:
                         row.pop("workspace_id", None)
                     elif "project_id" in row:
                         row["project_id"] = references[str(row["project_id"])]
+                    if table == "context_events" and row.get("event_metadata") is None:
+                        row.pop("event_metadata", None)
                     yield row
 
             report["tables"] = {table: _fingerprint(normalized_rows(table)) for table in TABLES}

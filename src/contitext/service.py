@@ -19,6 +19,9 @@ from contitext.schemas import (
     EventKind,
     HandoffRequest,
     ProjectContext,
+    EventMetadata,
+    AssemblyOptions,
+    AssembledContext,
     ProjectBinding,
     ProjectionResult,
     RecordContextRequest,
@@ -95,7 +98,11 @@ class ContextService:
         self,
         principal: PrincipalIdentity,
         project_id: str,
-    ) -> ProjectContext:
+        *, task_id: str | None = None, token_budget: int | None = None,
+    ) -> ProjectContext | AssembledContext:
+        if task_id is not None or token_budget is not None:
+            options = AssemblyOptions(task_id=task_id, token_budget=4000 if token_budget is None else token_budget)
+            return self._repository.assemble_context(principal, project_id, options)
         return self._repository.get_context(principal, project_id)
 
     def search_context(
@@ -127,6 +134,7 @@ class ContextService:
                 source_kind=request.source_kind,
                 source_id=request.source_id,
                 event_kind=EventKind.handoff,
+                event_metadata=request.event_metadata,
                 payload={
                     "summary": request.summary,
                     "next_action": request.next_action,

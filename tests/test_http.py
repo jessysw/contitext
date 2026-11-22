@@ -125,3 +125,22 @@ def test_readiness_fails_closed_without_database_and_openapi_is_exact(migrated_d
         }
     finally:
         engine.dispose()
+
+
+def test_http_explicit_lifecycle_and_task_assembly(migrated_database_url):
+    engine, client = setup(migrated_database_url)
+    try:
+        client.put('/v1/scopes/scope/binding',headers=auth(),json={'project_id':'alpha','session_id':'session'})
+        body = {**event_body('question'), 'event_kind':'question','event_metadata':{'task_id':'task-a'}}
+        question = client.post('/v1/projects/alpha/events', headers=auth(), json=body).json()
+        resolved = client.post('/v1/projects/alpha/events',headers=auth(),json={**event_body('resolve'),
+            'event_metadata':{'task_id':'task-a','resolves':question['event_id']}})
+        assert resolved.status_code == 201
+        assembled = client.get('/v1/projects/alpha/context',headers=auth(),params={'task_id':'task-a','token_budget':2000})
+        assert assembled.status_code == 200
+        assert assembled.json()['context']['questions'] == []
+        assert assembled.json()['used_budget'] <= 2000
+        assert client.get('/v1/projects/alpha/context',headers=auth(),params={'token_budget':0}).status_code == 422
+        assert client.get('/v1/projects/alpha/context',headers=auth('denied-token'),params={'token_budget':2000}).status_code == 404
+    finally:
+        engine.dispose()
