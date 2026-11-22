@@ -41,6 +41,10 @@ def main(argv: list[str] | None = None) -> None:
     reader.add_argument("--output", type=Path, required=True, help="Dedicated empty or managed reading folder; parent must exist.")
     reader.add_argument("--project", action="append", help="Explicit project ID; repeat to select several. Default: all accessible projects.")
     reader.add_argument("--watch", type=int, metavar="SECONDS", help="Refresh repeatedly; minimum 10 seconds. Otherwise export once.")
+    upgrade = commands.add_parser("upgrade-check", help="Read-only upgrade inventory and integrity comparison; does not migrate or fence writers.")
+    snapshot = upgrade.add_mutually_exclusive_group()
+    snapshot.add_argument("--snapshot", type=Path, help="Save a new private integrity baseline; refuses to overwrite.")
+    snapshot.add_argument("--compare", type=Path, help="Compare normalized data and effective permissions with a saved baseline.")
     commands.add_parser("doctor", help="Check configuration, database, MCP identity, and access without writing.")
     client = commands.add_parser("client-config", help="Print generic MCP client JSON without embedding secrets.")
     transport = client.add_mutually_exclusive_group(required=True)
@@ -83,7 +87,7 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(run(args))
         except (AuthenticationError, ConfigurationError, ValueError, OSError, ProjectionSafetyError):
             parser.error("cannot start reader; check authentication, output ownership, permissions, and configuration")
-    if args.command in {"init", "workspace", "project", "principal", "access", "credential", "doctor", "client-config"}:
+    if args.command in {"init", "upgrade-check", "workspace", "project", "principal", "access", "credential", "doctor", "client-config"}:
         from contitext.admin import manage
         from contitext.config import ConfigurationError
         from contitext.auth import AuthenticationError, ProjectNotFoundError
@@ -96,6 +100,14 @@ def main(argv: list[str] | None = None) -> None:
         try:
             if args.command == "init":
                 result = initialize(args)
+            elif args.command == "upgrade-check":
+                from contitext.upgrade import inspect_upgrade, compare_snapshot, write_snapshot
+                from contitext.config import Settings
+                result = inspect_upgrade(Settings.from_env(require_auth=False).database_url)
+                if args.compare:
+                    compare_snapshot(result, args.compare)
+                if args.snapshot:
+                    write_snapshot(result, args.snapshot)
             elif args.command == "doctor":
                 result = doctor()
             elif args.command == "client-config":
@@ -115,7 +127,7 @@ def main(argv: list[str] | None = None) -> None:
             else:
                 result = manage(args)
         except FileExistsError:
-            parser.error("configuration already exists; preserved without changes")
+            parser.error("upgrade snapshot already exists; preserved without changes" if args.command == "upgrade-check" else "configuration already exists; preserved without changes")
         except ValidationError:
             parser.error("invalid identifier or empty name; check command arguments")
         except (ValueError, ConfigurationError, AuthenticationError, ProjectNotFoundError, ProjectCreationConflictError, WriterFencedError) as exc:
@@ -125,7 +137,7 @@ def main(argv: list[str] | None = None) -> None:
         except OSError:
             parser.error("cannot access configuration output; check directory and permissions")
         print(json.dumps(result, sort_keys=True))
-        if args.command == "doctor" and not result["ok"]:
+        if args.command in {"doctor", "upgrade-check"} and not result["ok"]:
             raise SystemExit(1)
         return
     if args.command == "migrate":

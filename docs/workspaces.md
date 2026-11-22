@@ -97,8 +97,9 @@ maps existing string project IDs to slugs in it. Its stable UUID is
 `00000000-0000-4000-8000-000000000001`. Projects receive new UUIDs; every existing
 ACL, binding, event and projection offset is mapped to the corresponding UUID in
 one PostgreSQL transaction. Event IDs, principal IDs, provenance, timestamps and
-payloads are preserved. Existing ACL holders become members, not workspace
-owners; an operator assigns ownership explicitly if needed.
+payloads are preserved. Existing provisioned principals become members, not workspace
+owners; this preserves their prior ability to create projects without adding any
+project read grants; an operator assigns ownership explicitly if needed.
 
 Bare IDs are disabled unless the process explicitly configures:
 
@@ -111,8 +112,9 @@ references for that workspace and qualified references for all others, allowing
 old callers to keep using their original project IDs. There is no search across
 workspaces, fallback to the only accessible match, or directory-based inference.
 An absent or inaccessible configured workspace fails closed. New development
-`init` output and the example environment explicitly include this setting for
-their existing single-workspace bootstrap path.
+`init` output creates an owned `personal` workspace by default (or the explicit
+`--workspace` choice) and configures short-name compatibility for that workspace.
+The migration path for existing deployments remains `legacy`.
 
 ```sh
 # Trusted operator: assign the migrated workspace its first owner.

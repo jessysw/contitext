@@ -37,8 +37,8 @@ def upgrade() -> None:
     op.execute(sa.text("INSERT INTO workspaces (id, slug, display_name) VALUES "
                        "('00000000-0000-4000-8000-000000000001', 'legacy', 'Legacy workspace')"))
     op.execute(sa.text("INSERT INTO workspace_members (workspace_id, principal_id, role) "
-                       "SELECT '00000000-0000-4000-8000-000000000001', principal_id, 'member' "
-                       "FROM project_acl GROUP BY principal_id"))
+                       "SELECT '00000000-0000-4000-8000-000000000001', id, 'member' "
+                       "FROM principals"))
     op.add_column("projects", sa.Column("slug", sa.Text()))
     op.add_column("projects", sa.Column("workspace_id", postgresql.UUID()))
     op.add_column("projects", sa.Column("project_uuid", postgresql.UUID(), nullable=False, server_default=sa.text("gen_random_uuid()")))
