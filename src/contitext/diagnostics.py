@@ -12,6 +12,7 @@ from contitext.auth import AuthenticationError
 from contitext.config import ConfigurationError, Settings
 from contitext.db import create_database_engine, create_session_factory
 from contitext.models import Principal, ProjectACL
+from contitext.migrations import HEAD_REVISION
 
 
 def doctor() -> dict:
@@ -31,9 +32,9 @@ def doctor() -> dict:
             version = int(session.execute(text("SHOW server_version_num")).scalar_one())
             check("postgresql", version >= 160000, "PostgreSQL 16 or newer is required")
             revision = session.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-            check("schema", revision == "0001_foundation", "Expected foundation schema")
+            check("schema", revision == HEAD_REVISION, "Expected schema: " + HEAD_REVISION)
             try:
-                identity = settings.token_store.resolve(os.environ.get("CONTITEXT_MCP_TOKEN", ""))
+                identity = settings.credential_resolver(create_session_factory(engine)).resolve(os.environ.get("CONTITEXT_MCP_TOKEN", ""))
                 exists = session.get(Principal, identity.principal_id) is not None
                 check("mcp_identity", exists, "Configured MCP credential must refer to a provisioned principal")
                 grants = list(session.execute(select(ProjectACL.project_id, ProjectACL.role).where(ProjectACL.principal_id == identity.principal_id).order_by(ProjectACL.project_id)))

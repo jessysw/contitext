@@ -19,6 +19,8 @@ EXPECTED_TABLES = {
     "scope_bindings",
     "context_events",
     "projection_offsets",
+    "credentials",
+    "credential_audit",
 }
 
 

@@ -174,12 +174,12 @@ def manage(args) -> dict:
     try:
         if args.command == "project" and args.action == "create" and args.owner is None:
             token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
-            if not token or settings.token_store is None:
-                raise AuthenticationError("configure CONTITEXT_MCP_TOKEN and CONTITEXT_AUTH_TOKENS, or supply --owner from principal list")
+            if not token:
+                raise AuthenticationError("configure CONTITEXT_MCP_TOKEN for the selected authentication mode, or supply --owner from principal list")
             from contitext.repository import Repository
             from contitext.schemas import CreateProjectRequest
             from contitext.service import ContextService
-            identity = settings.token_store.resolve(token)
+            identity = settings.credential_resolver(create_session_factory(engine)).resolve(token)
             created = ContextService(Repository(create_session_factory(engine))).create_project(
                 identity, CreateProjectRequest(project_id=args.project_id, display_name=args.name),
             )

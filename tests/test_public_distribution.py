@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 from contitext.cli import migrate
+from contitext.migrations import HEAD_REVISION
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,6 @@ def test_migration_entry_point_works_away_from_checkout(test_database_url, postg
     engine = create_engine(test_database_url)
     try:
         with engine.connect() as connection:
-            assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0001_foundation"
+            assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == HEAD_REVISION
     finally:
         engine.dispose()

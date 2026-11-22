@@ -41,6 +41,30 @@ class ProjectACL(Base):
     role: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class Credential(Base):
+    __tablename__ = "credentials"
+    __table_args__ = (CheckConstraint("token_hash ~ '^[0-9a-f]{64}$'", name="ck_credentials_hash"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
+    principal_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("principals.id", ondelete="RESTRICT"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CredentialAudit(Base):
+    __tablename__ = "credential_audit"
+    __table_args__ = (CheckConstraint("action IN ('issued', 'imported', 'rotated', 'revoked')", name="ck_credential_audit_action"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
+    credential_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("credentials.id", ondelete="RESTRICT"), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    related_credential_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("credentials.id", ondelete="RESTRICT"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False)
+
+
 class ScopeBinding(Base):
     __tablename__ = "scope_bindings"
 

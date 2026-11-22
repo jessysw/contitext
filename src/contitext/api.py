@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from contitext import __version__
 from contitext.auth import AuthenticationError, PrincipalIdentity, ProjectNotFoundError, TokenStore
+from contitext.credentials import DatabaseTokenStore
 from contitext.config import Settings
 from contitext.db import create_database_engine, create_session_factory
 from contitext.repository import BindingConflictError, BindingNotFoundError, IdempotencyConflictError, ProjectCreationConflictError, Repository
@@ -66,15 +67,16 @@ class HandoffBody(BaseModel):
 def create_app(
     *,
     service: ContextService | None = None,
-    token_store: TokenStore | None = None,
+    token_store: TokenStore | DatabaseTokenStore | None = None,
     projection: Callable[[PrincipalIdentity, str], Any] | None = None,
 ) -> FastAPI:
     owned_engine = None
     if service is None or token_store is None:
         settings = Settings.from_env()
-        if service is None:
+        if service is None or settings.auth_mode == "database":
             owned_engine = create_database_engine(settings.database_url)
             factory = create_session_factory(owned_engine)
+        if service is None:
             configured_projector = None
             if projection is None:
                 import os
@@ -85,7 +87,7 @@ def create_app(
                     ))
             service = ContextService(Repository(factory), configured_projector)
         if token_store is None:
-            token_store = settings.token_store
+            token_store = settings.credential_resolver(factory if owned_engine is not None else None)
     if token_store is None:
         raise AuthenticationError("local bearer token resolver is required")
 

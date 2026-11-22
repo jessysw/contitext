@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Annotated, Any
+from typing import Annotated, Any, Callable
 
 from pydantic import Field
 
@@ -29,22 +29,25 @@ from contitext.schemas import (
 from contitext.service import ContextService
 
 
-def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> FastMCP:
+def create_mcp_server(service: ContextService, principal: PrincipalIdentity | Callable[[], PrincipalIdentity]) -> FastMCP:
     server = FastMCP("contitext", log_level="WARNING")
+
+    def identity() -> PrincipalIdentity:
+        return principal() if callable(principal) else principal
 
     @server.tool(name="project_bind", structured_output=True)
     def project_bind(scope_id: str, project_id: str, session_id: str) -> ProjectBinding:
-        return service.bind_project(principal, BindProjectRequest(
+        return service.bind_project(identity(), BindProjectRequest(
             project_id=project_id, scope_id=scope_id, session_id=session_id,
         ))
 
     @server.tool(name="project_current", structured_output=True)
     def project_current(scope_id: str) -> ProjectBinding:
-        return service.current_project(principal, scope_id)
+        return service.current_project(identity(), scope_id)
 
     @server.tool(name="context_get", structured_output=True)
     def context_get(project_id: str) -> ProjectContext:
-        return service.get_context(principal, project_id)
+        return service.get_context(identity(), project_id)
 
     @server.tool(name="context_search", structured_output=True)
     def context_search(
@@ -54,7 +57,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
         cursor: str | None = None,
     ) -> ContextSearchPage:
         return service.search_context(
-            principal, project_id, query, limit=limit, cursor=cursor
+            identity(), project_id, query, limit=limit, cursor=cursor
         )
 
     @server.tool(name="context_record", structured_output=True)
@@ -69,7 +72,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
         payload: dict[str, Any],
         idempotency_key: str,
     ) -> ContextEventResult:
-        return service.record_context(principal, RecordContextRequest(
+        return service.record_context(identity(), RecordContextRequest(
             project_id=project_id,
             scope_id=scope_id,
             session_id=session_id,
@@ -96,7 +99,7 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
         current: list[str] | None = None,
         blockers: list[str] | None = None,
     ) -> ContextEventResult:
-        return service.create_handoff(principal, HandoffRequest(
+        return service.create_handoff(identity(), HandoffRequest(
             project_id=project_id,
             scope_id=scope_id,
             session_id=session_id,
@@ -117,12 +120,12 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
         cursor: str | None = None,
     ) -> ProjectListPage:
         """List projects accessible to the authenticated caller without selecting one."""
-        return service.list_projects(principal, limit=limit, cursor=cursor)
+        return service.list_projects(identity(), limit=limit, cursor=cursor)
 
     @server.tool(name="project_create", structured_output=True)
     def project_create(project_id: str, display_name: str) -> AccessibleProject:
         """Create a project owned by the authenticated caller; does not bind a conversation."""
-        return service.create_project(principal, CreateProjectRequest(
+        return service.create_project(identity(), CreateProjectRequest(
             project_id=project_id, display_name=display_name,
         ))
 
@@ -132,12 +135,18 @@ def create_mcp_server(service: ContextService, principal: PrincipalIdentity) -> 
 def server_from_env() -> FastMCP:
     settings = Settings.from_env()
     token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
-    if not token or settings.token_store is None:
+    if not token:
         raise AuthenticationError("CONTITEXT_MCP_TOKEN is required")
-    principal = settings.token_store.resolve(token)
     engine = create_database_engine(settings.database_url)
-    service = ContextService(Repository(create_session_factory(engine)))
-    server = create_mcp_server(service, principal)
+    factory = create_session_factory(engine)
+    resolver = settings.credential_resolver(factory)
+    try:
+        resolver.resolve(token)
+    except BaseException:
+        engine.dispose()
+        raise
+    service = ContextService(Repository(factory))
+    server = create_mcp_server(service, lambda: resolver.resolve(token))
     # Keep the engine alive for the stdio server lifetime without exposing it as a tool.
     server._contitext_engine = engine
     return server

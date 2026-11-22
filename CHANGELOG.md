@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — 0.8 development
+
+- Define the self-hosted release plan, workspace/identity boundaries and acceptance gates.
+- Add opt-in database-backed credentials with hash-only storage, private one-time
+  file delivery, expiry, rotation, revocation, import and lifecycle audit metadata.
+- Reauthenticate database credentials for each HTTP request, MCP tool call and
+  Markdown reader refresh; preserve the default configuration authentication mode.
+- Add an additive credential migration and refuse destructive downgrade once
+  credential history exists. Workspace and namespace implementation is pending.
+
 ## 0.7.1 — 2026-11-18
 
 - Add authenticated, read-only Markdown exports for Obsidian and other readers.

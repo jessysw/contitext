@@ -26,6 +26,12 @@ end-to-end first-use tutorial. The database remains authoritative.
 
 ## Before v1.0
 
+The next milestone is the [v0.8.x self-hosted release plan](v0.8-plan.md):
+workspace namespaces, independent credentials, safe migration, and a verified
+first-use and operations path. See that plan for ordered batches and release gates.
+Automatic project resolution, session hooks and deeper memory integration are
+deferred to v0.9.x; the current explicit binding behavior remains authoritative.
+
 - Add question resolution, decision supersession, and task-scoped handoff selection
   with explicit lifecycle semantics and regression tests.
 - Rehearse migration and rollback with private deployments using private tooling;
