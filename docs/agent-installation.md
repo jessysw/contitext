@@ -12,10 +12,10 @@ interpreter is elsewhere. No packages are installed by this script.
 ## Connect an agent
 
 Obtain the installer from the public repository. Use the installer from the same release as your server.
-The examples below cover 0.8.0. The protocol includes project listing and creation:
+The examples below cover 0.8.1. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.8.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -111,3 +111,6 @@ run independent writable copies of the same logical deployment.
 For a complete first installation, follow [Getting started](getting-started.md).
 The optional [Markdown reader](obsidian.md) is configured on the service host;
 installing an agent adapter does not enable or select a vault.
+
+Optional native lifecycle hooks are installed separately through [session start](session-hooks.md)
+and [candidate checkpoints](checkpoints.md). MCP installation alone does not enable capture.

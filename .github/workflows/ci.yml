@@ -86,6 +86,8 @@ jobs:
           native/bin/contitext --env-file native.env doctor
           native/bin/contitext --env-file native.env mcp-smoke
           native/bin/contitext --env-file native.env export --output native-reader
+          native/bin/contitext client-config --config-file "$RUNNER_TEMP/native.env" --executable "$RUNNER_TEMP/native/bin/contitext" > "$RUNNER_TEMP/client.json"
+          native/bin/python "$GITHUB_WORKSPACE/scripts/check_hook_installation.py" --connection "$RUNNER_TEMP/client.json" --project personal/demo --directory "$RUNNER_TEMP/native-hooks"
           test -f native-reader/README.md
       - name: Fresh Compose installation from the release source artifact
         run: |
@@ -106,6 +108,9 @@ jobs:
           mkdir reader-vault
           docker compose -p contitext-ci-install --profile reader up --build -d --wait
           test -f reader-vault/README.md
+          "$RUNNER_TEMP/native/bin/contitext" client-config --compose "$release_dir" --compose-project contitext-ci-install > "$RUNNER_TEMP/docker-client.json"
+          cd "$RUNNER_TEMP"
+          native/bin/python "$GITHUB_WORKSPACE/scripts/check_hook_installation.py" --connection "$RUNNER_TEMP/docker-client.json" --project personal/demo --directory "$RUNNER_TEMP/docker-hooks"
       - name: Remove only this disposable CI stack
         if: always()
         run: |

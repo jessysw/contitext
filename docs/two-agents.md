@@ -1,6 +1,6 @@
 # Two independently authenticated agents
 
-This walkthrough covers 0.8.0. Start with the fresh setup in
+This walkthrough covers 0.8.1. Start with the fresh setup in
 [Getting started](getting-started.md), which owns workspace `personal`. Use one
 shared database and separate principals, credentials and launchers. These are
 trusted local/SSH clients, not untrusted tenants with restricted database access.

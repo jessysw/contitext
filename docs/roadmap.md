@@ -49,7 +49,7 @@ than a fixed feature-to-patch schedule. Explicit selection remains authoritative
 
 ## Project lifecycle and repository associations
 
-Private local mappings are implemented in development; see
+Private local mappings are available from 0.8.1; see
 [project resolution](project-resolution.md). Shared repository metadata remains
 a separate possible feature, independent of conversation bindings.
 A project can cover several repositories, and a repository can support multiple

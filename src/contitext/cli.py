@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> None:
     add_management_commands(commands)
     from contitext.credentials import add_arguments as add_credentials
     add_credentials(commands)
-    hooks = commands.add_parser("hooks", help="Install opt-in session start hooks (unreleased).")
+    hooks = commands.add_parser("hooks", help="Install opt-in session start hooks.")
     hook_commands = hooks.add_subparsers(dest="hook_action", required=True)
     hook_install = hook_commands.add_parser("install")
     hook_install.add_argument("--client", choices=["codex", "claude"], required=True)
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> None:
         operation.add_argument("--source-id", help="Stable milestone identifier for an explicit intermediate candidate.")
         operation.add_argument("--task-id")
 
-    mappings = commands.add_parser("mapping", help="Manage explicit local workspace/project mappings (unreleased).")
+    mappings = commands.add_parser("mapping", help="Manage explicit local workspace/project mappings.")
     mapping_commands = mappings.add_subparsers(dest="mapping_action", required=True)
     for action in ("add", "list", "remove"):
         mapping = mapping_commands.add_parser(action)
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> None:
             selector.add_argument("--directory", type=Path)
         if action == "add":
             mapping.add_argument("--project", required=True, help="Qualified workspace/project reference.")
-    resolve = commands.add_parser("resolve", help="Preview an authorized explicit mapping; optionally bind only an unbound scope (unreleased).")
+    resolve = commands.add_parser("resolve", help="Preview an authorized explicit mapping; optionally bind only an unbound scope.")
     resolve.add_argument("--mappings", type=Path, required=True)
     resolve.add_argument("--connection", type=Path, required=True)
     resolve.add_argument("--cwd", type=Path, required=True)

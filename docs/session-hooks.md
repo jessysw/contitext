@@ -1,6 +1,6 @@
-# Session start hooks (unreleased)
+# Session start hooks
 
-This opt-in feature is in development source, not the stable 0.8.0 package.
+Available in 0.8.1; the hook remains opt-in.
 It loads context through the same MCP command used by your agent. There is no
 new service and no database credential on a remote client. Native Python,
 Docker Compose and SSH connections are supported on macOS and Linux.
@@ -8,10 +8,9 @@ Docker Compose and SSH connections are supported on macOS and Linux.
 ## Set up
 
 First configure a trusted connection and private mappings using
-[project resolution](project-resolution.md). Install the same development build
-on the client and server; older servers can hydrate an already-selected scope
+[project resolution](project-resolution.md). Install compatible 0.8.1 builds on the client and server; older servers can hydrate an already-selected scope
 but cannot automatically bind one without the new atomic binding capability.
-Use a separate installation while evaluating unreleased code.
+Rehearse upgrades in a separate installation before changing a live service.
 
 For Codex, preview and then install into the user hooks file:
 
@@ -62,7 +61,8 @@ Retrieved text is labeled untrusted data, with a 12,000-byte startup cap; entrie
 that do not fit are omitted. The loader requests [context assembly](context-assembly.md) when the server
 advertises it, and otherwise uses the bounded legacy bundle.
 
-An isolated worker has a three-second deadline. The supervisor terminates its
+The installer uses Python isolated mode so repository files and `PYTHONPATH`
+cannot replace the hook package. A separate worker has a three-second deadline. The supervisor terminates its
 local process group on timeout and exits successfully with no context on malformed
 input, ambiguous mapping, unavailable server or denied access. Generated runtime
 configuration also sets a five-second outer timeout. Startup may wait briefly for

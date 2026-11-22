@@ -104,7 +104,7 @@ async def progress_event(args, event):
 def run_supervised(args, data):
     if len(data) > MAX_INPUT:
         return {}
-    command = [sys.executable, '-m', 'contitext.hooks', '--worker', '--client', args.client,
+    command = [sys.executable, '-I', '-m', 'contitext.hooks', '--worker', '--client', args.client,
                '--connection', str(args.connection), '--mappings', str(args.mappings),
                '--max-bytes', str(args.max_bytes)]
     if getattr(args, 'task_id', None):

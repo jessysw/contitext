@@ -13,7 +13,7 @@ no OAuth authorization server, browser login, encryption at rest, or hosted-tena
 management. In configuration authentication mode, rotate tokens through configuration
 and restart affected processes. Use TLS for HTTP access outside localhost.
 
-Version 0.8.0 includes opt-in [database credentials](docs/credentials.md)
+Version 0.8.1 includes opt-in [database credentials](docs/credentials.md)
 with expiry and per-request revocation checks. Configuration authentication remains
 the default; switching modes is explicit. Database revocation does not remove
 tokens from old configuration-mode processes. Already authenticated in-flight work
