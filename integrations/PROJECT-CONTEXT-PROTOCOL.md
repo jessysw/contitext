@@ -70,7 +70,7 @@ listing and creation still do not bind a conversation.
 
 ## Project identity and repositories
 
-A project ID identifies a context namespace inside the connected service. Its display name is a human-readable label. Neither is a Git repository identifier. Projects may span multiple repositories or have no repository. Repository associations are not implemented in this version; do not invent a `repo` command or infer a binding from the working directory. Listing or creating a project never hydrates or switches another project's context.
+A project ID identifies a context namespace inside the connected service. Its display name is a human-readable label. Neither is a Git repository identifier. Projects may span multiple repositories or have no repository. Shared repository metadata is not implemented. An operator may opt in to trusted local runtime mappings that establish an authorized binding before the agent starts. The agent must still read `project_current`; it must not discover mappings, invent a `repo` command or infer a binding from the working directory. Listing or creating a project never hydrates or switches another project's context.
 
 ## Lifecycle
 

@@ -24,6 +24,7 @@ For an existing 0.7.1 installation, use [its tagged guide](https://github.com/je
 
 See [release validation](docs/acceptance-0.8.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
+Subsequent unreleased work follows the [0.8.x automation plan](docs/automation-0.8.md).
 Releases use maintainer review, automated checks and documented operational
 rehearsals. User feedback is welcome through [GitHub issues](https://github.com/jessysw/contitext/issues).
 Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).

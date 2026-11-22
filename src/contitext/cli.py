@@ -37,6 +37,26 @@ def main(argv: list[str] | None = None) -> None:
     add_management_commands(commands)
     from contitext.credentials import add_arguments as add_credentials
     add_credentials(commands)
+    mappings = commands.add_parser("mapping", help="Manage explicit local workspace/project mappings (unreleased).")
+    mapping_commands = mappings.add_subparsers(dest="mapping_action", required=True)
+    for action in ("add", "list", "remove"):
+        mapping = mapping_commands.add_parser(action)
+        mapping.add_argument("--mappings", type=Path, required=True, help="Explicit absolute private mapping file; never discovered from a repository.")
+        mapping.add_argument("--connection", type=Path, required=True, help="Trusted command/args MCP connection JSON.")
+        if action != "list":
+            selector = mapping.add_mutually_exclusive_group(required=True)
+            selector.add_argument("--remote")
+            selector.add_argument("--directory", type=Path)
+        if action == "add":
+            mapping.add_argument("--project", required=True, help="Qualified workspace/project reference.")
+    resolve = commands.add_parser("resolve", help="Preview an authorized explicit mapping; optionally bind only an unbound scope (unreleased).")
+    resolve.add_argument("--mappings", type=Path, required=True)
+    resolve.add_argument("--connection", type=Path, required=True)
+    resolve.add_argument("--cwd", type=Path, required=True)
+    resolve.add_argument("--scope-id", required=True)
+    resolve.add_argument("--session-id", required=True)
+    resolve.add_argument("--bind", action="store_true", help="Opt in to atomic bind-if-unbound; never replace an existing binding.")
+    resolve.add_argument("--timeout", type=float, default=5, help="Total connection/resolve timeout in seconds (0.1–30).")
     reader = commands.add_parser("export", help="Export an authenticated Markdown reading copy without changing the database.")
     reader.add_argument("--output", type=Path, required=True, help="Dedicated empty or managed reading folder; parent must exist.")
     reader.add_argument("--project", action="append", help="Explicit project ID; repeat to select several. Default: all accessible projects.")
@@ -68,6 +88,8 @@ def main(argv: list[str] | None = None) -> None:
     seed = admin_commands.add_parser("seed", help="Apply the configured seed document.")
     seed.add_argument("--if-empty", action="store_true")
     args = parser.parse_args(argv)
+    if args.command == "resolve" and not 0.1 <= args.timeout <= 30:
+        parser.error("--timeout must be between 0.1 and 30 seconds")
     if args.command == "export" and args.watch is not None and args.watch < 10:
         parser.error("--watch must be at least 10 seconds")
     for env_file in args.env_file:
@@ -79,6 +101,18 @@ def main(argv: list[str] | None = None) -> None:
         except (OSError, UnicodeError):
             parser.error("cannot read configuration file")
         os.environ.update({key: value for key, value in values.items() if value is not None})
+    if args.command in {"mapping", "resolve"}:
+        import asyncio
+        from contitext.resolution import ResolutionError, edit_mapping
+        from contitext.session_client import resolve_command
+        try:
+            result = edit_mapping(args) if args.command == "mapping" else asyncio.run(resolve_command(args))
+        except ResolutionError as exc:
+            parser.error(str(exc))
+        print(json.dumps(result, sort_keys=True))
+        if args.command == "resolve" and result["status"] in {"unmatched", "ambiguous"}:
+            raise SystemExit(1)
+        return
     if args.command == "export":
         from contitext.reader import run
         from contitext.auth import AuthenticationError

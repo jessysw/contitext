@@ -37,6 +37,7 @@ class BindProjectRequest(BaseModel):
     project_id: str = Field(min_length=1)
     scope_id: str = Field(min_length=1)
     session_id: str = Field(min_length=1)
+    if_unbound: bool = Field(default=False, strict=True)
 
 
 class ProjectBinding(BaseModel):
