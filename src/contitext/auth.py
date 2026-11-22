@@ -80,6 +80,10 @@ class TokenStore:
     def __repr__(self) -> str:
         return f"TokenStore(credentials={len(self._credentials)}, plaintext=redacted)"
 
+    def hashed_credentials(self):
+        """Trusted migration input; never includes plaintext tokens."""
+        return tuple(self._credentials.items())
+
 
 ROLE_LEVEL = {"reader": 1, "writer": 2, "owner": 3}
 

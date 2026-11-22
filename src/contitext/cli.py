@@ -35,6 +35,8 @@ def main(argv: list[str] | None = None) -> None:
     add_arguments(commands.add_parser("init", help="Create private configuration and an initial project seed."))
     from contitext.admin import add_management_commands
     add_management_commands(commands)
+    from contitext.credentials import add_arguments as add_credentials
+    add_credentials(commands)
     reader = commands.add_parser("export", help="Export an authenticated Markdown reading copy without changing the database.")
     reader.add_argument("--output", type=Path, required=True, help="Dedicated empty or managed reading folder; parent must exist.")
     reader.add_argument("--project", action="append", help="Explicit project ID; repeat to select several. Default: all accessible projects.")
@@ -81,7 +83,7 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(run(args))
         except (AuthenticationError, ConfigurationError, ValueError, OSError, ProjectionSafetyError):
             parser.error("cannot start reader; check authentication, output ownership, permissions, and configuration")
-    if args.command in {"init", "project", "principal", "access", "doctor", "client-config"}:
+    if args.command in {"init", "project", "principal", "access", "credential", "doctor", "client-config"}:
         from contitext.admin import manage
         from contitext.config import ConfigurationError
         from contitext.auth import AuthenticationError
@@ -98,6 +100,18 @@ def main(argv: list[str] | None = None) -> None:
                 result = doctor()
             elif args.command == "client-config":
                 result = client_config(args)
+            elif args.command == "credential":
+                from contitext.credentials import manage as manage_credentials
+                from contitext.config import Settings
+                from contitext.db import create_database_engine, create_session_factory
+                settings = Settings.from_env(require_auth=False)
+                engine = create_database_engine(settings.database_url)
+                try:
+                    result = manage_credentials(args, create_session_factory(engine))
+                    if settings.auth_mode == "config" and args.action in {"revoke", "rotate"}:
+                        result["warning"] = "Database credentials changed only. Config-mode services still require token removal from configuration and restart."
+                finally:
+                    engine.dispose()
             else:
                 result = manage(args)
         except FileExistsError:

@@ -213,13 +213,16 @@ class ReaderDirectory:
 
 def run(args) -> int:
     settings = Settings.from_env()
-    identity = settings.token_store.resolve(os.environ.get("CONTITEXT_MCP_TOKEN", ""))
     engine = create_database_engine(settings.database_url)
     output = None
     try:
+        resolver = settings.credential_resolver(create_session_factory(engine))
+        token = os.environ.get("CONTITEXT_MCP_TOKEN", "")
+        identity = resolver.resolve(token)
         output = ReaderDirectory(args.output, str(identity.principal_id))
         while True:
             try:
+                identity = resolver.resolve(token)
                 fence = os.environ.get("CONTITEXT_WRITER_FENCE_FILE")
                 if fence and Path(fence).exists():
                     raise ValueError("maintenance")

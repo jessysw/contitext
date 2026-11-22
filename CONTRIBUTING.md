@@ -8,6 +8,36 @@ Use synthetic projects and identities in tests and documentation. Keep private
 configuration, credentials, hostnames, conversation history, and project state out
 of commits. Add regression tests for behavior changes and document API changes.
 
+## Development workflow
+
+Use short-lived branches and pull requests against `main`. Keep each PR focused
+on one independently reviewable change, including its tests and documentation.
+Use descriptive names such as `feat/managed-credentials`, `fix/reader-refresh`,
+or `docs/installation`; a version roadmap is not a long-lived integration branch.
+
+1. Track a release-sized effort in one issue with a checklist and links to the
+   relevant PRs. Create separate issues when a problem needs its own discussion.
+2. Start a focused branch from current `main`. Open a draft PR if work is still
+   incomplete; otherwise open it ready for review. Describe the user-visible
+   behavior, compatibility impact, and validation in English.
+3. Review the final diff and run the full CI matrix before merging. Address
+   failures and review findings in the same PR. Honor any configured review and
+   branch protection requirements; do not bypass them.
+4. Squash merge completed PRs so `main` has one descriptive commit per change.
+   Follow-up fixes remain visible in the PR without cluttering the main history.
+   Do not rewrite published main history or released tags.
+5. Delete merged remote branches and start the next change from updated `main`.
+   Keep the tracking issue and unreleased changelog current.
+
+`main` contains integrated development; tagged releases and PyPI packages are the
+published versions. A completed feature may merge before its target release is
+ready. Record such features under **Unreleased** and clearly label unreleased
+documentation. Bump and align package/Registry versions in a release-preparation
+PR, then follow [the release guide](docs/releasing.md) after the release gates pass.
+Do not publish a package or change a running deployment merely because a feature
+PR has merged. Use [GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow)
+as the underlying workflow.
+
 ## Local tests
 
 Use standard CPython 3.11–3.14 and a **dedicated disposable** PostgreSQL 16+ database.

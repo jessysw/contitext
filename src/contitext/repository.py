@@ -59,7 +59,8 @@ class Repository:
                 version = session.execute(text(
                     "SELECT version_num FROM alembic_version"
                 )).scalar_one()
-                return version == "0001_foundation"
+                from contitext.migrations import HEAD_REVISION
+                return version == HEAD_REVISION
         except Exception:
             return False
 

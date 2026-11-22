@@ -9,9 +9,16 @@ private contact without disclosing exploit details.
 Bearer credentials authorize a server-side principal. Project reader/writer/owner
 ACLs are checked for REST and MCP calls. Database credentials, Docker access, and
 the seed administrator are trusted administrative capabilities. This release has
-no OAuth authorization server, browser login, per-token expiry, encryption at rest,
-or hosted-tenant management. Rotate tokens through configuration and restart
-affected processes. Use TLS for HTTP access outside localhost.
+no OAuth authorization server, browser login, encryption at rest, or hosted-tenant
+management. In the published 0.7.1 release, rotate tokens through configuration and
+restart affected processes. Use TLS for HTTP access outside localhost.
+
+The 0.8 development branch adds opt-in [database credentials](docs/credentials.md)
+with expiry and per-request revocation checks. Configuration authentication remains
+the default; switching modes is explicit. Database revocation does not remove
+tokens from old configuration-mode processes. Already authenticated in-flight work
+may complete. Credential audit records identify trusted operator actions, not a
+human actor, and are not tamper-proof against database administrators.
 
 Store credentials and backups outside Git. Events can contain sensitive project
 content; they are not automatically redacted. Scope selection and lifecycle limits
