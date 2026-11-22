@@ -1,6 +1,6 @@
-# Automatic progress checkpoints (unreleased)
+# Automatic progress checkpoints
 
-This opt-in development feature extends [session start hooks](session-hooks.md).
+This opt-in 0.8.1 feature extends [session start hooks](session-hooks.md).
 It captures **unverified progress candidates**, not approved decisions or a complete
 transcript. Native hooks currently cover Codex and Claude Code on macOS and Linux.
 Other MCP clients retain the explicit checkpoint and handoff workflow.

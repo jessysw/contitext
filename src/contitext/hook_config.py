@@ -16,7 +16,7 @@ def install(args):
             raise ResolutionError('hook configuration paths must be absolute')
     connection = load_connection(args.connection)
     load_mappings(args.mappings, connection)
-    command = shlex.join([sys.executable, '-m', 'contitext.hooks', '--client', args.client,
+    command = shlex.join([sys.executable, '-I', '-m', 'contitext.hooks', '--client', args.client,
                           '--connection', str(args.connection), '--mappings', str(args.mappings)])
     state_dir = getattr(args,'state_dir',None)
     if getattr(args,'checkpoints',False):

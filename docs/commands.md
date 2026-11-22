@@ -22,8 +22,9 @@ another project's metadata or overwriting anything. Neither command changes the
 conversation's binding; `use` is a separate explicit step.
 
 Project ID, display name, and repository are independent concepts. This release
-has no repository association field or command. A project may span multiple
-repositories or have none; working-directory changes never select a project.
+has no shared repository metadata field. A project may span multiple repositories
+or have none. Optional local mappings can resolve an unbound session; changing
+directories never overrides an existing binding.
 
 ## Workspace-qualified references
 
@@ -49,6 +50,10 @@ command-specific options. Help and version output do not require a database.
 | `contitext workspace member grant team PRINCIPAL_UUID` | Grant membership as workspace owner |
 | `contitext credential issue PRINCIPAL_UUID --name "Agent" --output /private/agent.env` | Issue a managed credential to a new private file |
 | `contitext upgrade-check --snapshot /private/before.json` | Save a read-only integrity baseline before migration |
+| `contitext mapping add` / `list` / `remove` | Manage explicit private mappings for one MCP connection; see [resolution](project-resolution.md) |
+| `contitext resolve` | Preview an authorized mapping; `--bind` only fills an unbound scope |
+| `contitext hooks install` | Opt in to supported session hooks; `--dry-run` previews changes |
+| `contitext hooks status` / `flush` / `checkpoint` | Inspect or retry private candidates; provide intermediate progress on stdin; see [checkpoints](checkpoints.md) |
 | `contitext --version` | Print the installed package version |
 | `contitext init --project research --name "Research"` | Generate private `.env` and initial project seed; does not contact the database |
 | `contitext --env-file /absolute/private.env doctor` | Check configuration, schema, MCP identity, and grants without writing |

@@ -68,7 +68,7 @@ Creation observes the maintenance writer fence; listing remains read-only.
   agent protocol still requires a handoff before switching projects.
 - `context_get` returns the latest project checkpoint and handoff, the 20 latest
   decisions, and up to 20 question events whose own payload is not marked
-  `resolved: true`. In development, explicit `event_metadata` also reduces
+  `resolved: true`. From 0.8.1, explicit `event_metadata` also reduces
   question/decision lifecycle and separates candidates; see
   [context assembly](context-assembly.md). Arbitrary later payload text never
   closes a question. Search retains the full history.
@@ -85,7 +85,7 @@ command checks all eight tools against a real stdio server and writes synthetic
 records to the explicitly configured smoke project and creates one synthetic
 project. Run it only in a test deployment.
 
-## Unreleased Workspace references
+## Workspace references
 
 The eight MCP input schemas remain unchanged. With Workspace support, `project_id`
 is a reference such as `team/research`; REST project routes accept the same
@@ -96,7 +96,7 @@ slug; pagination cursors belong to the caller. Search cursors also belong to the
 actual project UUID and query. See [workspaces](workspaces.md) for the migration
 boundary and trusted operator model. This section applies to 0.8.0.
 
-## Atomic automatic binding (unreleased)
+## Atomic automatic binding
 
 `project_bind` and `PUT /v1/scopes/{scope_id}/binding` accept optional
 `if_unbound: true`. The default remains manual replacement. Automatic binding
@@ -108,7 +108,7 @@ manual bind on older servers. No schema migration or new MCP tool is required.
 
 Optional `task_id` / `token_budget` on `context_get` and `event_metadata` on record/
 handoff are documented in [context assembly](context-assembly.md). They require
-the unreleased metadata migration; default MCP result objects are not wrapped.
+the 0.8.1 metadata migration; default MCP result objects are not wrapped.
 
 Automatic `context_record` clients may supply `expected_binding_updated_at` from
 `project_current`. The server compares it while locking the binding row and

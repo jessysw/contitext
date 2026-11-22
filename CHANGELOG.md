@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.1 — 2026-11-22
 
 - Add opt-in candidate progress capture after responses, explicit intermediate
   checkpoints, and bounded compaction/end/interruption retries. Persist private
@@ -20,8 +20,8 @@
 - Add opt-in, connection-scoped local project mappings and authorization-checked
   MCP resolution. Preserve manual selections with atomic bind-if-unbound; reject
   ambiguous remotes and never infer a project from a basename.
-- Plan the remaining 0.8.x session hooks, context assembly and automatic progress
-  as focused deliveries without assigning a fixed patch version to each feature.
+- Deliver the four automation capabilities together after focused PRs, full CI
+  and installed-artifact acceptance; retain explicit selection and progress writes.
 
 ## 0.8.0 — 2026-11-22
 

@@ -134,3 +134,20 @@ def test_real_mcp_start_resume_and_manual_selection(migrated_database_url, monke
     separate,_=invoke(args,event)
     assert 'claude:chat' in separate['hookSpecificOutput']['additionalContext']
     assert '"project_id":"demo"' in separate['hookSpecificOutput']['additionalContext']
+
+
+def test_installed_hook_ignores_repo_package_and_pythonpath(tmp_path):
+    import shlex
+    args=configured(tmp_path)
+    install(args)
+    command=json.loads(args.config.read_text())['hooks']['SessionStart'][0]['hooks'][0]['command']
+    assert ' -I ' in command
+    shadow=tmp_path/'contitext';shadow.mkdir()
+    marker=tmp_path/'executed-untrusted-code'
+    (shadow/'__init__.py').write_text(f'open({str(marker)!r},"w").write("executed")\n')
+    (shadow/'hooks.py').write_text('raise RuntimeError("untrusted hook code")\n')
+    event={'hook_event_name':'SessionStart','session_id':'safe','cwd':str(tmp_path)}
+    result=subprocess.run(shlex.split(command),cwd=tmp_path,env={**os.environ,'PYTHONPATH':str(tmp_path)},
+                          input=json.dumps(event),capture_output=True,text=True,timeout=6)
+    assert result.returncode==0 and json.loads(result.stdout)=={}
+    assert not marker.exists()

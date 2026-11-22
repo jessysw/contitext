@@ -1,6 +1,6 @@
-# Context assembly and lifecycle metadata (unreleased)
+# Context assembly and lifecycle metadata
 
-This development feature is not in the stable 0.8.0 package. Upgrade the schema
+Available in 0.8.1. Upgrade the schema
 before running the new server. The eight MCP tool names and existing required
 arguments remain unchanged; old calls retain their top-level response shape.
 
@@ -41,7 +41,7 @@ wrappers consume additional context. No tokenizer or model download is required.
 
 Session-start hooks discover the optional assembly arguments and request a
 4000-unit project-wide bundle. Custom task-specific hook commands may pass
-`--task-id issue-14` to `python -m contitext.hooks`; standard runtime input does not
+`--task-id issue-14` to `python -I -m contitext.hooks`; standard runtime input does not
 supply a portable task ID. Old servers keep the bounded legacy-loading path.
 
 ## Record explicit metadata

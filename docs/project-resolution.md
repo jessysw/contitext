@@ -1,6 +1,6 @@
-# Project resolution (unreleased)
+# Project resolution
 
-This feature is available in development source, not the published 0.8.0 package.
+Available in 0.8.1.
 It is opt-in. Existing installations continue to use explicit chat selection.
 The commands below are terminal commands; they are not additional chat commands.
 

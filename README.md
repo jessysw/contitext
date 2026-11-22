@@ -12,19 +12,19 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**Current release: 0.8.0.**
-Install with `python -m pip install contitext` or pin `contitext==0.8.0` for a
-reproducible setup. This release adds workspace namespaces, managed credentials,
-safe upgrade checks and independent agent setup. Existing deployments should
-follow [the upgrade guide](docs/upgrading-to-0.8.md) before changing a live service.
+**Current release: 0.8.1.**
+Install with `python -m pip install contitext` or pin `contitext==0.8.1` for a
+reproducible setup. This release adds opt-in project resolution, session-start loading, task-aware
+context assembly and durable candidate checkpoints. Existing deployments should
+follow [the 0.8.1 upgrade guide](docs/upgrading-to-0.8.1.md) before changing a live service.
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
 installation paths, two independently authenticated agents and a visible handoff.
 For an existing 0.7.1 installation, use [its tagged guide](https://github.com/jessysw/contitext/blob/v0.7.1/docs/getting-started.md).
 
-See [release validation](docs/acceptance-0.8.md), [workspaces](docs/workspaces.md),
+See [release validation](docs/acceptance-0.8.1.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
-Subsequent unreleased work follows the [0.8.x automation plan](docs/automation-0.8.md).
+The [0.8.x automation plan](docs/automation-0.8.md) records the feature deliveries.
 Releases use maintainer review, automated checks and documented operational
 rehearsals. User feedback is welcome through [GitHub issues](https://github.com/jessysw/contitext/issues).
 Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).
@@ -36,7 +36,7 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.0` from PyPI; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.1` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -49,7 +49,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.8.0 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -158,6 +158,19 @@ not implement chat actions such as `use`, `status`, or `search`, and it does not
 set a global default project. See the [command reference](https://github.com/jessysw/contitext/blob/main/docs/commands.md) for
 CLI options, compatibility entry points, and conversation scope behavior.
 
+## Optional automation
+
+Start with the explicit workflow above. Then configure [trusted project mappings](docs/project-resolution.md)
+and [session-start hooks](docs/session-hooks.md) to load the right project in Codex
+or Claude Code. Manual selections always win. [Context assembly](docs/context-assembly.md)
+selects effective decisions, open questions and the relevant task handoff within
+a documented budget. [Candidate checkpoints](docs/checkpoints.md) add opt-in
+progress capture and durable retry; they do not create approved decisions.
+
+Native hooks currently cover Codex and Claude Code on macOS/Linux. Hermes,
+OpenClaw, Zed and other MCP clients retain the explicit MCP workflow. A Docker
+server can use the local Python client for hooks without exposing PostgreSQL.
+
 ## What it includes
 
 - Private initialization, project and permission administration, diagnostics, and
@@ -175,8 +188,9 @@ CLI options, compatibility entry points, and conversation scope behavior.
 
 Use Contitext when you need explicit project continuity across tools and machines.
 It does not automatically capture every conversation, consolidate memories, build
-a knowledge graph, or decide which facts are true. A project handoff is the latest
-handoff for the whole project, not a task scheduler or a conflict-resolution system.
+a knowledge graph, or decide which facts are true. The default context call retains the project-wide
+handoff; task-aware assembly selects a matching task or global fallback. Lifecycle
+changes require explicit metadata, not inferred agreement.
 
 ## Read your context without an agent
 

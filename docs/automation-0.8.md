@@ -1,8 +1,7 @@
 # 0.8.x automation and context plan
 
-Status: development after the published 0.8.0 release. Features described as
-planned below are not available in the stable 0.8.0 package. Installing 0.8.0
-remains the primary onboarding path until a subsequent release is published.
+Status: the four functional deliveries form release 0.8.1, following the published
+0.8.0 baseline. Release preparation and publication evidence are tracked below.
 
 Track all deliveries in [issue #14](https://github.com/jessysw/contitext/issues/14).
 
@@ -53,8 +52,9 @@ support rather than claiming every MCP client provides the same lifecycle.
   Codex and Claude; other MCP clients retain the explicit workflow.
 - C: merged in [PR #17](https://github.com/jessysw/contitext/pull/17); all seven CI
   jobs passed. See [context assembly](context-assembly.md).
-- D: implemented in development; see [automatic checkpoints](checkpoints.md).
-  The associated PR tracks full CI and merge.
+- D: merged in [PR #18](https://github.com/jessysw/contitext/pull/18); all seven CI
+  jobs passed. See [automatic checkpoints](checkpoints.md).
+- Release acceptance: [0.8.1 evidence](acceptance-0.8.1.md).
 - Published baseline: [0.8.0 release](https://github.com/jessysw/contitext/releases/tag/v0.8.0).
 - Existing self-hosting and migration work: [0.8.0 plan](v0.8-plan.md).
 
