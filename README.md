@@ -12,8 +12,9 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent explicitly selects the same project, reads that context, and continues from
 the recorded handoff.
 
-**0.8.0rc1 is a prepared release candidate, not a published stable release.**
-The latest published stable package remains 0.7.1. This branch contains Workspace
+**0.8.0rc1 is the 0.8 release candidate.**
+Install it explicitly with `python -m pip install contitext==0.8.0rc1`.
+The latest published stable package remains 0.7.1. This candidate contains Workspace
 namespaces, managed credentials, safe upgrade checks and independent agent setup.
 Use a disposable deployment for candidate evaluation; no existing service is
 upgraded by reading this repository or installing a package.
@@ -35,7 +36,7 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install the candidate wheel or public source; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.0rc1` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the candidate source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -48,7 +49,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch main --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.0rc1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait

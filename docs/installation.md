@@ -1,6 +1,6 @@
 # Installation and operation
 
-The unreleased 0.8 source supports two installation paths. Both use the same code, PostgreSQL
+Contitext 0.8.0rc1 supports two installation paths. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
@@ -13,20 +13,14 @@ tested matrix. No paid service or private source repository is required.
 
 ## Option 1: Python package
 
-For this unreleased candidate, clone the public source first and install it in a
-virtual environment. Published 0.7.1 does not include workspace/credential commands:
-
-```sh
-git clone --branch main https://github.com/jessysw/contitext.git
-cd contitext
-```
-
-Then install:
+Install the release candidate explicitly in a virtual environment. Stable 0.7.1
+does not include workspace/credential commands; an unpinned install normally
+selects the stable release rather than a prerelease:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install .
+python -m pip install contitext==0.8.0rc1
 ```
 
 Create a PostgreSQL 16+ database with your normal database administration tools.
@@ -76,7 +70,7 @@ Requires Docker with Compose, Git, and Python 3.11–3.14 for the dependency-fre
 bootstrap script. A separate host Python environment for Contitext is unnecessary.
 
 ```sh
-git clone --branch main --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.0rc1 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project research --name "Research"
 docker compose up --build -d --wait

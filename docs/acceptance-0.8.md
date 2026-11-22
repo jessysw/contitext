@@ -1,6 +1,6 @@
 # 0.8 candidate acceptance
 
-Status: `0.8.0rc1` is prepared for evaluation, not published. This report separates
+Status: `0.8.0rc1` is the candidate for public evaluation. This report separates
 controlled engineering rehearsal from independent first use. No production
 service, live credential, database or adapter was changed by these rehearsals.
 
@@ -15,7 +15,7 @@ service, live credential, database or adapter was changed by these rehearsals.
 | Reader | Authenticated native export; namespace separation and live-revocation cleanup covered by integration tests | Passed |
 | Historical upgrade | Actual v0.7.1 source, four principals, two projects, ten events; candidate and old-binary recovery copies verified | Passed in P3 |
 | Docker runtime | Fresh database, host-owned private token overlay, two real MCP clients, PostgreSQL/app restart, healthy reader and restored-copy fingerprints/bindings | Passed locally using cached dependency image |
-| Public Docker build | Unmodified Dockerfile from public source in the installation CI job | Required before P5 merge; local index timeout described below |
+| Public Docker build | Unmodified Dockerfile from public source in the installation CI job | Passed in PR #11 and main CI; local index timeout described below |
 | Distribution | Matching candidate versions, official Registry schema validation, matching wheel source, private-file archive exclusions, builds and twine checks | Passed; final CI is recorded in the P5 PR |
 | Independent first use | 2–3 developers follow the public guide without source edits or live coaching | Not yet performed |
 
@@ -32,8 +32,9 @@ The local source build could not read the PyPI index reliably (network read
 timeout). To separate network availability from runtime correctness, the candidate
 wheel was installed offline over the previously cached dependency image and
 `pip check` passed. This is not claimed as a clean public-source image build.
-The new installation CI job must build the unmodified public Dockerfile and pass
-before P5 merges. No dependency requirement was weakened to bypass the failure.
+The installation CI job passed the unmodified public Dockerfile in both
+[PR #11](https://github.com/jessysw/contitext/actions/runs/45006180468) and
+[main](https://github.com/jessysw/contitext/actions/runs/45006546938). No dependency requirement was weakened to bypass the failure.
 
 ## Repeatable checks
 
@@ -80,4 +81,5 @@ this independent-use gate.
 
 Merging the five development deliveries does not publish a package, create a
 release tag, update the MCP Registry or migrate a live deployment. The release
-tracker remains open for independent acceptance and publication.
+tracker remains open for independent acceptance and stable promotion. Candidate
+publication enables these trials; it does not claim that they have occurred.

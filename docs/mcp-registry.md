@@ -1,8 +1,8 @@
 # MCP Registry setup
 
 Contitext's official MCP Registry name is `io.github.jessysw/contitext`. Its
-`server.json` describes the prepared candidate. After that exact version is
-published, its PyPI stdio launcher will be:
+`server.json` describes the 0.8.0rc1 candidate. Its version-pinned PyPI stdio
+launcher is:
 
 ```sh
 uvx --python 3.12 contitext==0.8.0rc1 mcp
@@ -17,9 +17,9 @@ provide a database, account, or credentials. Each deployment retains its own
 project data. This release exposes MCP over stdio; the REST API is not a remote
 MCP endpoint.
 
-The main-branch manifest is release-preparation metadata, not a new Registry
-publication. Published 0.7.1 uses config-mode credentials; the workspace and
-database-mode settings below require the unreleased 0.8 source.
+Stable 0.7.1 uses config-mode credentials. The workspace and database-mode
+settings below require the 0.8.0rc1 candidate or later. Select the exact package
+version when evaluating a prerelease.
 
 ## Prepare your deployment
 
