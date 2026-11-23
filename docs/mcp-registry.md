@@ -1,11 +1,11 @@
 # MCP Registry setup
 
 Contitext's official MCP Registry name is `io.github.jessysw/contitext`. Its
-`server.json` describes release 0.8.2. Its version-pinned PyPI stdio
+`server.json` describes release 0.8.3. Its version-pinned PyPI stdio
 launcher is:
 
 ```sh
-uvx --python 3.12 contitext==0.8.2 mcp
+uvx --python 3.12 contitext==0.8.3 mcp
 ```
 
 The package supports standard CPython 3.11–3.14. The Registry launcher pins
@@ -65,7 +65,7 @@ command is:
   "mcpServers": {
     "contitext": {
       "command": "uvx",
-      "args": ["--python", "3.12", "contitext==0.8.2", "mcp"]
+      "args": ["--python", "3.12", "contitext==0.8.3", "mcp"]
     }
   }
 }
@@ -77,14 +77,14 @@ environment will not work, and registration does not automatically install or
 configure the server in every client.
 
 If a manual client can access a native installation's protected configuration file,
-its command may instead be `uvx --python 3.12 contitext==0.8.2 --env-file
+its command may instead be `uvx --python 3.12 contitext==0.8.3 --env-file
 /absolute/private.env mcp`. This explicitly loads the private configuration; it does not change the Registry
 manifest's inputs.
 
 Load the [agent protocol](../integrations/PROJECT-CONTEXT-PROTOCOL.md) into your
 client's instruction mechanism, then restart its MCP session. In agent chat, use
-`!! contitext use <your-project-id>` to select an explicitly seeded project.
-`!! ctx` is a shortcut and `!! context` is a legacy alias. Terminal commands begin
-with `contitext`, without exclamation marks.
+`contitext: use <your-project-id>` to select an explicitly seeded project.
+`contitext:` is the only chat prefix. Terminal commands begin
+with `contitext`, without the chat colon.
 
 See [release instructions](releasing.md) for publishing updates to the Registry.

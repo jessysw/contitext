@@ -1,0 +1,603 @@
+[
+  {
+    "id": "command-list",
+    "input": "contitext: list",
+    "expected": {
+      "match": true,
+      "command": "list",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-create",
+    "input": "contitext: create personal/my-project --name \"My Project\"",
+    "expected": {
+      "match": true,
+      "command": "create",
+      "args": "personal/my-project --name \"My Project\"",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-use",
+    "input": "contitext: use personal/My-Project",
+    "expected": {
+      "match": true,
+      "command": "use",
+      "args": "personal/My-Project",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-current",
+    "input": "contitext: current",
+    "expected": {
+      "match": true,
+      "command": "current",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-get",
+    "input": "contitext: get",
+    "expected": {
+      "match": true,
+      "command": "get",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-status",
+    "input": "contitext: status",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-search",
+    "input": "contitext: search publishing",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "publishing",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-record",
+    "input": "contitext: record decision Preserve Case.",
+    "expected": {
+      "match": true,
+      "command": "record",
+      "args": "decision Preserve Case.",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-checkpoint",
+    "input": "contitext: checkpoint Done. Next action.",
+    "expected": {
+      "match": true,
+      "command": "checkpoint",
+      "args": "Done. Next action.",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "command-handoff",
+    "input": "contitext: handoff Done. Next: continue.",
+    "expected": {
+      "match": true,
+      "command": "handoff",
+      "args": "Done. Next: continue.",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "mobile-case-fullwidth-colon",
+    "input": "Contitext：status",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "uppercase-command",
+    "input": "CONTITEXT: STATUS",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "colon-no-space",
+    "input": "contitext:status",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "spaces-around-colon",
+    "input": "contitext \t　:　\t status",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "leading-horizontal-spaces",
+    "input": "　 \tCoNtItExT　：　StAtUs",
+    "expected": {
+      "match": true,
+      "command": "status",
+      "args": "",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "unicode-search",
+    "input": "Contitext：search 发布 流程",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "发布 流程",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "fullwidth-arguments",
+    "input": "contitext: search ＡＢＣ ① ㍿　！：",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "ＡＢＣ ① ㍿　！：",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "decomposed-unicode",
+    "input": "contitext: search Café",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "Café",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "argument-case",
+    "input": "contitext: USE Team/Project",
+    "expected": {
+      "match": true,
+      "command": "use",
+      "args": "Team/Project",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "record-kind-not-normalized",
+    "input": "contitext: RECORD DECISION Keep This",
+    "expected": {
+      "match": true,
+      "command": "record",
+      "args": "DECISION Keep This",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "literal-shell-text",
+    "input": "contitext: search $(touch /tmp/not-a-command); `false` \\n $HOME",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "$(touch /tmp/not-a-command); `false` \\n $HOME",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "internal-trailing-whitespace",
+    "input": "contitext: search alpha  \t　beta \t　",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "alpha  \t　beta \t　",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "nonbreaking-space-payload",
+    "input": "contitext: search a b",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "a b",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "multiline-payload",
+    "input": "contitext: checkpoint First line.\nSecond line.\n",
+    "expected": {
+      "match": true,
+      "command": "checkpoint",
+      "args": "First line.\nSecond line.\n",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "crlf-preserved",
+    "input": "contitext: handoff First\r\nNext",
+    "expected": {
+      "match": true,
+      "command": "handoff",
+      "args": "First\r\nNext",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "payload-starts-newline",
+    "input": "contitext: record\nquestion Keep newline",
+    "expected": {
+      "match": true,
+      "command": "record",
+      "args": "\nquestion Keep newline",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "quoted-payload",
+    "input": "contitext: search \"contitext: use other\"",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "\"contitext: use other\"",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "subsequent-command-is-payload",
+    "input": "contitext: search first\ncontitext: use other",
+    "expected": {
+      "match": true,
+      "command": "search",
+      "args": "first\ncontitext: use other",
+      "action": "dispatch"
+    }
+  },
+  {
+    "id": "unknown-typo",
+    "input": "contitext: stauts",
+    "expected": {
+      "match": true,
+      "command": "stauts",
+      "args": "",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "unknown-args-preserved",
+    "input": "CONTITEXT：StAuTs Ａ\nB",
+    "expected": {
+      "match": true,
+      "command": "stauts",
+      "args": "Ａ\nB",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "unknown-unicode-command",
+    "input": "contitext: 状态",
+    "expected": {
+      "match": true,
+      "command": "状态",
+      "args": "",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "fullwidth-command-not-normalized",
+    "input": "contitext: ｓｔａｔｕｓ",
+    "expected": {
+      "match": true,
+      "command": "ｓｔａｔｕｓ",
+      "args": "",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "unicode-case-lookalike",
+    "input": "contitext: ſtatus",
+    "expected": {
+      "match": true,
+      "command": "ſtatus",
+      "args": "",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "command-punctuation",
+    "input": "contitext: status:",
+    "expected": {
+      "match": true,
+      "command": "status:",
+      "args": "",
+      "action": "error",
+      "message": "Unknown Contitext command. Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "empty",
+    "input": "contitext:",
+    "expected": {
+      "match": true,
+      "command": "",
+      "args": "",
+      "action": "help",
+      "message": "Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "empty-whitespace",
+    "input": "Contitext　： \t　",
+    "expected": {
+      "match": true,
+      "command": "",
+      "args": "",
+      "action": "help",
+      "message": "Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "help",
+    "input": "contitext: HELP",
+    "expected": {
+      "match": true,
+      "command": "help",
+      "args": "",
+      "action": "help",
+      "message": "Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "help-payload-preserved",
+    "input": "contitext: help Ａ",
+    "expected": {
+      "match": true,
+      "command": "help",
+      "args": "Ａ",
+      "action": "help",
+      "message": "Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "empty-first-line",
+    "input": "contitext:\nstatus",
+    "expected": {
+      "match": true,
+      "command": "",
+      "args": "\nstatus",
+      "action": "help",
+      "message": "Contitext chat commands: help, list, create, use, current, get, status, search, record, checkpoint, handoff. Use contitext: <command> [args]."
+    }
+  },
+  {
+    "id": "legacy-ascii",
+    "input": "!! contitext status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-fullwidth",
+    "input": "！！ contitext status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-short",
+    "input": "!! ctx status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-context",
+    "input": "!! context status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-no-space",
+    "input": "!!contitext status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-wide-short",
+    "input": "！！ctx status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "legacy-mixed",
+    "input": "!！ contitext status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "ctx-alias",
+    "input": "ctx: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "context-alias",
+    "input": "context: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "ordinary-prose",
+    "input": "please run contitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "markdown-quote",
+    "input": "> contitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "code-fence",
+    "input": "```text\ncontitext: status\n```",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "inline-code",
+    "input": "`contitext: status`",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "quoted",
+    "input": "\"contitext: status\"",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "second-line",
+    "input": "Hello\ncontitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "leading-newline",
+    "input": "\ncontitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "split-prefix",
+    "input": "contitext\n: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "fullwidth-letters",
+    "input": "ｃｏｎｔｉｔｅｘｔ：status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "unicode-prefix-lookalike",
+    "input": "contİtext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "bom",
+    "input": "﻿contitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "nonbreaking-leading-space",
+    "input": " contitext: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "no-colon",
+    "input": "contitext status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "similar-name",
+    "input": "contitextual: status",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "empty-text",
+    "input": "",
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "null",
+    "input": null,
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "number",
+    "input": 17,
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "object",
+    "input": {
+      "text": "contitext: status"
+    },
+    "expected": {
+      "match": false
+    }
+  },
+  {
+    "id": "array",
+    "input": [
+      "contitext: status"
+    ],
+    "expected": {
+      "match": false
+    }
+  }
+]

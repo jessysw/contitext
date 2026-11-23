@@ -27,7 +27,7 @@ the permissions it declares.
 
 The generated configuration makes bare project IDs resolve in the selected
 workspace. It creates no conversation binding. Start each new conversation with
-an explicit `!! contitext use team/research` (or its configured bare reference).
+an explicit `contitext: use team/research` (or its configured bare reference).
 Additional workspaces use `contitext workspace create`; see [workspaces](workspaces.md).
 
 ## Existing deployment: preserve the old namespace

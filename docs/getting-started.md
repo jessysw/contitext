@@ -2,7 +2,7 @@
 
 This guide takes you from a fresh installation to a project handoff that another
 agent session can read, then shows the same data in Obsidian. It uses
-Contitext 0.8.2, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
+Contitext 0.8.3, Docker Compose, and two independently authenticated clients. No paid API or LLM key is needed
 by Contitext; your agent has its own requirements.
 
 You need Git, Docker with Compose, Python 3.11–3.14, and an installed supported
@@ -14,7 +14,7 @@ and then continue at step 2 using the native connection example below.
 ## 1. Start your service
 
 ```sh
-git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project welcome --name "Welcome"
 docker compose up --build -d --wait
@@ -63,14 +63,14 @@ instead of a local Docker path.
 Send each instruction as a separate message to the agent:
 
 ```text
-!! contitext list
+contitext: list
 ```
 
 Expected: `welcome` appears with its display name, status, and your role.
 Create a separate project for this walkthrough:
 
 ```text
-!! contitext create first-project --name "My First Project"
+contitext: create first-project --name "My First Project"
 ```
 
 Expected: creation succeeds with you as owner, without an owner UUID. If the ID
@@ -78,7 +78,7 @@ already exists, use an available ID and substitute it in the following steps.
 Creation does not switch the conversation. Select it explicitly:
 
 ```text
-!! contitext use first-project
+contitext: use first-project
 ```
 
 Expected: the agent confirms `first-project` and reads its context. Project IDs
@@ -89,9 +89,9 @@ and names do not need to match a Git repository.
 Send these instructions separately:
 
 ```text
-!! contitext record decision The health endpoint will return JSON.
-!! contitext checkpoint The health endpoint response format is agreed.
-!! contitext handoff The response format is agreed. Next action: implement the health endpoint.
+contitext: record decision The health endpoint will return JSON.
+contitext: checkpoint The health endpoint response format is agreed.
+contitext: handoff The response format is agreed. Next action: implement the health endpoint.
 ```
 
 Expected: the agent confirms actual MCP writes. A natural-language promise to
@@ -106,8 +106,8 @@ install its own connection. Use `personal/first-project` in that guide. Then ope
 a fresh session in Agent B and send:
 
 ```text
-!! contitext use personal/first-project
-!! contitext status
+contitext: use personal/first-project
+contitext: status
 ```
 
 Expected: the recorded decision, checkpoint, and handoff are returned, including
@@ -148,7 +148,7 @@ existing-install permissions, remote copies, supervision, and refresh failures.
 ## Finish or troubleshoot
 
 - **Unknown chat command or only six tools:** update the adapter and reload MCP.
-- **No selected project:** send an explicit `!! contitext use first-project`.
+- **No selected project:** send an explicit `contitext: use first-project`.
 - **Project not found:** use `workspace/project` and check both workspace membership and project ACL. Run `doctor` with that client's credential file.
 - **Empty or stale reader:** check `SYNC-STATUS.md`, its timestamp, and
   `docker compose --profile reader logs --tail 30 reader`.

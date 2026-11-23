@@ -1,8 +1,8 @@
 # Contributing
 
 Use English for commit messages, issues, pull requests, reviews, release notes,
-documentation, code comments, and user-facing CLI messages. Use ASCII `!!` in
-documented chat commands; full-width punctuation is a compatibility input only.
+documentation, code comments, and user-facing CLI messages. Use `contitext:` in
+documented chat commands; a full-width colon is a compatibility input only.
 
 Use synthetic projects and identities in tests and documentation. Keep private
 configuration, credentials, hostnames, conversation history, and project state out

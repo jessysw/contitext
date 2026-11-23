@@ -32,7 +32,7 @@ and refuses a conflicting managed launcher instead of silently taking it over.
 - For Hermes, OpenClaw or OpenCode 2, export a new plugin directory, review its code
   and change the runtime reference explicitly. Preserve Hermes identity files and
   any candidate outbox. See [plugin clients](plugin-clients.md).
-- Existing MCP users can keep manual `!! contitext` commands without hooks. New
+- Existing MCP users can keep manual chat commands without hooks. New
   mappings and automatic candidate capture are opt-in, never inferred from a repo.
 
 If automation is unavailable, disable the affected hook/plugin and use explicit

@@ -12,17 +12,18 @@ An agent finishes a session by recording what changed and what comes next. Anoth
 agent resumes from the same project context, selected manually or resolved through
 opt-in trusted mappings, and continues from the recorded handoff.
 
-**Current stable release: [0.8.2](https://github.com/jessysw/contitext/releases/tag/v0.8.2).**
-Install with `python -m pip install contitext` or pin `contitext==0.8.2` for a
-reproducible setup. This release adds Copilot, Cursor, OpenCode and Gemini CLI
-integration, optional native lifecycle adapters, and hook diagnostics. Project
-resolution, context assembly and candidate capture remain opt-in. Existing
-deployments should follow [the 0.8.2 upgrade guide](docs/upgrading-to-0.8.2.md).
+**Current stable release: [0.8.3](https://github.com/jessysw/contitext/releases/tag/v0.8.3).**
+Install with `python -m pip install contitext` or pin `contitext==0.8.3` for a
+reproducible setup. This release unifies chat commands as `contitext:` across
+supported agents, with input-method compatibility and shared parser fixtures.
+Existing deployments should follow [the 0.8.3 upgrade guide](docs/upgrading-to-0.8.3.md)
+and reinstall their agent instructions. See [chat command compatibility](docs/chat-commands.md)
+for syntax and the distinction between instructions, parsers and native execution.
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
 installation paths, two independently authenticated agents and a visible handoff.
 
-See [release validation](docs/acceptance-0.8.2.md), [workspaces](docs/workspaces.md),
+See [release validation](docs/acceptance-0.8.3.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
 The [0.8.x automation plan](docs/automation-0.8.md) records the feature deliveries.
 See [agent coverage](docs/agent-coverage.md), [hook diagnostics](docs/hook-diagnostics.md)
@@ -38,7 +39,7 @@ tools. Neither requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.2` from PyPI; run native stdio MCP and optionally REST |
+| Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.3` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
@@ -51,7 +52,7 @@ A native MCP client can launch `contitext mcp` directly without a REST process.
 Requires Docker with Compose, Git, and standard CPython 3.11–3.14.
 
 ```sh
-git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py
 docker compose up --build -d --wait
@@ -120,7 +121,7 @@ existing app container and shares its database.
 | `context_search` | Search project events using PostgreSQL full-text search |
 
 Each caller uses a stable conversation scope. By default, select a project with
-`!! contitext use`. With [trusted local mappings](docs/project-resolution.md) and
+`contitext: use`. With [trusted local mappings](docs/project-resolution.md) and
 an enabled lifecycle adapter, Contitext can resolve and bind an unbound scope
 automatically from a configured full Git remote or directory. Existing selections
 take precedence; unmatched or ambiguous mappings do not bind a project. Agents
@@ -150,16 +151,19 @@ clients with backups and a shared protocol. After installation, use these **chat
 instructions** in a conversation with the agent:
 
 ```text
-!! contitext list
-!! contitext create my-project --name "My Project"
-!! contitext use my-project
-!! contitext status
-!! contitext search publishing
-!! contitext checkpoint Documented the publishing workflow.
+contitext: help
+contitext: list
+contitext: create my-project --name "My Project"
+contitext: use my-project
+contitext: status
+contitext: search publishing
+contitext: checkpoint Documented the publishing workflow.
 ```
 
-`!! contitext` is the canonical chat prefix. `!! ctx` is a shortcut, and
-`!! context` remains a legacy alias. These are agent instructions, not terminal
+`contitext:` is the only chat prefix. Prefix and command names are
+case-insensitive; an input-method full-width colon is accepted. Empty commands
+show help and unknown commands show an error with available commands. Arguments
+are preserved without Unicode normalization. These are agent instructions, not terminal
 subcommands. The terminal CLI currently runs and administers the service; it does
 not implement chat actions such as `use`, `status`, or `search`, and it does not
 set a global default project. See the [command reference](https://github.com/jessysw/contitext/blob/main/docs/commands.md) for

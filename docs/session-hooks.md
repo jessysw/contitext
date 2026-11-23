@@ -10,7 +10,7 @@ Docker Compose and SSH connections are supported on macOS and Linux.
 ## Set up
 
 First configure a trusted connection and private mappings using
-[project resolution](project-resolution.md). Use a 0.8.2 client and a server at 0.8.1 or later; older servers can hydrate an already-selected scope
+[project resolution](project-resolution.md). Use a 0.8.3 client and a server at 0.8.1 or later; older servers can hydrate an already-selected scope
 but cannot automatically bind one without the new atomic binding capability.
 Rehearse upgrades in a separate installation before changing a live service.
 
@@ -71,7 +71,7 @@ command hooks allow at least four seconds externally; Codex end/interrupt hooks
 retain a two-second worker and three-second outer limit. Startup may wait briefly for
 this bounded load; failure never asks the client to block or continue a turn.
 No stale disk cache is injected after failure. Use `contitext resolve` for explicit
-diagnostics, or `!! contitext use <project-id>` to select a project manually.
+diagnostics, or `contitext: use <project-id>` to select a project manually.
 
 ## Supported runtime contract
 
