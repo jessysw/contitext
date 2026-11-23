@@ -1,6 +1,6 @@
 # Two independently authenticated agents
 
-This walkthrough covers 0.8.2. Start with the fresh setup in
+This walkthrough covers 0.8.3. Start with the fresh setup in
 [Getting started](getting-started.md), which owns workspace `personal`. Use one
 shared database and separate principals, credentials and launchers. These are
 trusted local/SSH clients, not untrusted tenants with restricted database access.
@@ -109,9 +109,9 @@ explicitly; one target in one home has one managed connection.
 Reload MCP. In Agent B, send each instruction separately:
 
 ```text
-!! contitext list
-!! contitext use personal/first-project
-!! contitext status
+contitext: list
+contitext: use personal/first-project
+contitext: status
 ```
 
 Expected: the handoff written by Agent A is visible, including its next action.

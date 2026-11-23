@@ -40,6 +40,7 @@ def export(args):
                                        '--directory', str(args.output / 'identities')]
     else:
         content['bridge.mjs'] = resource.joinpath('bridge.mjs').read_text()
+        content['chat_commands.mjs'] = resource.joinpath('chat_commands.mjs').read_text()
         content['index.mjs'] = resource.joinpath(args.client + '.mjs').read_text()
         content['package.json'] = json.dumps({'name': 'contitext-' + args.client, 'version': __version__,
             'private': True, 'type': 'module', 'exports': './index.mjs',

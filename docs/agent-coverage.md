@@ -1,6 +1,6 @@
 # Agent coverage
 
-The 0.8.2 installer covers the nine clients below. A successful MCP connection
+The 0.8.3 installer covers the nine clients below. A successful MCP connection
 is distinct from instruction loading, native lifecycle hooks and runtime trust.
 
 ## MCP and instructions
@@ -73,7 +73,7 @@ Installer regression tests exercise real generated launchers, literal argument
 handling, both OpenCode layouts, idempotence, JSONC preservation, restricted and
 disabled entries, backups and refusal paths. These are configuration-contract
 tests, not proof that every proprietary GUI has been independently exercised.
-Use each client's MCP status interface, then confirm `!! contitext list`, explicit
+Use each client's MCP status interface, then confirm `contitext: list`, explicit
 selection and a handoff/read in a dedicated test project.
 
 Primary references, checked 2026-11-22:

@@ -1,4 +1,5 @@
 import { bridge, bounded, checkpoints, contextText, validID } from './bridge.mjs';
+export { parseChatCommand } from './chat_commands.mjs';
 
 // OpenCode 2's documented default-export id/setup contract. No V1 hook guessing.
 export default {

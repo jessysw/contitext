@@ -1,6 +1,6 @@
 # Installation and operation
 
-Contitext 0.8.2 supports two installation paths. Both use the same code, PostgreSQL
+Contitext 0.8.3 supports two installation paths. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
@@ -20,7 +20,7 @@ installation. Existing deployments should follow the [upgrade guide](upgrading-t
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.8.2
+python -m pip install contitext==0.8.3
 ```
 
 Create a PostgreSQL 16+ database with your normal database administration tools.
@@ -70,7 +70,7 @@ Requires Docker with Compose, Git, and Python 3.11–3.14 for the dependency-fre
 bootstrap script. A separate host Python environment for Contitext is unnecessary.
 
 ```sh
-git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project research --name "Research"
 docker compose up --build -d --wait
@@ -175,7 +175,7 @@ persisted scope binding. Bind explicitly before writing, including retries after
 switching projects. Existing correctly bound conversations continue working;
 there is no schema change. See the [release notes](../CHANGELOG.md).
 
-In 0.7, `!! contitext list` and `!! contitext create ID --name "Name"` work before
+Project listing and creation (introduced in 0.7) work before
 project selection. Reload MCP and rerun the adapter installer to install the new
 protocol. Clients with the complete legacy six-tool allowlist are expanded to
 include the two new tools; custom restrictions remain unchanged. The database

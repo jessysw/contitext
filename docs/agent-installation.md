@@ -15,10 +15,10 @@ paths, version differences and the distinction between MCP and native hooks.
 ## Connect an agent
 
 Obtain the installer from the public repository. Use the installer from the same release as your server.
-The examples below cover 0.8.2. The protocol includes project listing and creation:
+The examples below cover 0.8.3. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.8.2 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 
@@ -70,13 +70,14 @@ session may retain its previous server name or instructions. Use the client's
 MCP status command to check the connection, then start with:
 
 ```text
-!! contitext list
-!! contitext create your-project --name "Your Project"
-!! contitext use your-project
-!! contitext current
+contitext: help
+contitext: list
+contitext: create your-project --name "Your Project"
+contitext: use your-project
+contitext: current
 ```
 
-`!! ctx` is the shortcut and `!! context` remains a compatibility alias. Installation
+`contitext:` is the only chat prefix. Installation
 does not select a default project, create a project, or migrate server data.
 
 ## Independent identities

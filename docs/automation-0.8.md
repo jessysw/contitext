@@ -27,7 +27,7 @@ support rather than claiming every MCP client provides the same lifecycle.
 
 ## Boundaries
 
-- Keep explicit `!! contitext use` authoritative. The agent itself never guesses
+- Keep explicit `contitext: use` authoritative. The agent itself never guesses
   a project from prose, directory names or a repository basename. A user-configured
   runtime resolver may establish a binding before the agent reads it.
 - Mappings are private operator configuration outside repositories, scoped to an

@@ -94,7 +94,7 @@ def test_managed_skill_migration_is_repeatable(tmp_path, capsys):
     assert not old.exists()
     assert (Path(first['backup'])/old.relative_to(home)).is_file()
     new=home/'.openclaw/skills/contitext/SKILL.md'
-    assert '# Contitext' in new.read_text() and '!! contitext' in new.read_text()
+    assert '# Contitext' in new.read_text() and 'contitext:' in new.read_text()
     a.main(args);assert json.loads(capsys.readouterr().out)['changed']==[]
 
 
@@ -151,8 +151,8 @@ def test_expanded_clients_preserve_settings_and_execute_literal_launcher(tmp_pat
         if target=='copilot':assert entry['type']=='stdio' and entry['tools']==['*']
         if target=='gemini':assert 'trust' not in entry
     a.main(args);assert json.loads(capsys.readouterr().out)['changed']==[]
-    assert '!! contitext' in (home/'.gemini/GEMINI.md').read_text()
-    assert '!! contitext' in (home/'.copilot/copilot-instructions.md').read_text()
+    assert 'contitext:' in (home/'.gemini/GEMINI.md').read_text()
+    assert 'contitext:' in (home/'.copilot/copilot-instructions.md').read_text()
     assert (home/'.cursor/skills/contitext/SKILL.md').read_text().startswith('---\nname: contitext')
 
 

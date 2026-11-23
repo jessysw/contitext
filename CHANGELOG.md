@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.8.3 — 2026-11-23
+
+- **Breaking chat syntax:** replace `!! contitext` and all old chat aliases with
+  `contitext:`. Accept input-method full-width colons, case-insensitive prefix and
+  command names, and horizontal spacing; preserve argument text without Unicode
+  normalization. Empty commands display help; unknown commands display an error.
+- Unify installed instructions across the eight supported agents and retain Zed's
+  manual MCP integration. Add shared Python/JavaScript/shell syntax fixtures and
+  document instruction, parser, automation bridge and actual runtime boundaries.
+- Keep terminal CLI entry points, eight MCP tools, schema, ACLs, project bindings,
+  checkpoints and session automation unchanged. Reinstall client instructions and
+  reload sessions when upgrading; updating only the server does not change them.
 
 - Clarify the README's existing opt-in project resolution and lifecycle automation,
   and link directly to the current stable release. No runtime behavior changes.

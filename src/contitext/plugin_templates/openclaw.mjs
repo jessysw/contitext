@@ -1,4 +1,5 @@
 import { bridge, checkpoints, contextText, validID } from './bridge.mjs';
+export { parseChatCommand } from './chat_commands.mjs';
 
 export default {
   id: 'contitext', name: 'Contitext',

@@ -101,7 +101,7 @@ project. To resolve a stale item, inspect its private `*.pending.json` locally,
 review the summary and record it explicitly in the intended project before
 manually archiving the pending copy. Do not edit binding timestamps to force replay.
 
-`!! contitext checkpoint` and `!! contitext handoff` remain the explicit agent
+`contitext: checkpoint` and `contitext: handoff` remain the explicit agent
 commands for recording reviewed progress and an actual structured handoff. An
 automatic candidate is not reported as a completed handoff. A machine crash or
 SIGKILL can recover only content already captured; no hook can guarantee saving

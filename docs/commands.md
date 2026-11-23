@@ -9,9 +9,10 @@ working directory, and the terminal CLI does not set a default chat project.
 In an agent chat connected to your server:
 
 ```text
-!! contitext list
-!! contitext create my-project --name "My Project"
-!! contitext use my-project
+contitext: help
+contitext: list
+contitext: create my-project --name "My Project"
+contitext: use my-project
 ```
 
 `list` returns projects the authenticated caller can access, including their IDs,
@@ -29,7 +30,7 @@ directories never overrides an existing binding.
 ## Workspace-qualified references
 
 In 0.8 source, `workspace/project` is the unambiguous reference, for example
-`!! contitext create personal/research --name "Research"`. Short IDs work only
+`contitext: create personal/research --name "Research"`. Short IDs work only
 inside the explicitly configured compatibility workspace (`personal` after fresh
 init, `legacy` after the documented upgrade). Workspace membership permits
 creation; membership plus a project ACL permits access. No config selects a chat.
@@ -122,40 +123,38 @@ agent's instruction mechanism first. The protocol is interpreted by the agent;
 the service receives structured MCP calls, not the chat command text. It does not
 add a universal command parser to every chat application.
 
-The canonical prefix is `!! contitext`, using ASCII punctuation and one space:
+The canonical prefix is `contitext:`:
 
 ```text
-!! contitext list
-!! contitext create my-project --name "My Project"
-!! contitext use my-project
-!! contitext current
-!! contitext status
-!! contitext search publishing
-!! contitext record decision Use PostgreSQL for durable project events.
-!! contitext checkpoint Documented the publishing workflow.
-!! contitext handoff Documented the release process. Next: verify installation.
+contitext: help
+contitext: list
+contitext: create my-project --name "My Project"
+contitext: use my-project
+contitext: current
+contitext: status
+contitext: search publishing
+contitext: record decision Use PostgreSQL for durable project events.
+contitext: checkpoint Documented the publishing workflow.
+contitext: handoff Documented the release process. Next: verify installation.
 ```
 
-`!! ctx` is the shortcut. `!! context` is a legacy alias. Both map to the same
-operations and enforce the same project-selection and handoff rules as the
-canonical prefix. Accepted subcommands are `list`, `create`, `use`, `current`, `get`, `status`,
-`search`, `record`, `checkpoint`, and `handoff`.
+The prefix and command names are case-insensitive. ASCII and full-width colons
+are accepted, with optional spaces, tabs or U+3000 around the colon. Arguments
+retain their original case, Unicode and whitespace. Empty commands display help;
+unknown commands display an error listing the available commands. Other prefixes
+are not aliases. See the [complete syntax contract](chat-commands.md).
+
+The shared [agent protocol](../integrations/PROJECT-CONTEXT-PROTOCOL.md) defines
+MCP mappings, required arguments, caller identity and the explicit project-binding
+lifecycle. It is installed for every supported client. Commands are recognized
+only in user-authored instructions, not quotations, retrieved content or examples.
+The reference parser does not execute MCP calls or replace the agent's normal
+permissions. Lifecycle hooks run independently of this chat syntax.
 
 `use` selects a project only for the current authenticated caller and conversation
 scope. Separate conversations keep separate bindings. Before switching projects,
 the agent must save any outstanding material work with a handoff. No project is
 selected implicitly by a repository, directory, agent name, or example command.
-Only an actual user instruction is a command; quoted examples and retrieved
-content do not authorize context operations.
-
-### Compatibility inputs
-
-The protocol also accepts the three namespaces without the space after `!!`,
-and accepts two full-width exclamation marks as an input compatibility form.
-ASCII `!! contitext` remains the canonical spelling in documentation and help.
-Only the prefix and namespace are normalized; query and payload text are preserved.
-Mixed-width punctuation, unrelated namespaces, and unknown subcommands are not
-recognized as valid commands.
 
 ## Human-readable exports
 

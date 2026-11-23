@@ -46,7 +46,7 @@ def test_version_matches_package(tmp_path, clean_environment):
 
 
 @pytest.mark.parametrize("args", [
-    ["use", "demo"], ["!!", "contitext", "status"], ["admin", "delete"],
+    ["use", "demo"], ["!!", "contitext", "status"], ["contitext:", "status"], ["ctx", "status"], ["admin", "delete"],
     ["serve", "--port", "not-a-port"], ["mcp", "--unknown"],
 ])
 def test_invalid_commands_fail_before_starting_services(args, tmp_path, clean_environment):

@@ -22,9 +22,9 @@ events, conversation bindings and projection offsets; callers need not copy them
 to use a project. Workspace and project renaming or moving are not exposed.
 
 ```text
-!! contitext list
-!! contitext create personal/research --name "Research"
-!! contitext use personal/research
+contitext: list
+contitext: create personal/research --name "Research"
+contitext: use personal/research
 ```
 
 Creation and listing never select a project. A conversation binding remains

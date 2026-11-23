@@ -38,6 +38,7 @@ for name, path in archives.items():
         assert any(x.endswith('/docs/acceptance-0.8.md') for x in names), 'missing acceptance guide'
         assert any(x.endswith('/scripts/check_distribution.py') for x in names), 'missing distribution check'
         assert any(x.endswith('/plugin_templates/opencode.mjs') for x in names), 'missing native plugin templates'
+        assert any(x.endswith('/tests/fixtures/chat-commands.json') for x in names), 'missing shared chat syntax fixtures'
     for member in names:
         parts = PurePosixPath(member).parts
         assert not member.startswith('/') and '..' not in parts, 'unsafe archive path'

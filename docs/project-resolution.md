@@ -77,7 +77,7 @@ perform automatic binding. Upgrade it or continue using explicit chat selection.
 Selection order:
 
 1. Existing authorized conversation binding, including a prior explicit
-   `!! contitext use`. It wins without consulting local mappings.
+   `contitext: use`. It wins without consulting local mappings.
 2. One uniquely mapped full Git remote identity from the local repository.
 3. The most specific configured ancestor directory, if no remote matched.
 4. No match: remain unbound and use the existing explicit selection workflow.

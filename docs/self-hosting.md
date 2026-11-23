@@ -1,6 +1,6 @@
 # Self-hosting and replacing an existing deployment
 
-This guide covers Contitext 0.8.2 for trusted personal or small-team deployments.
+This guide covers Contitext 0.8.3 for trusted personal or small-team deployments.
 Choose the [Python package or Docker Compose installation](installation.md); both
 provide the commands below. PostgreSQL 16+ is required. No private repository,
 cloud account, LLM API key, or hosted control plane is needed.
@@ -111,9 +111,9 @@ generating the client configuration so it joins the same deployment.
 Install the [agent protocol](../integrations/PROJECT-CONTEXT-PROTOCOL.md) in each
 agent's instruction mechanism and restart its MCP session. Then:
 
-1. Agent A: `!! contitext use research` and record a checkpoint and handoff.
-2. Agent B, in a separate conversation: `!! contitext use research`, then
-   `!! contitext status`. Verify it can retrieve A's handoff.
+1. Agent A: `contitext: use research` and record a checkpoint and handoff.
+2. Agent B, in a separate conversation: `contitext: use research`, then
+   `contitext: status`. Verify it can retrieve A's handoff.
 3. Restart the MCP client and verify its original scope binding still resolves.
 4. Use `doctor` for non-mutating diagnostics. `mcp-smoke` writes synthetic events;
    run it only against a dedicated test project.
