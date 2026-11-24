@@ -21,7 +21,7 @@ and reinstall their agent instructions. See [chat command compatibility](docs/ch
 for syntax and the distinction between instructions, parsers and native execution.
 
 **New to Contitext? Follow [Getting started](docs/getting-started.md)** for both
-installation paths, two independently authenticated agents and a visible handoff.
+deployment paths, two independently authenticated agents and a visible handoff.
 
 See [release validation](docs/acceptance-0.8.3.md), [workspaces](docs/workspaces.md),
 [upgrade and recovery](docs/upgrading-to-0.8.md), and [the release plan](docs/v0.8-plan.md).
@@ -34,17 +34,18 @@ Contributions follow the [PR workflow](CONTRIBUTING.md#development-workflow).
 
 ## Installation options
 
-Both options run the same Contitext implementation and expose the same eight MCP
-tools. Neither requires a private repository or a paid service.
+All options run the same Contitext implementation and expose the same eight MCP
+tools. None requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
+| Homebrew | Homebrew on macOS/Linux and your PostgreSQL 16+ database | `brew install jessysw/tap/contitext`; isolated native CLI/MCP |
 | Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.3` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 
 Use the [installation guide](https://github.com/jessysw/contitext/blob/main/docs/installation.md)
-for either path. Python installation does not require Docker. The database is
-required in both cases; Contitext is not a standalone in-memory or SQLite store.
+for setup and the [Homebrew guide](docs/homebrew.md) for package upgrades.
+Native installation does not require Docker. The database is required in every case; Contitext is not a standalone in-memory or SQLite store.
 A native MCP client can launch `contitext mcp` directly without a REST process.
 
 ## Docker Compose quick start

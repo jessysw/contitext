@@ -1,0 +1,31 @@
+class Contitext < Formula
+  include Language::Python::Virtualenv
+
+  desc "Project continuity for AI agents"
+  homepage "https://github.com/jessysw/contitext"
+  url "@URL@"
+  sha256 "@SHA256@"
+  license "Apache-2.0"
+
+  depends_on "pkgconf" => :build
+  depends_on "rust" => :build
+  depends_on "libffi"
+  depends_on "libpq"
+  depends_on "openssl@3"
+  depends_on "python@3.14"
+
+@RESOURCES@
+  def install
+    # Homebrew supplies libpq; build Psycopg's C implementation against it.
+    inreplace "pyproject.toml", "psycopg[binary]", "psycopg[c]"
+    virtualenv_install_with_resources
+    pkgshare.install "scripts", "integrations", "docs"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/contitext --version")
+    system bin/"contitext", "init", "--project", "demo", "--output", testpath/"private.env"
+    assert_predicate testpath/"private.env", :exist?
+    assert_match "project", shell_output("#{bin}/contitext --help")
+  end
+end

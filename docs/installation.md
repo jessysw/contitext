@@ -1,15 +1,20 @@
 # Installation and operation
 
-Contitext 0.8.3 supports two installation paths. Both use the same code, PostgreSQL
+Contitext 0.8.3 supports native and Docker deployments. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
 | --- | --- | --- |
+| Homebrew package | `brew install jessysw/tap/contitext`; isolated native CLI/MCP | Supply PostgreSQL 16+ yourself |
 | Python package | PyPI package in a virtual environment; native CLI/MCP and optional REST | Supply PostgreSQL 16+ yourself |
 | Docker Compose | Build the pinned public release and run its Compose stack | PostgreSQL 16 is included in the stack |
 
 Standard CPython 3.11–3.14 is supported. Free-threaded Python builds are not in the
 tested matrix. No paid service or private source repository is required.
+
+For Homebrew, follow the [Homebrew guide](homebrew.md), then the native initialization
+steps below. Use the stable `opt/contitext/bin/contitext` executable when multiple
+installations or private operator wrappers exist.
 
 ## Option 1: Python package
 
@@ -104,7 +109,7 @@ must follow [the 0.8 upgrade guide](upgrading-to-0.8.md) before changing binarie
 ## Agent installation
 
 Use the [repeatable adapter installer](agent-installation.md) to configure Codex,
-Claude Code, Zed, Hermes, or OpenClaw and install their shared protocol. The same
+Claude Code, GitHub Copilot, Cursor, Gemini CLI, OpenCode, Hermes, or OpenClaw and install their shared protocol. The same
 installer supports either server deployment path and remote SSH connections.
 It backs up client settings and does not migrate or duplicate the database.
 

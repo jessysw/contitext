@@ -3,10 +3,10 @@ from importlib.resources import files
 import json
 from pathlib import Path
 import os
-import sys
 
 from contitext import __version__
 from contitext.resolution import ResolutionError, load_connection, load_mappings
+from contitext.runtime_paths import integration_python
 
 
 def export(args):
@@ -17,7 +17,7 @@ def export(args):
     load_mappings(args.mappings, connection)
     if args.output.exists() or args.output.is_symlink():
         raise ResolutionError('export destination must be new; review a new export before replacing an installed plugin')
-    command = [sys.executable, '-I', '-m', 'contitext.hooks', '--client', args.client,
+    command = [integration_python(), '-I', '-m', 'contitext.hooks', '--client', args.client,
                '--connection', str(args.connection), '--mappings', str(args.mappings), '--timeout', '3']
     checkpoints = getattr(args, 'checkpoints', False)
     state_dir = getattr(args, 'state_dir', None)
@@ -36,7 +36,7 @@ def export(args):
     if args.client == 'hermes':
         content['__init__.py'] = resource.joinpath('hermes.py').read_text()
         content['plugin.yaml'] = f'name: contitext\nversion: "{__version__}"\ndescription: Project continuity through an existing Contitext MCP connection\n'
-        profile['identity_command'] = [sys.executable, '-I', '-m', 'contitext.plugin_identity',
+        profile['identity_command'] = [integration_python(), '-I', '-m', 'contitext.plugin_identity',
                                        '--directory', str(args.output / 'identities')]
     else:
         content['bridge.mjs'] = resource.joinpath('bridge.mjs').read_text()

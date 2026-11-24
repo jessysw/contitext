@@ -11,6 +11,10 @@ operations. For a native Python deployment with your own PostgreSQL 16+ database
 follow [the native installation steps](installation.md#option-1-python-package)
 and then continue at step 2 using the native connection example below.
 
+Homebrew users can follow the [Homebrew installation guide](homebrew.md), then use
+the native/Python workflow below. Docker and native installations share the same
+project and handoff steps.
+
 ## 1. Start your service
 
 ```sh

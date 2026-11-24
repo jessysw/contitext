@@ -123,3 +123,21 @@ jobs:
           if [ -f "$RUNNER_TEMP/release-source/.env" ]; then
             docker compose --project-directory "$RUNNER_TEMP/release-source" -p contitext-ci-install --profile reader down -v
           fi
+  homebrew-metadata:
+    name: Homebrew dependency resolution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'uv==0.12.5' 'packaging>=25,<27'
+      - name: Rehearse formula generation against the published upgrade baseline
+        run: python scripts/update_homebrew.py 0.8.3 --output formula/contitext.rb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-baseline-formula
+          path: formula/contitext.rb
