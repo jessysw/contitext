@@ -35,7 +35,11 @@ and builds on Python 3.11–3.14 without publishing credentials. All four jobs m
 pass before the Python 3.12 distributions are handed to a separate PyPI publishing
 job using OIDC. Once PyPI succeeds, another job verifies
 the published ownership marker and publishes `server.json` to the MCP Registry
-using GitHub OIDC. It does not run on every commit or release.
+using GitHub OIDC. A final job opens the Homebrew formula update PR.
+These publishing jobs do not run on every commit or release.
+Before dispatch, configure `HOMEBREW_TAP_TOKEN` as described in the
+[Homebrew release guide](homebrew.md#release-automation-and-verification).
+The preflight rejects a missing token before uploading to PyPI.
 Use English for the commit, release title, and release notes.
 Verify the resulting version on PyPI and install it in an empty environment before
 advertising the package as available. Add appropriate environment approvals for
@@ -59,7 +63,8 @@ Before publishing:
    the release commit must still pass CI and package checks.
 4. Align version metadata, installation examples, changelog and upgrade guidance.
 5. Merge the PR, tag that exact commit and run the publishing workflow above.
-6. Verify PyPI and the MCP Registry, install the published package, then create a
+6. Verify PyPI and the MCP Registry, confirm the Homebrew update PR passes and
+   merges, install the published package, then create a
    non-prerelease GitHub Release and mark it Latest. Confirm the default public
    versions and close the release tracker.
 

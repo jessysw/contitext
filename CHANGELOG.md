@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add the project Homebrew tap, checksummed source/dependency generation and
+  stable-release update PR automation with macOS/Linux package acceptance.
+- Keep generated Homebrew hook/plugin Python paths on the verified `opt` link
+  so upgrades can remove old Cellar directories without breaking those profiles.
+- Document native package installation, explicit database/agent setup, upgrade
+  preservation, uninstall and release-token rotation. No schema or MCP API change.
+
 ## 0.8.3 — 2026-11-23
 
 - **Breaking chat syntax:** replace `!! contitext` and all old chat aliases with

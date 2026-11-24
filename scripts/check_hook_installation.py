@@ -6,6 +6,7 @@ supplied connection/project MUST belong to a disposable acceptance deployment.
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -60,6 +61,8 @@ for client in ('codex','claude','copilot','cursor','gemini','hermes','openclaw',
         command=shlex.split(entry['command'] if client in ('copilot','cursor') else entry['hooks'][0]['command'])
         report=invoke([cli,'hooks','doctor',*common,'--config',str(config),'--state-dir',str(state),'--timeout','7'])
         assert report['connection']=='ready' and report['runtime_activation']=='not_verified'
+    if os.environ.get('EXPECT_STABLE_HOMEBREW') == '1':
+        assert command[0].endswith('/opt/contitext/libexec/bin/python'), 'Generated hook path is not upgrade-stable'
     event={'session_id':session,'cwd':str(args.directory),'hook_event_name':'SessionStart','source':'startup'}
     if client=='copilot':event={'sessionId':session,'cwd':str(args.directory),'source':'new'}
     if client=='cursor':event.update(hook_event_name='sessionStart',conversation_id=session)
