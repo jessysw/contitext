@@ -2,7 +2,8 @@
 """Generate a checksummed Homebrew formula from a stable public PyPI release.
 
 Requires uv and packaging. Resolution/build happens without publishing credentials.
-All four supported macOS/Linux targets must agree on common dependency versions.
+Four macOS/Linux resolution targets must agree on common dependency versions.
+Resolution is not native installation evidence; see docs/homebrew.md.
 """
 from __future__ import annotations
 

@@ -15,10 +15,10 @@ paths, version differences and the distinction between MCP and native hooks.
 ## Connect an agent
 
 Obtain the installer from the public repository. Use the installer from the same release as your server.
-The examples below cover 0.8.3. The protocol includes project listing and creation:
+The examples below cover 0.8.4. The protocol includes project listing and creation:
 
 ```sh
-git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.4 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 ```
 

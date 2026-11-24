@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "contitext"
-version = "0.8.3"
+version = "0.8.4"
 description = "Project continuity for AI agents: state, decisions, checkpoints, and handoffs."
 readme = "README.md"
 license = "Apache-2.0"

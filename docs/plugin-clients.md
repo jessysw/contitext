@@ -14,7 +14,7 @@ Choose a **new absolute directory** for each export:
 
 ```sh
 contitext plugins export --client openclaw \
-  --output "$HOME/.local/share/contitext/plugins/openclaw-0.8.3" \
+  --output "$HOME/.local/share/contitext/plugins/openclaw-0.8.4" \
   --connection "$HOME/.config/contitext/client.json" \
   --mappings "$HOME/.config/contitext/projects.json" --dry-run
 ```

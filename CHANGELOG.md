@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.4 — 2026-11-24
 
 - Add the project Homebrew tap, checksummed source/dependency generation and
   stable-release update PR automation with macOS/Linux package acceptance.

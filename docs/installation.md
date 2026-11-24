@@ -1,6 +1,6 @@
 # Installation and operation
 
-Contitext 0.8.3 supports native and Docker deployments. Both use the same code, PostgreSQL
+Contitext 0.8.4 supports native and Docker deployments. Both use the same code, PostgreSQL
 schema, operator commands, and eight MCP tools.
 
 | Path | Install and run | Database |
@@ -25,7 +25,7 @@ installation. Existing deployments should follow the [upgrade guide](upgrading-t
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install contitext==0.8.3
+python -m pip install contitext==0.8.4
 ```
 
 Create a PostgreSQL 16+ database with your normal database administration tools.
@@ -75,7 +75,7 @@ Requires Docker with Compose, Git, and Python 3.11–3.14 for the dependency-fre
 bootstrap script. A separate host Python environment for Contitext is unnecessary.
 
 ```sh
-git clone --branch v0.8.3 --depth 1 https://github.com/jessysw/contitext.git
+git clone --branch v0.8.4 --depth 1 https://github.com/jessysw/contitext.git
 cd contitext
 python3 scripts/bootstrap.py --project research --name "Research"
 docker compose up --build -d --wait

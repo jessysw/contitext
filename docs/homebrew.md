@@ -1,8 +1,5 @@
 # Homebrew installation and upgrades
 
-The release automation and stable generated hook paths described here are
-**0.8.4 development changes** until the matching stable release is published.
-
 Homebrew is an additional package manager for the native Python deployment.
 It uses the same PostgreSQL database, CLI, MCP tools and permissions as PyPI and
 Docker. No Homebrew account is required. This is a project-maintained tap, not a
