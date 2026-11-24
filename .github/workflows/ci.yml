@@ -123,3 +123,80 @@ jobs:
           if [ -f "$RUNNER_TEMP/release-source/.env" ]; then
             docker compose --project-directory "$RUNNER_TEMP/release-source" -p contitext-ci-install --profile reader down -v
           fi
+  homebrew-metadata:
+    name: Homebrew dependency resolution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'uv==0.12.5' 'packaging>=25,<27'
+      - name: Rehearse formula generation against the published upgrade baseline
+        run: python scripts/update_homebrew.py 0.8.3 --output formula/contitext.rb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-baseline-formula
+          path: formula/contitext.rb
+  homebrew-installation:
+    name: Homebrew candidate (${{ matrix.os }})
+    needs: homebrew-metadata
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+      EXPECT_STABLE_HOMEBREW: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: jessysw/homebrew-tap
+          ref: dac48e6eaf281c66aec924e63a49fbacd4108263
+          path: tap
+          persist-credentials: false
+      - uses: Homebrew/actions/setup-homebrew@d482da0e602890d3160aade42e72c8556103bf04
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/download-artifact@v4
+        with:
+          name: homebrew-baseline-formula
+          path: baseline
+      - name: Build the candidate source distribution
+        run: |
+          python -m pip install build
+          cd source
+          python -m build --sdist
+      - name: Prepare a candidate formula using the local release artifact
+        run: |
+          python - <<'PY'
+          import hashlib, re, tomllib
+          from pathlib import Path
+          root = Path.cwd()
+          version = tomllib.loads((root/'source/pyproject.toml').read_text())['project']['version']
+          artifact = next((root/'source/dist').glob('contitext-*.tar.gz'))
+          formula = (root/'baseline/contitext.rb').read_text()
+          formula = re.sub(r'^  url .+$', '  url "' + artifact.as_uri() + '"', formula, count=1, flags=re.M)
+          formula = re.sub(r'^  sha256 .+$', '  sha256 "' + hashlib.sha256(artifact.read_bytes()).hexdigest() + '"', formula, count=1, flags=re.M)
+          formula = formula.replace('  license "Apache-2.0"', '  license "Apache-2.0"\n  revision 1')
+          (root/'tap/Formula/contitext.rb').write_text(formula)
+          PY
+          tap="$(brew --repository)/Library/Taps/jessysw/homebrew-tap"
+          mkdir -p "$(dirname "$tap")"
+          ln -s "$GITHUB_WORKSPACE/tap" "$tap"
+      - name: Upgrade from the public baseline and verify the candidate
+        run: |
+          export BASE_FORMULA="$GITHUB_WORKSPACE/baseline/contitext.rb"
+          export GITHUB_WORKSPACE="$GITHUB_WORKSPACE/tap"
+          bash "$GITHUB_WORKSPACE/scripts/acceptance.sh"

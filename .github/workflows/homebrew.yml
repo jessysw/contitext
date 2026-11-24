@@ -1,0 +1,113 @@
+name: Update Homebrew tap
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published stable PyPI version (X.Y.Z)
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+    secrets:
+      HOMEBREW_TAP_TOKEN:
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: homebrew-release
+  cancel-in-progress: false
+jobs:
+  formula:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: jessysw/homebrew-tap
+          path: tap
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install release tools
+        run: python -m pip install 'uv==0.12.5' 'packaging>=25,<27'
+      - name: Prepare the versioned update branch
+        id: prepare
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          python -c 'import os,re; assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", os.environ["RELEASE_VERSION"])'
+          python - <<'PYCODE'
+          import os, re
+          from pathlib import Path
+          requested = tuple(map(int, os.environ['RELEASE_VERSION'].split('.')))
+          formula = Path('tap/Formula/contitext.rb').read_text()
+          current = re.search(r'^  url ".*/contitext-([0-9]+\.[0-9]+\.[0-9]+)\.tar\.gz"$', formula, re.M)
+          if not current:
+              raise SystemExit('Cannot identify the current stable tap version')
+          installed = tuple(map(int, current[1].split('.')))
+          if requested < installed:
+              raise SystemExit('Refusing an automated tap downgrade')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('published=' + str(requested == installed).lower() + '\n')
+          PYCODE
+          cd tap
+          branch="contitext-v$RELEASE_VERSION"
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+            git switch -c "$branch" "origin/$branch"
+          else
+            git switch -c "$branch"
+          fi
+      - name: Resolve and checksum the published package and dependencies
+        if: steps.prepare.outputs.published != 'true'
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python source/scripts/update_homebrew.py "$RELEASE_VERSION" --output tap/Formula/contitext.rb
+      - name: Commit the formula update
+        if: steps.prepare.outputs.published != 'true'
+        id: commit
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          cd tap
+          git config user.name 'Contitext release automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Formula/contitext.rb
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Contitext to $RELEASE_VERSION"
+          fi
+          if git diff --quiet origin/main HEAD; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open the tap pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          test -n "$GH_TOKEN" || { echo 'HOMEBREW_TAP_TOKEN is required'; exit 1; }
+          cd tap
+          branch="contitext-v$RELEASE_VERSION"
+          # Scope credentials to this push only. No token is stored in the checkout.
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)
+          echo "::add-mask::$auth"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "$branch"
+          existing=$(gh pr list --repo jessysw/homebrew-tap --head "$branch" --base main --state open --json number --jq 'length')
+          if [ "$existing" = 0 ]; then
+            cat > "$RUNNER_TEMP/tap-pr.md" <<BODY
+          Update the Homebrew formula to the published Contitext $RELEASE_VERSION release.
+
+          The source distribution and all runtime resources are pinned to PyPI SHA256 hashes. Formula CI checks clean installation or upgrade, MCP write/read, adapter contracts, and data-preserving uninstall on Apple Silicon macOS and x86-64 Linux. The update is merged only after that workflow succeeds.
+          BODY
+            gh pr create --repo jessysw/homebrew-tap --head "$branch" --base main --title "Update Contitext to $RELEASE_VERSION" --body-file "$RUNNER_TEMP/tap-pr.md"
+          fi

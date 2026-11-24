@@ -2,13 +2,13 @@
 import json
 from pathlib import Path
 import shlex
-import sys
 import tempfile
 import os
 from contextlib import nullcontext
 
 from contitext.resolution import ResolutionError, load_connection, load_mappings, mapping_lock, read_local_json
 from contitext.hook_contracts import additions as native_additions
+from contitext.runtime_paths import integration_python
 
 
 def install(args):
@@ -17,7 +17,7 @@ def install(args):
             raise ResolutionError('hook configuration paths must be absolute')
     connection = load_connection(args.connection)
     load_mappings(args.mappings, connection)
-    command = shlex.join([sys.executable, '-I', '-m', 'contitext.hooks', '--client', args.client,
+    command = shlex.join([integration_python(), '-I', '-m', 'contitext.hooks', '--client', args.client,
                           '--connection', str(args.connection), '--mappings', str(args.mappings)])
     state_dir = getattr(args,'state_dir',None)
     if getattr(args,'checkpoints',False):
