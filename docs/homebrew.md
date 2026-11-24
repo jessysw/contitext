@@ -17,7 +17,7 @@ brew test contitext
 ```
 
 Homebrew supplies an isolated Python 3.14 environment and builds checksummed,
-pinned dependencies. The initial build can take several minutes. Do not install
+pinned dependencies. The initial build can take ten minutes or more. Do not install
 extra Python packages into the formula's environment. PyPI remains available for
 Python 3.11–3.14; Docker remains available for a combined app/database deployment.
 
@@ -30,6 +30,15 @@ Keep configuration and credentials outside Homebrew's `Cellar` and `opt` trees.
 If another `contitext` executable or operator wrapper already exists, inspect
 `command -v contitext`. Homebrew does not replace wrappers outside its prefix.
 Use the explicit stable path below to select this installation.
+
+## Platform coverage
+
+Release acceptance covers Apple Silicon macOS and x86-64 Linux. Intel macOS
+Homebrew installation is not validated: Homebrew has stopped building new Intel
+bottles, and dependency compilation can take substantially longer. Use the
+[Python installation](installation.md#option-1-python-package) on Intel Macs.
+See [Homebrew support tiers](https://docs.brew.sh/Support-Tiers). Linux ARM64
+dependencies are resolved by the generator, but installation is not yet validated.
 
 ## Connect agents
 
@@ -95,7 +104,7 @@ A stable PyPI release triggers a formula update PR in
 [jessysw/homebrew-tap](https://github.com/jessysw/homebrew-tap). The generator resolves
 macOS/Linux dependencies for Python 3.14, pins source URLs and SHA256 hashes, and
 uses system `libpq` with the source-built Psycopg driver. The tap checks macOS
-Apple Silicon, macOS Intel and Linux before merging automated formula updates.
+Apple Silicon and x86-64 Linux before merging automated formula updates.
 
 The release job uses `HOMEBREW_TAP_TOKEN`: a fine-grained GitHub token owned by
 `jessysw`, limited to **homebrew-tap**, with **Contents: read/write** and

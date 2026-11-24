@@ -39,7 +39,7 @@ tools. None requires a private repository or a paid service.
 
 | Option | Requirements | Operation |
 | --- | --- | --- |
-| Homebrew | Homebrew on macOS/Linux and your PostgreSQL 16+ database | `brew install jessysw/tap/contitext`; isolated native CLI/MCP |
+| Homebrew | Homebrew on Apple Silicon macOS / x86-64 Linux and your PostgreSQL 16+ database | `brew install jessysw/tap/contitext`; isolated native CLI/MCP |
 | Python package | Standard CPython 3.11–3.14 and your PostgreSQL 16+ database | Install `contitext==0.8.3` from PyPI; run native stdio MCP and optionally REST |
 | Docker Compose | Docker with Compose, Git, and Python 3.11–3.14 for bootstrap | Build the release source; Compose runs Contitext and PostgreSQL together |
 

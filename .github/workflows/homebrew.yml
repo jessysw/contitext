@@ -107,7 +107,7 @@ jobs:
             cat > "$RUNNER_TEMP/tap-pr.md" <<BODY
           Update the Homebrew formula to the published Contitext $RELEASE_VERSION release.
 
-          The source distribution and all runtime resources are pinned to PyPI SHA256 hashes. Formula CI checks clean installation or upgrade, MCP write/read, adapter contracts, and data-preserving uninstall on macOS ARM, macOS Intel and Linux. The update is merged only after that workflow succeeds.
+          The source distribution and all runtime resources are pinned to PyPI SHA256 hashes. Formula CI checks clean installation or upgrade, MCP write/read, adapter contracts, and data-preserving uninstall on Apple Silicon macOS and x86-64 Linux. The update is merged only after that workflow succeeds.
           BODY
             gh pr create --repo jessysw/homebrew-tap --head "$branch" --base main --title "Update Contitext to $RELEASE_VERSION" --body-file "$RUNNER_TEMP/tap-pr.md"
           fi
