@@ -162,7 +162,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: jessysw/homebrew-tap
-          ref: 63d1997ec9bfe9219ee8cca082a55ed7bb693bd7
+          ref: 98d87f0ac5d386d4c469fb37da7796e11b3406cf
           path: tap
           persist-credentials: false
       - uses: Homebrew/actions/setup-homebrew@d482da0e602890d3160aade42e72c8556103bf04

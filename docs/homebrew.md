@@ -24,7 +24,7 @@ Python 3.11–3.14; Docker remains available for a combined app/database deploym
 Installation does not start a service, install a PostgreSQL server, create a
 database, run migrations, generate credentials or change agent settings. The
 formula's `libpq` dependency is a PostgreSQL client library, not a database server.
-Supply PostgreSQL 16+ and use the [native initialization workflow](installation.md#option-1-python-package).
+Supply a UTF-8 PostgreSQL 16+ database and use the [native initialization workflow](installation.md#option-1-python-package).
 Keep configuration and credentials outside Homebrew's `Cellar` and `opt` trees.
 
 If another `contitext` executable or operator wrapper already exists, inspect
@@ -45,7 +45,13 @@ Use your real private configuration path. Merge the entry into your client's MCP
 settings and install the [agent instructions](agent-installation.md). Homebrew
 includes the optional adapter installer and protocol under
 `$(brew --prefix)/opt/contitext/share/contitext`; run that installer explicitly
-with the same options documented in the agent guide. It never runs on `brew install`.
+with the same options documented in the agent guide. It never runs on `brew install`. Use the package's Python when invoking it, rather
+than relying on whichever `python3` happens to be on your PATH:
+
+```sh
+CONTITEXT_INSTALL_PYTHON="$(brew --prefix)/opt/contitext/libexec/bin/python" \
+  sh "$(brew --prefix)/opt/contitext/share/contitext/scripts/install-agent-adapters.sh" --help
+```
 
 The eight supported agent families use the same protocol and existing lifecycle
 infrastructure. Homebrew does not add a chat interceptor or bypass host trust.
