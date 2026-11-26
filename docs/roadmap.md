@@ -63,8 +63,20 @@ status field is descriptive metadata and does not revoke access or prevent write
 Prefer reversible archival that preserves history before considering permanent
 deletion, including its effects on bindings and references.
 
+## Planned v0.9: remote MCP and hosting support
+
+The [v0.9 Core development plan](v0.9-plan.md) proposes authenticated remote MCP,
+request-scoped authorization, remote client/automation support and published OCI
+images. The [hosting integration contract](hosting-integration-contract.md)
+describes the generic interfaces and requirements for operators consuming Core.
+These are planned capabilities, not features shipped in 0.8.4.
+
+Self-hosters retain the complete Core product. Account sites, hosting operations
+and provider-specific policy are outside this repository's development plan.
+A Core release does not announce the availability of an operated service.
+
 ## Later, if users need it
 
-Broader memory/knowledge integrations and an authenticated
-remote MCP transport. A hosted service is a separate operational and security
-decision; no hosted availability or service-level guarantee is promised here.
+Broader memory/knowledge integrations remain separate from the remote-access
+milestone. No hosted availability or service-level guarantee is promised by this
+Core roadmap.
